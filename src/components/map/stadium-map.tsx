@@ -1,58 +1,87 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { createClient } from '@supabase/supabase-js';
+import { Search, X, Check, Star, Calendar } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet default icon issue in Next.js
-const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-L.Marker.prototype.options.icon = DefaultIcon;
-
-// Create marker icon with club color
-const createClubIcon = (primaryColor: string, isSparta: boolean = false) => {
+const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false) => {
   const color = primaryColor || '#ef4444';
   
-  // Sparta gets a special animated golden glow marker
+  if (isVisited) {
+    const svg = `
+      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow-v" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
+              fill="${color}" filter="url(#shadow-v)" stroke="#22c55e" stroke-width="3"/>
+        <circle cx="18" cy="17" r="8" fill="white"/>
+        <path d="M13 17 L16 20 L23 13" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    return L.divIcon({
+      html: svg,
+      className: 'custom-stadium-marker visited',
+      iconSize: [36, 44],
+      iconAnchor: [18, 44],
+      popupAnchor: [0, -44],
+    });
+  }
+
+  if (isWishlist) {
+    const svg = `
+      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow-w" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
+              fill="${color}" filter="url(#shadow-w)" stroke="#eab308" stroke-width="2"/>
+        <circle cx="18" cy="17" r="8" fill="white"/>
+        <polygon points="18,12 19.5,16 24,16 20.5,18.5 22,23 18,20 14,23 15.5,18.5 12,16 16.5,16" fill="#eab308"/>
+      </svg>
+    `;
+    return L.divIcon({
+      html: svg,
+      className: 'custom-stadium-marker wishlist',
+      iconSize: [36, 44],
+      iconAnchor: [18, 44],
+      popupAnchor: [0, -44],
+    });
+  }
+
   if (isSparta) {
     const svg = `
       <svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <filter id="sparta-outer-glow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feFlood flood-color="#FFD700" flood-opacity="0.8"/>
+          <filter id="sparta-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feFlood flood-color="#FFD700" flood-opacity="0.6"/>
             <feComposite in2="blur" operator="in"/>
             <feMerge>
               <feMergeNode/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
-          <radialGradient id="sparta-gradient" cx="50%" cy="30%" r="60%">
-            <stop offset="0%" style="stop-color:#ff4444"/>
-            <stop offset="100%" style="stop-color:#CC0000"/>
-          </radialGradient>
         </defs>
-        <!-- Outer glow ring (animated via CSS) -->
-        <circle cx="24" cy="22" r="18" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.6" class="sparta-pulse"/>
-        <!-- Main pin -->
-        <path d="M24 4C13.507 4 5 12.507 5 23c0 10.493 19 29 19 29s19-18.507 19-29C43 12.507 34.493 4 24 4z" 
-              fill="url(#sparta-gradient)" filter="url(#sparta-outer-glow)" stroke="#FFD700" stroke-width="2"/>
-        <!-- Inner white circle -->
+        <circle cx="24" cy="22" r="20" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5" class="sparta-pulse"/>
+        <path d="M24 4C13.507 4 5 12.507 5 23c0 10.493 19 29 19 29s19-18.507 19-29C43 12.507 34.493 4 24 4z"
+              fill="#CC0000" filter="url(#sparta-glow)" stroke="#FFD700" stroke-width="2"/>
         <circle cx="24" cy="22" r="10" fill="white"/>
-        <!-- Castle emoji -->
-        <text x="24" y="27" text-anchor="middle" font-size="14">🏰</text>
+        <text x="24" y="26" text-anchor="middle" font-size="12" fill="#CC0000">S</text>
       </svg>
     `;
-    
     return L.divIcon({
       html: svg,
       className: 'custom-stadium-marker sparta-special',
@@ -61,20 +90,19 @@ const createClubIcon = (primaryColor: string, isSparta: boolean = false) => {
       popupAnchor: [0, -56],
     });
   }
-  
+
   const svg = `
     <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <filter id="shadow-d" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
         </filter>
       </defs>
-      <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z" 
-            fill="${color}" filter="url(#shadow)"/>
+      <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z"
+            fill="${color}" filter="url(#shadow-d)"/>
       <circle cx="16" cy="16" r="6" fill="white"/>
     </svg>
   `;
-  
   return L.divIcon({
     html: svg,
     className: 'custom-stadium-marker',
@@ -84,26 +112,25 @@ const createClubIcon = (primaryColor: string, isSparta: boolean = false) => {
   });
 };
 
-// Component to set map bounds (prevent infinite scrolling)
 function MapBounds() {
   const map = useMap();
-  
   useEffect(() => {
-    // Set max bounds to prevent map from repeating
-    const southWest = L.latLng(-85, -180);
-    const northEast = L.latLng(85, 180);
-    const bounds = L.latLngBounds(southWest, northEast);
-    
+    const bounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
     map.setMaxBounds(bounds);
     map.setMinZoom(3);
     map.setMaxZoom(18);
-    
-    // Prevent dragging outside bounds
-    map.on('drag', function() {
-      map.panInsideBounds(bounds, { animate: false });
-    });
+    map.on('drag', () => map.panInsideBounds(bounds, { animate: false }));
   }, [map]);
-  
+  return null;
+}
+
+function FlyToStadium({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lng) {
+      map.flyTo([lat, lng], 14, { duration: 1.5 });
+    }
+  }, [lat, lng, map]);
   return null;
 }
 
@@ -116,19 +143,26 @@ interface Stadium {
   city?: string;
   address?: string;
   built_year?: number;
-  image_url?: string;
   club?: {
     id: string;
     name: string;
     short_name: string;
     primary_color?: string;
     secondary_color?: string;
-    crest_url?: string;
-    current_league?: {
-      division: number;
-      name: string;
-    } | null;
+    current_league?: { division: number; name: string } | null;
   } | null;
+}
+
+interface Visit {
+  stadium_id: string;
+  visit_date: string | null;
+  notes?: string;
+}
+
+interface WishlistItem {
+  stadium_id: string;
+  priority: number;
+  notes?: string;
 }
 
 interface StadiumMapProps {
@@ -137,194 +171,316 @@ interface StadiumMapProps {
   lang: 'nl' | 'en';
 }
 
-// Translations
-const translations = {
-  nl: {
-    seats: 'stoelen',
-    built: 'Gebouwd',
-    address: 'Adres',
-    league: 'Competitie',
-    loadingMap: 'Kaart laden...',
-  },
-  en: {
-    seats: 'seats',
-    built: 'Built',
-    address: 'Address',
-    league: 'League',
-    loadingMap: 'Loading map...',
-  }
-};
+const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
 export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
-  const t = translations[lang];
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStadium, setSelectedStadium] = useState<{ lat: number; lng: number } | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
+  const [visitDate, setVisitDate] = useState('');
 
   useEffect(() => {
     setMounted(true);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    const [visitsRes, wishlistRes] = await Promise.all([
+      supabase.from('bram_visits').select('stadium_id, visit_date, notes'),
+      supabase.from('bram_wishlist').select('stadium_id, priority, notes')
+    ]);
+    if (visitsRes.data) setVisits(visitsRes.data);
+    if (wishlistRes.data) setWishlist(wishlistRes.data);
+  };
+
+  const toggleVisit = async (stadiumId: string, date?: string) => {
+    const existing = visits.find(v => v.stadium_id === stadiumId);
+    if (existing) {
+      await supabase.from('bram_visits').delete().eq('stadium_id', stadiumId);
+      setVisits(visits.filter(v => v.stadium_id !== stadiumId));
+    } else {
+      const { data } = await supabase.from('bram_visits').insert({ 
+        stadium_id: stadiumId, 
+        visit_date: date || null 
+      }).select().single();
+      if (data) setVisits([...visits, data]);
+    }
+    if (!existing && wishlist.find(w => w.stadium_id === stadiumId)) {
+      await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
+      setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
+    }
+    setShowDatePicker(null);
+  };
+
+  const toggleWishlist = async (stadiumId: string) => {
+    const existing = wishlist.find(w => w.stadium_id === stadiumId);
+    if (existing) {
+      await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
+      setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
+    } else if (!visits.find(v => v.stadium_id === stadiumId)) {
+      const { data } = await supabase.from('bram_wishlist').insert({ stadium_id: stadiumId }).select().single();
+      if (data) setWishlist([...wishlist, data]);
+    }
+  };
+
+  const filteredStadiums = useMemo(() => {
+    if (!searchQuery.trim()) return stadiums;
+    const q = searchQuery.toLowerCase();
+    return stadiums.filter(s => 
+      s.name.toLowerCase().includes(q) ||
+      s.club?.name.toLowerCase().includes(q) ||
+      s.city?.toLowerCase().includes(q)
+    );
+  }, [stadiums, searchQuery]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim() || searchQuery.length < 2) return [];
+    return filteredStadiums.slice(0, 8);
+  }, [filteredStadiums, searchQuery]);
 
   if (!mounted) {
     return (
-      <div className={`w-full h-full flex items-center justify-center ${
-        theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'
-      }`}>
+      <div className={`w-full h-full flex items-center justify-center ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
         <div className={theme === 'dark' ? 'text-slate-500' : 'text-slate-600'}>
-          {t.loadingMap}
+          {tr(lang, 'Kaart laden...', 'Loading map...')}
         </div>
       </div>
     );
   }
 
-  // Default center on Europe
-  const defaultCenter: [number, number] = [50.0, 10.0];
-  const defaultZoom = 5;
-
-  // Tile layers
-  const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-  const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
+      <div className="absolute top-20 left-4 z-[1001] w-72">
+        <div className={`relative rounded-lg shadow-lg ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+          <input
+            type="text"
+            placeholder={tr(lang, 'Zoek stadion, club of stad...', 'Search stadium, club or city...')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full pl-10 pr-8 py-2.5 rounded-lg text-sm ${
+              theme === 'dark' 
+                ? 'bg-slate-800 text-white placeholder-slate-400 border border-slate-700' 
+                : 'bg-white text-slate-900 placeholder-slate-500 border border-slate-200'
+            }`}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <X className={`w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+            </button>
+          )}
+        </div>
+        
+        {searchResults.length > 0 && (
+          <div className={`mt-1 rounded-lg shadow-lg overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+            {searchResults.map(stadium => (
+              <button
+                key={stadium.id}
+                onClick={() => {
+                  setSelectedStadium({ lat: stadium.latitude, lng: stadium.longitude });
+                  setSearchQuery('');
+                }}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-3 ${
+                  theme === 'dark' ? 'hover:bg-slate-700' : 'hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
+                />
+                <div className="min-w-0">
+                  <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {stadium.club?.name || stadium.name}
+                  </div>
+                  <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {stadium.name} - {stadium.city}
+                  </div>
+                </div>
+                {visits.find(v => v.stadium_id === stadium.id) && (
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className={`absolute top-20 right-4 z-[1001] px-4 py-2 rounded-lg shadow-lg ${
+        theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
+      }`}>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1.5">
+            <Check className="w-4 h-4 text-green-500" />
+            <span className="font-bold">{visits.length}</span>
+            <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {stadiums.length}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Star className="w-4 h-4 text-yellow-500" />
+            <span className="font-bold">{wishlist.length}</span>
+          </div>
+        </div>
+      </div>
+
       <MapContainer
-        center={defaultCenter}
-        zoom={defaultZoom}
+        center={[50.0, 10.0]}
+        zoom={5}
         className="w-full h-full"
         zoomControl={false}
         worldCopyJump={false}
         maxBoundsViscosity={1.0}
       >
         <MapBounds />
+        {selectedStadium && <FlyToStadium lat={selectedStadium.lat} lng={selectedStadium.lng} />}
         
-        {/* Tile layer based on theme */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url={theme === 'dark' ? darkTileUrl : lightTileUrl}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url={theme === 'dark' 
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+          }
           noWrap={true}
         />
-        
         <ZoomControl position="bottomright" />
-        
-        {stadiums.map((stadium) => {
+
+        {filteredStadiums.map((stadium) => {
           const isSparta = stadium.club?.short_name === 'SPA';
-          const clubColor = stadium.club?.primary_color || '#ef4444';
-          
+          const isVisited = visits.some(v => v.stadium_id === stadium.id);
+          const isOnWishlist = wishlist.some(w => w.stadium_id === stadium.id);
+          const visitData = visits.find(v => v.stadium_id === stadium.id);
+
           return (
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(clubColor, isSparta)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist)}
             >
               <Popup>
-                <div className={`min-w-[280px] max-w-[320px] ${
-                  theme === 'dark' ? 'text-white' : 'text-slate-900'
-                }`}>
-                  {/* Club Logo & Stadium Name Header */}
+                <div className={`min-w-[280px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                   <div className="flex items-start gap-3 p-4 border-b border-slate-700/30">
-                    {/* Club crest placeholder or emoji */}
-                    <div 
-                      className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                      style={{ 
-                        backgroundColor: stadium.club?.primary_color || '#ef4444',
-                        color: 'white'
-                      }}
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
+                      style={{ backgroundColor: stadium.club?.primary_color || '#6b7280', color: 'white' }}
                     >
-                      {isSparta ? '🏰' : '⚽'}
+                      {stadium.club?.short_name?.substring(0, 2) || '?'}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-lg leading-tight">{stadium.name}</h3>
-                      {stadium.club && (
-                        <p className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
-                          {stadium.club.name}
-                        </p>
+                      <h3 className="font-bold text-lg">{stadium.club?.name || 'Unknown'}</h3>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {stadium.name}
+                      </p>
+                      {stadium.club?.current_league && (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-500 text-white">
+                          {stadium.club.current_league.name}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Stadium Photo via placeholder */}
-                  <div 
-                    className="h-28 bg-cover bg-center relative overflow-hidden"
-                    style={{
-                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${theme === 'dark' ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.95)'}), url('https://source.unsplash.com/400x200/?football,stadium,${encodeURIComponent(stadium.city || 'europe')}')`,
-                      backgroundColor: theme === 'dark' ? '#334155' : '#e2e8f0'
-                    }}
-                  >
-                    <div className="absolute bottom-2 left-3 right-3">
-                      <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
-                        📍 {stadium.city}
-                      </div>
+                  <div className="p-4 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Stad', 'City')}</span>
+                      <span className="font-medium">{stadium.city}</span>
                     </div>
+                    {stadium.capacity && (
+                      <div className="flex justify-between">
+                        <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Capaciteit', 'Capacity')}</span>
+                        <span className="font-medium">{stadium.capacity.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {stadium.built_year && (
+                      <div className="flex justify-between">
+                        <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Gebouwd', 'Built')}</span>
+                        <span className="font-medium">{stadium.built_year}</span>
+                      </div>
+                    )}
+                    {isVisited && visitData?.visit_date && (
+                      <div className="flex justify-between text-green-500">
+                        <span>{tr(lang, 'Bezocht', 'Visited')}</span>
+                        <span className="font-medium">{new Date(visitData.visit_date).toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB')}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Stadium Details */}
-                  <div className="p-4 space-y-2">
-                    {/* Capacity */}
-                    {stadium.capacity && (
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          👥 {lang === 'nl' ? 'Capaciteit' : 'Capacity'}
-                        </span>
-                        <span className="font-semibold">
-                          {stadium.capacity.toLocaleString()} {t.seats}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Built Year */}
-                    {stadium.built_year && (
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          🏗️ {t.built}
-                        </span>
-                        <span className="font-semibold">{stadium.built_year}</span>
-                      </div>
-                    )}
-
-                    {/* League */}
-                    {stadium.club?.current_league && (
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          🏆 {t.league}
-                        </span>
-                        <span className="font-semibold text-sm">{stadium.club.current_league.name}</span>
-                      </div>
-                    )}
-
-                    {/* Address */}
-                    {stadium.address && (
-                      <div className="pt-2 border-t border-slate-700/30">
-                        <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                          📍 {stadium.address}
+                  <div className="p-4 pt-0 space-y-2">
+                    {showDatePicker === stadium.id && (
+                      <div className={`p-3 rounded-lg mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                        <label className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {tr(lang, 'Wanneer bezocht?', 'When did you visit?')}
+                        </label>
+                        <input
+                          type="date"
+                          value={visitDate}
+                          onChange={(e) => setVisitDate(e.target.value)}
+                          className={`w-full mt-1 px-3 py-2 rounded text-sm ${
+                            theme === 'dark' ? 'bg-slate-600 text-white' : 'bg-white text-slate-900 border'
+                          }`}
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => toggleVisit(stadium.id, visitDate)}
+                            className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium"
+                          >
+                            {tr(lang, 'Opslaan', 'Save')}
+                          </button>
+                          <button
+                            onClick={() => toggleVisit(stadium.id)}
+                            className={`flex-1 py-1.5 rounded text-sm ${theme === 'dark' ? 'bg-slate-600 text-white' : 'bg-slate-200'}`}
+                          >
+                            {tr(lang, 'Zonder datum', 'No date')}
+                          </button>
                         </div>
                       </div>
                     )}
 
-                    {/* Sparta special badge */}
-                    {isSparta && (
-                      <div className="mt-3 p-2 bg-red-900/30 rounded-lg border border-red-800/50">
-                        <div className="flex items-center gap-2 text-red-400">
-                          <span>🏰</span>
-                          <span className="text-xs font-medium">
-                            {lang === 'nl' 
-                              ? 'Oudste profclub van Nederland (1888)' 
-                              : 'Oldest professional club in the Netherlands (1888)'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (isVisited) {
+                          toggleVisit(stadium.id);
+                        } else {
+                          setShowDatePicker(stadium.id);
+                          setVisitDate('');
+                        }
+                      }}
+                      className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                        isVisited
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      {isVisited ? (
+                        <><Check className="w-4 h-4" /> {tr(lang, 'Bezocht', 'Visited')}</>
+                      ) : (
+                        <><Calendar className="w-4 h-4" /> {tr(lang, 'Markeer als bezocht', 'Mark as visited')}</>
+                      )}
+                    </button>
 
-                    {/* Google Maps Link */}
-                    <div className="mt-3 pt-3 border-t border-slate-700/30">
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stadium.name + ' ' + stadium.city)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition shadow-md"
+                    {!isVisited && (
+                      <button
+                        onClick={() => toggleWishlist(stadium.id)}
+                        className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                          isOnWishlist
+                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30'
+                            : theme === 'dark'
+                              ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                        }`}
                       >
-                        <span>🗺️</span>
-                        <span>{lang === 'nl' ? 'Open in Google Maps' : 'Open in Google Maps'}</span>
-                      </a>
-                    </div>
+                        <Star className={`w-4 h-4 ${isOnWishlist ? 'fill-current' : ''}`} />
+                        {isOnWishlist ? tr(lang, 'Op wishlist', 'On wishlist') : tr(lang, 'Toevoegen aan wishlist', 'Add to wishlist')}
+                      </button>
+                    )}
+
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stadium.name + ' ' + stadium.city)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-2.5 rounded-lg font-medium text-sm text-center bg-blue-600 hover:bg-blue-700 text-white transition"
+                    >
+                      {tr(lang, 'Open in Google Maps', 'Open in Google Maps')}
+                    </a>
                   </div>
                 </div>
               </Popup>
@@ -334,73 +490,17 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       </MapContainer>
 
       <style jsx global>{`
-        .custom-stadium-marker {
-          background: transparent;
-          border: none;
-        }
-        
-        /* Sparta pulsing glow animation */
-        .sparta-special .sparta-pulse {
-          animation: sparta-glow-pulse 2s ease-in-out infinite;
-          transform-origin: center;
-        }
-        
-        @keyframes sparta-glow-pulse {
-          0%, 100% {
-            opacity: 0.4;
-            r: 18;
-          }
-          50% {
-            opacity: 0.8;
-            r: 22;
-          }
-        }
-        
-        .sparta-special {
-          filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6));
-          z-index: 1000 !important;
-        }
-        
-        /* Dark mode popup styling */
-        html.dark .leaflet-popup-content-wrapper {
-          background: #1e293b;
-          border-radius: 12px;
-          padding: 0;
-          overflow: hidden;
-        }
-        
-        html.dark .leaflet-popup-tip {
-          background: #1e293b;
-        }
-        
-        html.dark .leaflet-popup-content {
-          margin: 0;
-          color: white;
-        }
-
-        /* Light mode popup styling */
-        html.light .leaflet-popup-content-wrapper {
-          background: white;
-          border-radius: 12px;
-          padding: 0;
-          overflow: hidden;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-        }
-        
-        html.light .leaflet-popup-tip {
-          background: white;
-        }
-        
-        html.light .leaflet-popup-content {
-          margin: 0;
-          color: #1e293b;
-        }
-
-        .leaflet-popup-close-button {
-          color: inherit !important;
-          font-size: 20px !important;
-          padding: 8px !important;
-        }
+        .custom-stadium-marker { background: transparent; border: none; }
+        .sparta-special { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); z-index: 1000 !important; }
+        .sparta-pulse { animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+        html.dark .leaflet-popup-content-wrapper { background: #1e293b; border-radius: 12px; padding: 0; }
+        html.dark .leaflet-popup-tip { background: #1e293b; }
+        html.dark .leaflet-popup-content { margin: 0; color: white; }
+        html.light .leaflet-popup-content-wrapper { background: white; border-radius: 12px; padding: 0; }
+        html.light .leaflet-popup-tip { background: white; }
+        html.light .leaflet-popup-content { margin: 0; color: #1e293b; }
+        .leaflet-popup-close-button { color: inherit !important; font-size: 20px !important; padding: 8px !important; }
       `}</style>
     </div>
   );
