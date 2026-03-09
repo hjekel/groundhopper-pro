@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, createContext, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { createClient } from '@supabase/supabase-js'
+import { LanguageContext, ThemeContext, Language, Theme } from '@/lib/contexts'
 
 // Dynamic import for Leaflet (no SSR)
 const StadiumMap = dynamic(() => import('@/components/map/stadium-map'), {
@@ -28,38 +29,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-// Language context
-type Language = 'nl' | 'en'
-interface LanguageContextType {
-  lang: Language
-  setLang: (lang: Language) => void
-  t: (nl: string, en: string) => string
-}
-
-export const LanguageContext = createContext<LanguageContextType>({
-  lang: 'nl',
-  setLang: () => {},
-  t: (nl) => nl,
-})
-
-export const useLanguage = () => useContext(LanguageContext)
-
-// Theme context
-type Theme = 'dark' | 'light'
-interface ThemeContextType {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-  toggleTheme: () => void
-}
-
-export const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  setTheme: () => {},
-  toggleTheme: () => {},
-})
-
-export const useTheme = () => useContext(ThemeContext)
 
 interface Stadium {
   id: string
@@ -89,11 +58,8 @@ interface Stadium {
 function FloodlightIcon({ isOn }: { isOn: boolean }) {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Pole */}
       <rect x="15" y="14" width="2" height="16" fill={isOn ? '#fbbf24' : '#64748b'} />
-      {/* Light housing */}
       <path d="M8 4 L24 4 L22 14 L10 14 Z" fill={isOn ? '#fbbf24' : '#64748b'} />
-      {/* Light beams when on */}
       {isOn && (
         <>
           <path d="M10 14 L4 24" stroke="#fbbf24" strokeWidth="2" opacity="0.6" />
@@ -151,7 +117,6 @@ export default function Home() {
           .eq('is_active', true)
 
         if (error) throw error
-
         setStadiums(data || [])
       } catch (err) {
         console.error('Error fetching stadiums:', err)
@@ -160,11 +125,9 @@ export default function Home() {
         setLoading(false)
       }
     }
-
     fetchStadiums()
   }, [])
 
-  // Apply theme to document
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light')
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -194,14 +157,12 @@ export default function Home() {
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
-          {/* Header */}
           <header className={`absolute top-0 left-0 right-0 z-[1000] p-4 ${
             theme === 'dark' 
               ? 'bg-gradient-to-b from-slate-900 to-transparent' 
               : 'bg-gradient-to-b from-white to-transparent'
           }`}>
             <div className="flex items-center justify-between max-w-7xl mx-auto">
-              {/* Logo & Title */}
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🏟️</span>
                 <div>
@@ -214,9 +175,7 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Controls */}
               <div className="flex items-center gap-2">
-                {/* Sparta Tribute Button */}
                 <button
                   onClick={() => setShowSpartaTribute(true)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
@@ -230,51 +189,4 @@ export default function Home() {
                   <span className="hidden sm:inline font-medium">Sparta</span>
                 </button>
 
-                {/* Language Toggle */}
                 <button
-                  onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')}
-                  className={`px-3 py-2 rounded-lg font-medium transition ${
-                    theme === 'dark'
-                      ? 'bg-slate-800 hover:bg-slate-700 text-white'
-                      : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'
-                  }`}
-                  title={t('Switch to English', 'Wissel naar Nederlands')}
-                >
-                  {lang === 'nl' ? '🇳🇱 NL' : '🇬🇧 EN'}
-                </button>
-
-                {/* Theme Toggle - Floodlight */}
-                <button
-                  onClick={toggleTheme}
-                  className={`p-2 rounded-lg transition ${
-                    theme === 'dark'
-                      ? 'bg-slate-800 hover:bg-slate-700'
-                      : 'bg-white hover:bg-slate-100 border border-slate-200'
-                  }`}
-                  title={t(
-                    theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten',
-                    theme === 'dark' ? 'Turn lights on' : 'Turn lights off'
-                  )}
-                >
-                  <FloodlightIcon isOn={theme === 'dark'} />
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Map */}
-          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
-
-          {/* Sparta Tribute Modal */}
-          {showSpartaTribute && (
-            <SpartaTribute 
-              onClose={() => setShowSpartaTribute(false)} 
-              theme={theme}
-              lang={lang}
-            />
-          )}
-        </main>
-      </LanguageContext.Provider>
-    </ThemeContext.Provider>
-  )
-}
