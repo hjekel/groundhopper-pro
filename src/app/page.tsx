@@ -94,7 +94,7 @@ export default function Home() {
           `)
           .eq('is_active', true)
         if (error) throw error
-        setStadiums(data || [])
+        setStadiums((data as any) || [])
       } catch (err) {
         console.error('Error fetching stadiums:', err)
         setError(err instanceof Error ? err.message : 'Failed to load stadiums')
