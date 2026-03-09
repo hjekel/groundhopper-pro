@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light mode body */
+html.light body {
+  @apply bg-slate-100 text-slate-900;
+}
+
+/* Dark mode body */
+html.dark body {
+  @apply bg-slate-900 text-white;
+}
+
+/* Custom scrollbar - Dark */
+html.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Custom scrollbar - Light */
+html.light ::-webkit-scrollbar {
+  width: 8px;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Leaflet map container */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+}
+
+/* Dark mode map */
+html.dark .leaflet-container {
+  background: #0f172a;
+}
+
+/* Light mode map */
+html.light .leaflet-container {
+  background: #f8fafc;
+}
+
+/* Dark mode popup */
+html.dark .leaflet-popup-content-wrapper {
+  background: #1e293b;
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+html.dark .leaflet-popup-tip {
+  background: #1e293b;
+}
+
+/* Light mode popup */
+html.light .leaflet-popup-content-wrapper {
+  background: white;
+  color: #1e293b;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+html.light .leaflet-popup-tip {
+  background: white;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+}
+
+/* Custom marker styles */
+.custom-stadium-marker {
+  background: transparent;
+  border: none;
+}
+
+/* Sparta special marker */
+.sparta-marker {
+  filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.5));
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Sparta colors */
+.sparta-red {
+  color: #D90000;
+}
+
+.sparta-bg {
+  background-color: #D90000;
+}
+
+/* Animation for Sparta tribute */
+@keyframes castle-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(217, 0, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(217, 0, 0, 0.8));
+  }
+}
+
+.castle-glow {
+  animation: castle-glow 2s ease-in-out infinite;
+}
+
+/* Prevent map from repeating */
+.leaflet-container {
+  max-width: 100%;
+}
