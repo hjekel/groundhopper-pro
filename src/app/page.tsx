@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@supabase/supabase-js'
 import { LanguageContext, ThemeContext, Language, Theme } from '@/lib/contexts'
 
-// Dynamic import for Leaflet (no SSR)
 const StadiumMap = dynamic(() => import('@/components/map/stadium-map'), {
   ssr: false,
   loading: () => (
@@ -19,12 +18,10 @@ const StadiumMap = dynamic(() => import('@/components/map/stadium-map'), {
   ),
 })
 
-// Dynamic import for Sparta Tribute
 const SpartaTribute = dynamic(() => import('@/components/sparta/sparta-tribute'), {
   ssr: false,
 })
 
-// Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -54,7 +51,6 @@ interface Stadium {
   } | null
 }
 
-// Floodlight icon component for theme toggle
 function FloodlightIcon({ isOn }: { isOn: boolean }) {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,9 +64,7 @@ function FloodlightIcon({ isOn }: { isOn: boolean }) {
           <circle cx="16" cy="9" r="3" fill="#fff" opacity="0.9" />
         </>
       )}
-      {!isOn && (
-        <circle cx="16" cy="9" r="3" fill="#334155" />
-      )}
+      {!isOn && <circle cx="16" cy="9" r="3" fill="#334155" />}
     </svg>
   )
 }
@@ -84,7 +78,7 @@ export default function Home() {
   const [showSpartaTribute, setShowSpartaTribute] = useState(false)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
-  const t = (nl: string, en: string) => lang === 'nl' ? nl : en
+  const t = (nl: string, en: string) => (lang === 'nl' ? nl : en)
 
   useEffect(() => {
     async function fetchStadiums() {
@@ -92,30 +86,13 @@ export default function Home() {
         const { data, error } = await supabase
           .from('stadiums')
           .select(`
-            id,
-            name,
-            latitude,
-            longitude,
-            capacity,
-            city,
-            address,
-            built_year,
-            image_url,
+            id, name, latitude, longitude, capacity, city, address, built_year, image_url,
             club:clubs (
-              id,
-              name,
-              short_name,
-              primary_color,
-              secondary_color,
-              crest_url,
-              current_league:leagues (
-                division,
-                name
-              )
+              id, name, short_name, primary_color, secondary_color, crest_url,
+              current_league:leagues ( division, name )
             )
           `)
           .eq('is_active', true)
-
         if (error) throw error
         setStadiums(data || [])
       } catch (err) {
@@ -142,10 +119,7 @@ export default function Home() {
             {t('Verbindingsfout', 'Connection Error')}
           </h2>
           <p className="text-slate-500">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-          >
+          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
             {t('Opnieuw proberen', 'Try Again')}
           </button>
         </div>
@@ -157,36 +131,33 @@ export default function Home() {
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
-          <header className={`absolute top-0 left-0 right-0 z-[1000] p-4 ${
-            theme === 'dark' 
-              ? 'bg-gradient-to-b from-slate-900 to-transparent' 
-              : 'bg-gradient-to-b from-white to-transparent'
-          }`}>
+          <header className={`absolute top-0 left-0 right-0 z-[1000] p-4 ${theme === 'dark' ? 'bg-gradient-to-b from-slate-900 to-transparent' : 'bg-gradient-to-b from-white to-transparent'}`}>
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🏟️</span>
                 <div>
-                  <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                    Groundhopper Pro
-                  </h1>
-                  <p className="text-slate-500 text-sm">
-                    {loading ? t('Laden...', 'Loading...') : `${stadiums.length} ${t('stadions', 'stadiums')}`}
-                  </p>
+                  <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
+                  <p className="text-slate-500 text-sm">{loading ? t('Laden...', 'Loading...') : `${stadiums.length} ${t('stadions', 'stadiums')}`}</p>
                 </div>
               </div>
-              
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowSpartaTribute(true)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
-                    theme === 'dark'
-                      ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800'
-                      : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'
-                  }`}
-                  title="Sparta Rotterdam Tribute"
-                >
+                <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
                   <span className="text-lg">🏰</span>
                   <span className="hidden sm:inline font-medium">Sparta</span>
                 </button>
-
-                <button
+                <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`px-3 py-2 rounded-lg font-medium transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
+                  {lang === 'nl' ? '🇳🇱 NL' : '🇬🇧 EN'}
+                </button>
+                <button onClick={toggleTheme} className={`p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
+                  <FloodlightIcon isOn={theme === 'dark'} />
+                </button>
+              </div>
+            </div>
+          </header>
+          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
+          {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
+        </main>
+      </LanguageContext.Provider>
+    </ThemeContext.Provider>
+  )
+}
