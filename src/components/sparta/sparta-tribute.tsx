@@ -12,13 +12,14 @@ interface SpartaTributeProps {
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
 const IMAGES = {
-  kasteel: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Het_Kasteel%2C_Rotterdam.jpg/960px-Het_Kasteel%2C_Rotterdam.jpg',
+  kasteelFacade: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Exterieur_OVERZICHT_CLUBGEBOUW_-_Rotterdam_-_20282971_-_RCE.jpg/960px-Exterieur_OVERZICHT_CLUBGEBOUW_-_Rotterdam_-_20282971_-_RCE.jpg',
+  kasteelStadion: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Het_Kasteel%2C_Rotterdam.jpg/960px-Het_Kasteel%2C_Rotterdam.jpg',
   badge: 'https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png',
   banner: 'https://r2.thesportsdb.com/images/media/team/banner/r3ujd51722780656.jpg',
   bokDeKorver: 'https://upload.wikimedia.org/wikipedia/commons/c/cd/BokdeKorver.jpg',
   vanEde: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tonny_van_Ede_%281962%29.jpg/330px-Tonny_van_Ede_%281962%29.jpg',
   terlouw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Rinus_Terlouw_%281951%29.jpg/330px-Rinus_Terlouw_%281951%29.jpg',
-  neville: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg/300px-Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg',
+  neville: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg/330px-Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg',
   vanTiggelen: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Adri_van_Tiggelen_%28cropped%29.jpg',
   advocaat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Dick_Advocaat_2021.jpg/500px-Dick_Advocaat_2021.jpg',
 };
@@ -87,16 +88,39 @@ const legends = [
   },
 ];
 
+// Verified squad via ESPN, Transfermarkt, Sparta-rotterdam.nl (2024-25 season)
+// Note: Sparta uses traditional 1-11 numbering per match — no fixed squad numbers
 const squad = [
-  { name: 'Joel Drommel', number: 1, position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q3r4li1646699927.jpg' },
-  { name: 'Filip Bednarek', number: 16, position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇵🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/ksus991696664818.jpg' },
-  { name: 'Bruno Martins Indi', number: 4, position: { nl: 'Verdediger', en: 'Centre-Back' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/2sx3a31509654666.jpg' },
-  { name: 'Jens Toornstra', number: 6, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w6cgvc1679239148.jpg' },
-  { name: 'Julian Baas', number: 8, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q1oahy1679406854.jpg' },
-  { name: 'Jonathan de Guzman', number: 20, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/kpr9mr1578087007.jpg' },
-  { name: 'Joshua Kitolano', number: 10, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇨🇩', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/7kyq9j1701437428.jpg' },
-  { name: 'Ayoni Santos', number: 14, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/75e2m61765730191.jpg' },
-  { name: 'Ayoub Oufkir', number: 7, position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w0ikoj1759697668.jpg' },
+  { name: 'Nick Olij', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: null, note: { nl: '1e keeper', en: '1st choice' } },
+  { name: 'Joel Drommel', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q3r4li1646699927.jpg' },
+  { name: 'Filip Bednarek', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇵🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/ksus991696664818.jpg' },
+  { name: 'Bruno Martins Indi', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/2sx3a31509654666.jpg' },
+  { name: 'Patrick van Aanholt', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: null, note: { nl: 'ex-Chelsea, Crystal Palace', en: 'ex-Chelsea, Crystal Palace' } },
+  { name: 'Boyd Reith', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: null },
+  { name: 'Mike Kleijn', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: null },
+  { name: 'Said Bakari', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇰🇲', photo: null },
+  { name: 'Jens Toornstra', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w6cgvc1679239148.jpg' },
+  { name: 'Julian Baas', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q1oahy1679406854.jpg' },
+  { name: 'Jonathan de Guzman', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/kpr9mr1578087007.jpg' },
+  { name: 'Joshua Kitolano', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇴', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/7kyq9j1701437428.jpg' },
+  { name: 'Pelle Clement', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: null },
+  { name: 'Carel Eiting', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: null, note: { nl: 'huur FC Twente', en: 'loan FC Twente' } },
+  { name: 'Ayoni Santos', position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/75e2m61765730191.jpg' },
+  { name: 'Tobias Lauritsen', position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇳🇴', photo: null, note: { nl: 'topscorer', en: 'top scorer' } },
+  { name: 'Shunsuke Mito', position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇯🇵', photo: null },
+  { name: 'Ayoub Oufkir', position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w0ikoj1759697668.jpg' },
+  { name: 'Mitchell van Bergen', position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇳🇱', photo: null, note: { nl: 'huur FC Twente', en: 'loan FC Twente' } },
+];
+
+// Verified notable ex-Sparta players via Wikipedia, Transfermarkt
+const exPlayers = [
+  { name: 'Pim Doesburg', years: '1962-1977', role: { nl: 'Keeper — 687 Eredivisie-wedstrijden (all-time record!)', en: 'GK — 687 Eredivisie apps (all-time record!)' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Pim_Doesburg_%28PSV%29.jpg/330px-Pim_Doesburg_%28PSV%29.jpg' },
+  { name: 'Ed de Goey', years: '1985-1990', role: { nl: 'Keeper — debuut bij Sparta → Chelsea, 31 interlands', en: 'GK — Sparta debut → Chelsea, 31 caps' }, photo: null },
+  { name: 'Winston Bogarde', years: '1991-1994', role: { nl: 'Verdediger — Ajax (CL \'95), Milan, Barcelona', en: 'Defender — Ajax (CL \'95), Milan, Barcelona' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Winston_bogarde-1507900545.jpg/330px-Winston_bogarde-1507900545.jpg' },
+  { name: 'John de Wolf', years: '1983-1985', role: { nl: 'Verdediger — Feyenoord-legende, later Sparta-trainer', en: 'Defender — Feyenoord legend, later Sparta manager' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Feyenoord_-_GAE_-_53334499213.jpg/330px-Feyenoord_-_GAE_-_53334499213.jpg' },
+  { name: 'Henk Fraser', years: '1984-1986', role: { nl: 'Verdediger — Feyenoord, WK \'90, later Sparta-coach', en: 'Defender — Feyenoord, WC \'90, later Sparta coach' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Henk_Fraser_coach.jpg' },
+  { name: 'Danny Koevermans', years: '2000-2005', role: { nl: 'Aanvaller — 71 goals in 110 wedstrijden!', en: 'Forward — 71 goals in 110 matches!' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Danny-Koevermans2.jpg/330px-Danny-Koevermans2.jpg' },
+  { name: 'Jetro Willems', years: 'Jeugd-2011', role: { nl: 'Verdediger — jongste EK-speler ooit (18 jr)', en: 'Defender — youngest ever Euro Champ player (18)' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/PSV_Eindhoven%2C_Teamcamp_Bad_Erlach%2C_July_2014_%28154%29_%28cropped%29.jpg/330px-PSV_Eindhoven%2C_Teamcamp_Bad_Erlach%2C_July_2014_%28154%29_%28cropped%29.jpg' },
 ];
 
 // Verified youth academy products via Transfermarkt, Wikipedia, NOS, Squawka
@@ -326,8 +350,10 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
           {activeTab === 'stadium' && (
             <div className="space-y-4">
               <div className="rounded-xl overflow-hidden">
-                <img src={IMAGES.kasteel} alt="Het Kasteel - Sparta Rotterdam" className="w-full h-52 object-cover" onError={(e) => {
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="w-full h-52 bg-red-900/20 flex items-center justify-center"><span class="text-6xl">🏰</span></div>';
+                <img src={IMAGES.kasteelFacade} alt="Het Kasteel - Sparta Rotterdam" className="w-full h-52 object-cover" onError={(e) => {
+                  const el = e.target as HTMLImageElement;
+                  el.src = IMAGES.kasteelStadion;
+                  el.onerror = () => { el.parentElement!.innerHTML = '<div class="w-full h-52 bg-red-900/20 flex items-center justify-center"><span class="text-6xl">🏰</span></div>'; };
                 }} />
               </div>
 
@@ -393,7 +419,7 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                 <div className="space-y-2">
                   {[
                     { name: 'Bok de Korver', nl: 'Familietribune — vernoemd naar de verdediger (363 wedstrijden)', en: 'Family stand — named after the defender (363 matches)' },
-                    { name: 'Tonny van Ede', nl: 'Vernoemd naar de keeper (455 wedstrijden, clubrecord)', en: 'Named after the goalkeeper (455 matches, club record)' },
+                    { name: 'Tonny van Ede', nl: 'Hoofdtribune — vernoemd naar "De Schicht" (455 wed., clubrecord)', en: 'Main stand — named after "The Flash" (455 apps, club record)' },
                     { name: 'Denis Neville', nl: 'De luidruchtigste tribune — vernoemd naar de kampioenentrainer', en: 'The noisiest stand — named after the championship manager' },
                   ].map((s, i) => (
                     <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg ${cardBg}`}>
@@ -413,53 +439,81 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
 
           {/* SQUAD TAB */}
           {activeTab === 'squad' && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-bold ${textPrimary}`}>{tr(lang, 'Selectie 2024-25', 'Squad 2024-25')}</h3>
-                <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'}`}>
-                  Eredivisie
-                </span>
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`font-bold ${textPrimary}`}>{tr(lang, 'Selectie 2024-25', 'Squad 2024-25')}</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'}`}>Eredivisie</span>
+                </div>
+                {(['Keeper', 'Verdediger', 'Middenvelder', 'Aanvaller'] as const).map(posGroup => {
+                  const posLabel = { nl: posGroup, en: posGroup === 'Keeper' ? 'Keepers' : posGroup === 'Verdediger' ? 'Defenders' : posGroup === 'Middenvelder' ? 'Midfielders' : 'Forwards' };
+                  const players = squad.filter(p => p.position.nl === posGroup);
+                  if (players.length === 0) return null;
+                  return (
+                    <div key={posGroup} className="mb-3">
+                      <h4 className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${textMuted}`}>{tr(lang, posLabel.nl, posLabel.en)}</h4>
+                      <div className="space-y-1">
+                        {players.map((player, i) => (
+                          <div key={i} className={`flex items-center gap-2.5 p-2 rounded-lg ${cardBg}`}>
+                            <div className="relative flex-shrink-0">
+                              {player.photo ? (
+                                <img src={player.photo} alt={player.name} className="w-8 h-8 rounded-full object-cover" onError={(e) => {
+                                  const el = e.target as HTMLImageElement;
+                                  el.style.display = 'none';
+                                  el.nextElementSibling!.classList.remove('hidden');
+                                }} />
+                              ) : null}
+                              <div className={`w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xs ${player.photo ? 'hidden' : ''}`}>
+                                {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={`font-medium text-sm ${textPrimary}`}>{player.name}</div>
+                              {player.note && <div className={`text-xs ${textMuted}`}>{tr(lang, player.note.nl, player.note.en)}</div>}
+                            </div>
+                            <span className="text-sm">{player.nationality}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {(['Keeper', 'Verdediger', 'Middenvelder', 'Aanvaller'] as const).map(posGroup => {
-                const posLabel = { nl: posGroup, en: posGroup === 'Keeper' ? 'Goalkeepers' : posGroup === 'Verdediger' ? 'Defenders' : posGroup === 'Middenvelder' ? 'Midfielders' : 'Forwards' };
-                const players = squad.filter(p => p.position.nl === posGroup);
-                if (players.length === 0) return null;
-                return (
-                  <div key={posGroup} className="mb-4">
-                    <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${textMuted}`}>
-                      {tr(lang, posLabel.nl, posLabel.en)}
-                    </h4>
-                    <div className="space-y-1.5">
-                      {players.map((player, i) => (
-                        <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg ${cardBg}`}>
-                          <div className="relative flex-shrink-0">
-                            {player.photo ? (
-                              <img src={player.photo} alt={player.name} className="w-10 h-10 rounded-full object-cover" onError={(e) => {
-                                const el = e.target as HTMLImageElement;
-                                el.style.display = 'none';
-                                el.nextElementSibling!.classList.remove('hidden');
-                              }} />
-                            ) : null}
-                            <div className={`w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-sm ${player.photo ? 'hidden' : ''}`}>
-                              {player.number || '?'}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className={`font-medium text-sm ${textPrimary}`}>{player.name}</div>
-                            <div className={`text-xs ${textMuted}`}>{tr(lang, player.position.nl, player.position.en)}</div>
-                          </div>
-                          <span className="text-sm mr-1">{player.nationality}</span>
-                          {player.number && <div className="text-red-500 font-bold text-lg w-8 text-center">{player.number}</div>}
+              {/* Notable Ex-Players */}
+              <div>
+                <h3 className={`font-bold mb-3 flex items-center gap-2 ${textPrimary}`}>
+                  <Trophy className="w-4 h-4 text-red-500" />
+                  {tr(lang, 'Markante ex-Spartanen', 'Notable ex-Spartans')}
+                </h3>
+                <div className="space-y-2">
+                  {exPlayers.map((player, i) => (
+                    <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg ${cardBg}`}>
+                      <div className="flex-shrink-0">
+                        {player.photo ? (
+                          <img src={player.photo} alt={player.name} className="w-10 h-10 rounded-full object-cover" onError={(e) => {
+                            const el = e.target as HTMLImageElement;
+                            el.style.display = 'none';
+                            el.nextElementSibling!.classList.remove('hidden');
+                          }} />
+                        ) : null}
+                        <div className={`w-10 h-10 rounded-full bg-red-800 text-white flex items-center justify-center font-bold text-xs ${player.photo ? 'hidden' : ''}`}>
+                          {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </div>
-                      ))}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium text-sm ${textPrimary}`}>{player.name}</div>
+                        <div className={`text-xs ${textMuted}`}>
+                          <span className="text-red-500 font-semibold">{player.years}</span> — {tr(lang, player.role.nl, player.role.en)}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
 
-              <p className={`text-xs mt-4 text-center ${textMuted}`}>
-                {tr(lang, 'Gegevens via TheSportsDB', 'Data via TheSportsDB')}
+              <p className={`text-xs text-center ${textMuted}`}>
+                {tr(lang, 'Bronnen: TheSportsDB, Transfermarkt, Wikipedia', 'Sources: TheSportsDB, Transfermarkt, Wikipedia')}
               </p>
             </div>
           )}
