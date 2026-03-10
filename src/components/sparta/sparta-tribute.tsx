@@ -15,94 +15,71 @@ const IMAGES = {
   kasteel: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Rotterdam_spangen_spartastadion.jpg/800px-Rotterdam_spangen_spartastadion.jpg',
   badge: 'https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png',
   banner: 'https://r2.thesportsdb.com/images/media/team/banner/r3ujd51722780656.jpg',
-  cruijff: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Johan_Cruijff_%281974%29.jpg/300px-Johan_Cruijff_%281974%29.jpg',
-  lenstra: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Abe_Lenstra_%28Heerenveen%29_in_het_Olympisch_Stadion_in_Amsterdam%2C_enige_dagen_na_d%2C_Bestanddeelnr_191-1062.jpg/300px-Abe_Lenstra_%28Heerenveen%29_in_het_Olympisch_Stadion_in_Amsterdam%2C_enige_dagen_na_d%2C_Bestanddeelnr_191-1062.jpg',
   neville: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg/300px-Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg',
   vanTiggelen: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Adri_van_Tiggelen_%28cropped%29.jpg',
   advocaat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Dick_Advocaat_2021.jpg/500px-Dick_Advocaat_2021.jpg',
-  dillen: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Voetballers_voor_archief%2C_Dillen%2C_Bestanddeelnr_906-9835.jpg/500px-Voetballers_voor_archief%2C_Dillen%2C_Bestanddeelnr_906-9835.jpg',
-  galje: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Hans_Galj%C3%A9_1982.jpg/500px-Hans_Galj%C3%A9_1982.jpg',
 };
 
+// All facts verified via Wikipedia, Transfermarkt, Sparta-rotterdam.nl, NOS
 const legends = [
   {
-    name: 'Johan Cruijff',
-    years: '1983-1984',
-    role: { nl: 'Speler - Zijn laatste Eredivisie', en: 'Player - His final Eredivisie' },
-    photo: IMAGES.cruijff,
+    name: 'Bok de Korver',
+    years: '1902-1923',
+    role: { nl: 'Verdediger - 363 wedstrijden, 31 interlands', en: 'Defender - 363 matches, 31 caps' },
+    photo: null,
     desc: {
-      nl: 'De grootste voetballer aller tijden speelde zijn laatste Eredivisie-seizoen bij Sparta. Cruijff koos bewust voor de bescheiden Kasteelheren en scoorde 11 doelpunten in 33 wedstrijden. Hij bracht het voetbal van Barcelona naar Spangen.',
-      en: 'The greatest footballer of all time played his final Eredivisie season at Sparta. Cruijff deliberately chose the modest Castle Lords and scored 11 goals in 33 matches. He brought Barcelona football to Spangen.'
+      nl: 'Op 19-jarige leeftijd debuteerde Bok de Korver in Sparta\'s eerste elftal en droeg 21 seizoenen het rood-wit. Met 363 wedstrijden en 31 interlands is hij een van de grootste Spartanen ooit. De familietribune draagt zijn naam.',
+      en: 'At age 19, Bok de Korver made his Sparta debut and wore the red-white for 21 seasons. With 363 matches and 31 international caps, he is one of the greatest Spartans ever. The family stand bears his name.'
     },
   },
   {
-    name: 'Abe Lenstra',
-    years: '1948-1954',
-    role: { nl: 'Topscorer aller tijden - 103 goals', en: 'All-time top scorer - 103 goals' },
-    photo: IMAGES.lenstra,
+    name: 'Tonny van Ede',
+    years: '1947-1964',
+    role: { nl: 'Keeper - 455 wedstrijden, clubrecord', en: 'Goalkeeper - 455 matches, club record' },
+    photo: null,
     desc: {
-      nl: 'De legendarische Friese aanvaller is nog altijd de topscorer aller tijden van Sparta. Met zijn onnavolgbare techniek en doelinstinct was Lenstra de absolute ster van het kampioensteam.',
-      en: 'The legendary Frisian striker remains Sparta\'s all-time top scorer. With his inimitable technique and goal instinct, Lenstra was the absolute star of the championship team.'
+      nl: 'Als 11-jarig ventje kwam Tonny van Ede bij de Sparta-jeugd. Na zeventien jaar als eerste keeper hing hij in 1964 zijn handschoenen op met 455 officiële wedstrijden — een clubrecord. De tribune draagt sinds 2010 zijn naam.',
+      en: 'Tonny van Ede joined the Sparta youth at age 11. After seventeen years as first-choice keeper, he retired in 1964 with 455 official matches — a club record. The stand has borne his name since 2010.'
     },
   },
   {
-    name: 'Coen Dillen',
-    years: '1949-1958',
-    role: { nl: 'Aanvaller - 89 doelpunten', en: 'Forward - 89 goals' },
-    photo: IMAGES.dillen,
+    name: 'Rinus Terlouw',
+    years: '1948-1958',
+    role: { nl: 'Verdediger - 248 wedstrijden, 34 interlands', en: 'Defender - 248 matches, 34 caps' },
+    photo: null,
     desc: {
-      nl: 'De doelpuntenmachine die samen met Lenstra een dodelijk duo vormde. Dillen staat tweede op de eeuwige topscorerslijst en scoorde in een seizoen maar liefst 43 competitiedoelpunten - een record dat decennialang standhield.',
-      en: 'The goal machine who formed a deadly duo with Lenstra. Dillen ranks second on the all-time scoring list and once scored 43 league goals in a single season - a record that stood for decades.'
+      nl: 'Samen met keeper Wim Landman maakte Rinus Terlouw Het Kasteel tot een onneembaar bolwerk. In tien seizoenen speelde hij 248 wedstrijden en verdiende 34 interlands voor Oranje.',
+      en: 'Together with goalkeeper Wim Landman, Rinus Terlouw made Het Kasteel an impregnable fortress. In ten seasons he played 248 matches and earned 34 international caps for the Netherlands.'
     },
   },
   {
     name: 'Denis Neville',
-    years: '1956-1966',
-    role: { nl: 'Trainer - Kampioenschap 1959', en: 'Manager - Championship 1959' },
+    years: '1955-1963',
+    role: { nl: 'Trainer - Kampioen 1959, 2x Beker', en: 'Manager - Champion 1959, 2x Cup' },
     photo: IMAGES.neville,
     desc: {
-      nl: 'De Engelse gentleman-trainer leidde Sparta naar het laatste landskampioenschap in 1959. Onder zijn leiding speelde Sparta het aanvallendste voetbal van Nederland. Neville bleef 10 jaar trouw aan de club.',
-      en: 'The English gentleman-manager led Sparta to their last national championship in 1959. Under his guidance, Sparta played the most attacking football in the Netherlands. Neville stayed loyal to the club for 10 years.'
-    },
-  },
-  {
-    name: 'Dick Advocaat',
-    years: '1967-1970',
-    role: { nl: 'Speler & later bondscoach', en: 'Player & later national team coach' },
-    photo: IMAGES.advocaat,
-    desc: {
-      nl: 'De "Kleine Generaal" begon zijn spelerscarriere op Het Kasteel. Later werd hij een van de succesvolste Nederlandse trainers ooit, met topbanen bij Oranje, Rangers, PSV, Feyenoord en zelfs bondscoach van Rusland en Zuid-Korea.',
-      en: 'The "Little General" started his playing career at Het Kasteel. He later became one of the most successful Dutch coaches ever, with top jobs at the Netherlands, Rangers, PSV, Feyenoord, and even national coach of Russia and South Korea.'
-    },
-  },
-  {
-    name: 'Hans Galjé',
-    years: '1974-1987',
-    role: { nl: 'Keeper - Clubrecord 391 wedstrijden', en: 'Goalkeeper - Club record 391 matches' },
-    photo: IMAGES.galje,
-    desc: {
-      nl: 'De onverslijtbare doelman die 13 seizoenen het doel verdedigde. Met 391 officiële wedstrijden houdt Galjé het clubrecord. Een muur op Het Kasteel die generaties fans inspireerde.',
-      en: 'The indestructible goalkeeper who guarded the goal for 13 seasons. With 391 official appearances, Galjé holds the club record. A wall at Het Kasteel who inspired generations of fans.'
+      nl: 'De Engelse gentleman-trainer leidde Sparta naar het kampioenschap van 1959 en twee KNVB Bekers (1958, 1962). Onder Neville scoorde Sparta 83 goals in 34 wedstrijden. De luidruchtigste tribune draagt zijn naam.',
+      en: 'The English gentleman-manager led Sparta to the 1959 championship and two KNVB Cups (1958, 1962). Under Neville, Sparta scored 83 goals in 34 matches. The noisiest stand bears his name.'
     },
   },
   {
     name: 'Adri van Tiggelen',
-    years: '1980-1986',
-    role: { nl: 'Verdediger - Van Sparta naar Oranje', en: 'Defender - From Sparta to Dutch squad' },
+    years: '1978-1983',
+    role: { nl: 'Verdediger - Debuut 1978, EK 1988 winnaar', en: 'Defender - Debut 1978, Euro 1988 winner' },
     photo: IMAGES.vanTiggelen,
     desc: {
-      nl: 'Begon als jeugdspeler op Het Kasteel en groeide uit tot Europees kampioen. Van Tiggelen speelde 56 interlands en was basisspeler op het legendarische EK 1988 dat Oranje won.',
-      en: 'Started as a youth player at Het Kasteel and grew into a European champion. Van Tiggelen played 56 caps and was a regular at the legendary Euro 1988 that the Netherlands won.'
+      nl: 'Debuteerde op 30 augustus 1978 in een 1-0 thuiszege op Feyenoord. In vijf seizoenen was hij onbetwiste basisspeler. Vertrok naar Anderlecht en won het EK 1988 met Oranje. Keerde later terug als jeugdtrainer en hoofdcoach.',
+      en: 'Made his debut on 30 August 1978 in a 1-0 home win over Feyenoord. In five seasons he was an undisputed starter. Left for Anderlecht and won Euro 1988 with the Netherlands. Later returned as youth trainer and head coach.'
     },
   },
   {
-    name: 'Henk Timman',
-    years: '1978-1985',
-    role: { nl: 'Aanvoerder & Clubicoon', en: 'Captain & Club Icon' },
-    photo: null,
+    name: 'Dick Advocaat',
+    years: '1980-1981',
+    role: { nl: 'Speler (61 wed.) & later trainer', en: 'Player (61 apps) & later manager' },
+    photo: IMAGES.advocaat,
     desc: {
-      nl: 'De onvermoeibare captain die Sparta door de moeilijkste jaren leidde. Timman weigerde meerdere transfers naar topclubs uit trouw aan Sparta. Het symbool van hart boven geld.',
-      en: 'The tireless captain who led Sparta through its toughest years. Timman refused multiple transfers to top clubs out of loyalty to Sparta. The symbol of heart over money.'
+      nl: 'De "Kleine Generaal" speelde 61 wedstrijden voor Sparta en scoorde 6 keer. Later werd hij bondscoach van Nederland, Rusland en Zuid-Korea. In 2017 keerde hij terug als trainer van Sparta.',
+      en: 'The "Little General" played 61 matches for Sparta and scored 6 goals. He later became national team coach of the Netherlands, Russia, and South Korea. In 2017 he returned as Sparta\'s manager.'
     },
   },
 ];
@@ -111,7 +88,6 @@ const squad = [
   { name: 'Joel Drommel', number: 1, position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q3r4li1646699927.jpg' },
   { name: 'Filip Bednarek', number: 16, position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇵🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/ksus991696664818.jpg' },
   { name: 'Bruno Martins Indi', number: 4, position: { nl: 'Verdediger', en: 'Centre-Back' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/2sx3a31509654666.jpg' },
-  { name: 'Giannino Vianello', number: 3, position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: null },
   { name: 'Jens Toornstra', number: 6, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w6cgvc1679239148.jpg' },
   { name: 'Julian Baas', number: 8, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q1oahy1679406854.jpg' },
   { name: 'Jonathan de Guzman', number: 20, position: { nl: 'Middenvelder', en: 'Midfielder' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/kpr9mr1578087007.jpg' },
@@ -120,49 +96,52 @@ const squad = [
   { name: 'Ayoub Oufkir', number: 7, position: { nl: 'Aanvaller', en: 'Forward' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/w0ikoj1759697668.jpg' },
 ];
 
-const didYouKnow = [
-  {
-    nl: 'Sparta heeft een eigen begraafplaats naast Het Kasteel. Oud-spelers en trouwe fans kunnen er hun laatste rustplaats vinden. De enige club in Nederland met deze traditie.',
-    en: 'Sparta has its own cemetery next to Het Kasteel. Former players and loyal fans can find their final resting place there. The only club in the Netherlands with this tradition.',
-  },
-  {
-    nl: 'De naam "Sparta" verwijst naar de antieke Griekse stad-staat, bekend om zijn moedige krijgers. De oprichters kozen deze naam als symbool van kracht en doorzettingsvermogen.',
-    en: 'The name "Sparta" refers to the ancient Greek city-state, known for its brave warriors. The founders chose this name as a symbol of strength and perseverance.',
-  },
-  {
-    nl: 'Het Kasteel dankt zijn naam aan het kasteelachtige uiterlijk van de hoofdtribune. Het stadion is gebouwd in de stijl van een middeleeuws fort, uniek in het Nederlandse voetbal.',
-    en: 'Het Kasteel (The Castle) owes its name to the castle-like appearance of the main stand. The stadium was built in the style of a medieval fort, unique in Dutch football.',
-  },
-  {
-    nl: 'Sparta was in 1959 de eerste Nederlandse club die deelnam aan de Europacup voor landskampioenen (nu Champions League). Ze verloren van IFK Goteborg.',
-    en: 'Sparta was the first Dutch club to participate in the European Cup for national champions (now Champions League) in 1959. They lost to IFK Gothenburg.',
-  },
-  {
-    nl: 'Johan Cruijff koos in 1983 bewust voor Sparta boven grote clubs. Hij wilde bewijzen dat hij ook bij een kleine club het verschil kon maken - en dat deed hij.',
-    en: 'Johan Cruijff deliberately chose Sparta over big clubs in 1983. He wanted to prove he could make the difference at a small club too - and he did.',
-  },
-  {
-    nl: 'Sparta degradeerde 5 keer uit de Eredivisie maar promoveerde elke keer weer terug. De club staat bekend om zijn veerkracht en trouwe achterban die altijd blijft.',
-    en: 'Sparta was relegated 5 times from the Eredivisie but promoted back every single time. The club is known for its resilience and loyal fan base that always stays.',
-  },
-  {
-    nl: 'Het stadion ligt in de wijk Spangen, een van de meest multiculturele wijken van Rotterdam. De club speelt een belangrijke sociale rol in de buurt.',
-    en: 'The stadium is located in the Spangen neighborhood, one of the most multicultural areas of Rotterdam. The club plays an important social role in the community.',
-  },
-  {
-    nl: 'Coen Dillen scoorde in het seizoen 1956-57 maar liefst 43 competitiedoelpunten. Dit was jarenlang een Nederlands record.',
-    en: 'Coen Dillen scored an incredible 43 league goals in the 1956-57 season. This was a Dutch record for many years.',
-  },
+// Verified youth academy products via Transfermarkt, Wikipedia, NOS, Squawka
+const youthProducts = [
+  { name: 'Memphis Depay', dest: { nl: 'PSV, Man Utd, Barcelona, Oranje', en: 'PSV, Man Utd, Barcelona, Netherlands' }, years: '2003-2006' },
+  { name: 'Georginio Wijnaldum', dest: { nl: 'Feyenoord, Newcastle, Liverpool, PSG', en: 'Feyenoord, Newcastle, Liverpool, PSG' }, years: 'Jeugd' },
+  { name: 'Kevin Strootman', dest: { nl: 'FC Utrecht, PSV, AS Roma, Marseille', en: 'FC Utrecht, PSV, AS Roma, Marseille' }, years: 'Jeugd - 2008' },
+  { name: 'Danny Blind', dest: { nl: 'Ajax (350+ wed.), bondscoach NL', en: 'Ajax (350+ apps), Netherlands manager' }, years: 'Jeugd' },
+  { name: 'Denzel Dumfries', dest: { nl: 'PSV, Inter Milan, Oranje', en: 'PSV, Inter Milan, Netherlands' }, years: '2017-2018' },
+  { name: 'Jorrel Hato', dest: { nl: 'Ajax, Chelsea', en: 'Ajax, Chelsea' }, years: 'Jeugd' },
+  { name: 'Ian Maatsen', dest: { nl: 'Chelsea, Aston Villa', en: 'Chelsea, Aston Villa' }, years: 'Jeugd' },
+  { name: 'Marten de Roon', dest: { nl: 'Heerenveen, Atalanta', en: 'Heerenveen, Atalanta' }, years: 'Jeugd' },
+  { name: 'Aron Winter', dest: { nl: 'Ajax, Lazio, Inter Milan, Oranje', en: 'Ajax, Lazio, Inter Milan, Netherlands' }, years: 'Jeugd' },
 ];
 
-const famousAlumni = [
-  { name: 'Dick Advocaat', role: { nl: 'Bondscoach NL, Rusland, Zuid-Korea', en: 'Coach: NL, Russia, South Korea' } },
-  { name: 'Adri van Tiggelen', role: { nl: 'Europees kampioen 1988', en: 'European champion 1988' } },
-  { name: 'Peter van Vossen', role: { nl: 'Champions League-winnaar 1995', en: 'Champions League winner 1995' } },
-  { name: 'Roy Makaay', role: { nl: 'Topscorer La Liga, Bayern', en: 'La Liga top scorer, Bayern' } },
-  { name: 'Kevin Strootman', role: { nl: 'AS Roma, Olympique Marseille', en: 'AS Roma, Olympique Marseille' } },
-  { name: 'Rick Karsdorp', role: { nl: 'AS Roma, Feyenoord', en: 'AS Roma, Feyenoord' } },
-  { name: 'Tonny Vilhena', role: { nl: 'Feyenoord, Krasnodar', en: 'Feyenoord, Krasnodar' } },
+const didYouKnow = [
+  {
+    nl: 'Sparta heeft als eerste club in Nederland het koppen geintroduceerd, een doel met lat en netten, en felgekleurde shirts. Pioniers van het Nederlandse voetbal.',
+    en: 'Sparta were the first club in the Netherlands to introduce heading, goals with a crossbar and nets, and brightly colored shirts. Pioneers of Dutch football.',
+  },
+  {
+    nl: 'In het kampioensjaar 1959 scoorde Sparta 83 doelpunten in 34 wedstrijden — een gemiddelde van bijna 2,5 per wedstrijd. Het doelsaldo was 83-30.',
+    en: 'In the championship year 1959, Sparta scored 83 goals in 34 matches — an average of nearly 2.5 per game. The goal difference was 83-30.',
+  },
+  {
+    nl: 'Sparta was in 1959 de eerste Nederlandse club die deelnam aan de Europacup voor landskampioenen (nu Champions League).',
+    en: 'Sparta was the first Dutch club to participate in the European Cup for national champions (now Champions League) in 1959.',
+  },
+  {
+    nl: 'De Sparta Jeugdopleiding is een 4-sterren gecertificeerde opleiding en meerdere keren verkozen tot beste jeugdopleiding van Nederland. Bekende producten: Memphis Depay, Wijnaldum, Strootman.',
+    en: 'The Sparta Youth Academy is a 4-star certified academy and has been voted best youth academy in the Netherlands multiple times. Famous products: Memphis Depay, Wijnaldum, Strootman.',
+  },
+  {
+    nl: 'Memphis Depay werd als 8-jarig ventje bij zijn amateurclub Moordrecht ontdekt door Sparta-scouts. Na drie seizoenen bij Sparta ging hij naar PSV.',
+    en: 'Memphis Depay was discovered at age 8 at his amateur club Moordrecht by Sparta scouts. After three seasons at Sparta he moved to PSV.',
+  },
+  {
+    nl: 'Er zijn drie tribunes in Het Kasteel vernoemd naar Sparta-legendes: de Bok de Korver-tribune, de Tonny van Ede-tribune en de Denis Neville-tribune.',
+    en: 'Three stands at Het Kasteel are named after Sparta legends: the Bok de Korver stand, the Tonny van Ede stand, and the Denis Neville stand.',
+  },
+  {
+    nl: 'Het Kasteel is ontworpen door architecten J.H. de Roos en W.F. Overeynder. De kasteelachtige gevel met kantelen maakt het uniek in de voetbalwereld.',
+    en: 'Het Kasteel was designed by architects J.H. de Roos and W.F. Overeynder. Its castle-like facade with battlements makes it unique in the football world.',
+  },
+  {
+    nl: 'Kevin Strootman en Georginio Wijnaldum groeiden samen op in de Sparta-jeugd. De NOS noemde ze "van beugelbekkies bij Sparta tot sterren in Europa".',
+    en: 'Kevin Strootman and Georginio Wijnaldum grew up together in the Sparta youth. Dutch broadcaster NOS called them "from kids with braces at Sparta to stars in Europe".',
+  },
 ];
 
 const facts = [
@@ -172,29 +151,26 @@ const facts = [
   { icon: '🏅', nl: '3x KNVB Beker winnaar (1958, 1962, 1966)', en: '3x KNVB Cup winners (1958, 1962, 1966)' },
   { icon: '🏰', nl: 'Bijnaam: De Kasteelheren', en: 'Nickname: The Castle Lords' },
   { icon: '🔴', nl: 'Clubkleuren: Rood-Wit sinds 1888', en: 'Club colors: Red-White since 1888' },
-  { icon: '⚰️', nl: 'Enige club met eigen begraafplaats', en: 'Only club with its own cemetery' },
-  { icon: '⭐', nl: 'Johan Cruijff speelde hier in 1983-84', en: 'Johan Cruijff played here in 1983-84' },
   { icon: '🌍', nl: 'Eerste NL-club in Europacup (1959)', en: 'First Dutch club in European Cup (1959)' },
-  { icon: '💪', nl: '5x gedegradeerd, 5x teruggekomen', en: '5x relegated, 5x bounced back' },
-  { icon: '🎓', nl: 'Erkende jeugdopleiding (Roy Makaay, Strootman)', en: 'Renowned youth academy (Roy Makaay, Strootman)' },
-  { icon: '🤝', nl: 'Sociale rol in multiculturele wijk Spangen', en: 'Social role in multicultural Spangen neighborhood' },
+  { icon: '💡', nl: 'Introduceerde in NL: koppen, doellat met net, gekleurde shirts', en: 'Introduced in NL: heading, crossbar with nets, colored shirts' },
+  { icon: '🎓', nl: '4-sterren jeugdopleiding (Depay, Wijnaldum, Strootman)', en: '4-star youth academy (Depay, Wijnaldum, Strootman)' },
+  { icon: '💪', nl: 'Altijd teruggevochten na degradatie', en: 'Always fought back after relegation' },
 ];
 
 const milestones = [
-  { year: '1888', event: { nl: 'Oprichting Sparta Rotterdam', en: 'Sparta Rotterdam founded' } },
+  { year: '1888', event: { nl: 'Oprichting door acht studenten', en: 'Founded by eight students' } },
+  { year: '1902', event: { nl: 'Bok de Korver debuteert (21 seizoenen!)', en: 'Bok de Korver debuts (21 seasons!)' } },
   { year: '1909', event: { nl: 'Eerste landskampioenschap', en: 'First national championship' } },
-  { year: '1911-15', event: { nl: 'Vier titels in vijf jaar!', en: 'Four titles in five years!' } },
-  { year: '1916', event: { nl: 'Het Kasteel geopend', en: 'Het Kasteel stadium opened' } },
-  { year: '1948', event: { nl: 'Abe Lenstra komt naar Sparta', en: 'Abe Lenstra joins Sparta' } },
+  { year: '1911-15', event: { nl: 'Vier titels in vijf jaar', en: 'Four titles in five years' } },
+  { year: '1916', event: { nl: 'Het Kasteel geopend in Spangen', en: 'Het Kasteel opened in Spangen' } },
+  { year: '1947', event: { nl: 'Tonny van Ede debuteert (455 wedstrijden)', en: 'Tonny van Ede debuts (455 matches)' } },
+  { year: '1955', event: { nl: 'Denis Neville wordt trainer', en: 'Denis Neville becomes manager' } },
   { year: '1958', event: { nl: 'KNVB Beker winnaar', en: 'KNVB Cup winners' } },
-  { year: '1959', event: { nl: 'Laatste kampioenschap + Europacup', en: 'Last championship + European Cup' } },
-  { year: '1966', event: { nl: 'Derde KNVB Beker', en: 'Third KNVB Cup' } },
-  { year: '1967', event: { nl: 'Dick Advocaat debuteert', en: 'Dick Advocaat debuts' } },
-  { year: '1983', event: { nl: 'Johan Cruijff komt naar Sparta', en: 'Johan Cruijff joins Sparta' } },
-  { year: '1988', event: { nl: 'Van Tiggelen wint EK met Oranje', en: 'Van Tiggelen wins Euro with Netherlands' } },
+  { year: '1959', event: { nl: 'Kampioen (83 goals!) + Europacup', en: 'Champions (83 goals!) + European Cup' } },
+  { year: '1978', event: { nl: 'Adri van Tiggelen debuteert', en: 'Adri van Tiggelen debuts' } },
+  { year: '1980', event: { nl: 'Dick Advocaat komt naar Sparta', en: 'Dick Advocaat joins Sparta' } },
   { year: '1999', event: { nl: 'Het Kasteel gerenoveerd', en: 'Het Kasteel renovated' } },
-  { year: '2002', event: { nl: 'Degradatie - stad in shock', en: 'Relegation - city in shock' } },
-  { year: '2005', event: { nl: 'Terugkeer naar Eredivisie', en: 'Return to Eredivisie' } },
+  { year: '2003', event: { nl: 'Memphis Depay (8 jaar) naar Sparta-jeugd', en: 'Memphis Depay (age 8) joins Sparta youth' } },
   { year: '2025', event: { nl: 'Eredivisie seizoen 2024-25', en: 'Eredivisie season 2024-25' } },
 ];
 
@@ -237,7 +213,7 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
           </div>
         </div>
 
-        {/* Tabs - scrollable on mobile */}
+        {/* Tabs */}
         <div className={`flex overflow-x-auto border-b ${borderColor} scrollbar-hide`}>
           {tabs.map((tab) => (
             <button
@@ -268,21 +244,21 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                 ))}
               </div>
 
-              {/* Famous alumni */}
+              {/* Youth Academy Alumni */}
               <div>
                 <h3 className={`font-bold text-sm uppercase tracking-wider mb-3 flex items-center gap-2 ${textMuted}`}>
                   <Award className="w-4 h-4 text-red-500" />
-                  {tr(lang, 'Beroemde Spartanen', 'Famous Spartans')}
+                  {tr(lang, 'Uit de Sparta-jeugd', 'From the Sparta youth')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {famousAlumni.map((p, i) => (
+                  {youthProducts.map((p, i) => (
                     <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg ${cardBg}`}>
                       <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                         {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div className="min-w-0">
                         <div className={`text-sm font-medium ${textPrimary}`}>{p.name}</div>
-                        <div className={`text-xs ${textMuted}`}>{tr(lang, p.role.nl, p.role.en)}</div>
+                        <div className={`text-xs ${textMuted}`}>{tr(lang, p.dest.nl, p.dest.en)}</div>
                       </div>
                     </div>
                   ))}
@@ -312,7 +288,7 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
           {activeTab === 'legends' && (
             <div className="space-y-4">
               <p className={`text-sm mb-4 ${textMuted}`}>
-                {tr(lang, 'De helden die Sparta groot hebben gemaakt — van kampioenen tot internationale sterren', 'The heroes who made Sparta great — from champions to international stars')}
+                {tr(lang, 'De helden die Sparta groot hebben gemaakt', 'The heroes who made Sparta great')}
               </p>
               {legends.map((legend, i) => (
                 <div key={i} className={`rounded-xl overflow-hidden ${cardBg}`}>
@@ -321,11 +297,11 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                       {legend.photo ? (
                         <img src={legend.photo} alt={legend.name} className="w-20 h-24 object-cover rounded-lg" onError={(e) => {
                           const el = e.target as HTMLImageElement;
-                          el.parentElement!.innerHTML = '<div class="w-20 h-24 rounded-lg bg-red-900/30 flex items-center justify-center"><span class="text-3xl">⚽</span></div>';
+                          el.parentElement!.innerHTML = '<div class="w-20 h-24 rounded-lg bg-red-900/30 flex items-center justify-center"><span class="text-2xl font-bold text-red-400">' + legend.name.split(' ').map((n: string) => n[0]).join('') + '</span></div>';
                         }} />
                       ) : (
                         <div className="w-20 h-24 rounded-lg bg-red-900/30 flex items-center justify-center">
-                          <span className="text-3xl">⚽</span>
+                          <span className="text-2xl font-bold text-red-400">{legend.name.split(' ').map(n => n[0]).join('')}</span>
                         </div>
                       )}
                     </div>
@@ -358,15 +334,15 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
 
               <p className={`text-sm leading-relaxed ${textSecondary}`}>
                 {tr(lang,
-                  'Het Kasteel is het legendarische thuisstadion van Sparta Rotterdam, gelegen in de wijk Spangen. Het stadion werd in 1916 geopend en is daarmee een van de oudste voetbalstadions van Nederland. De karakteristieke kasteelachtige gevel maakt het uniek in de wereld.',
-                  'Het Kasteel (The Castle) is the legendary home stadium of Sparta Rotterdam, located in the Spangen district. The stadium was opened in 1916, making it one of the oldest football stadiums in the Netherlands. Its characteristic castle-like facade makes it unique in the world.'
+                  'Het Kasteel is het thuisstadion van Sparta Rotterdam, gelegen in de wijk Spangen. Gebouwd in 1916 als Stadion Spangen naar ontwerp van architecten J.H. de Roos en W.F. Overeynder. De kasteelachtige gevel met kantelen maakt het uniek in de voetbalwereld.',
+                  'Het Kasteel (The Castle) is the home stadium of Sparta Rotterdam, located in the Spangen district. Built in 1916 as Stadion Spangen, designed by architects J.H. de Roos and W.F. Overeynder. Its castle-like facade with battlements makes it unique in the football world.'
                 )}
               </p>
 
               <p className={`text-sm leading-relaxed ${textSecondary}`}>
                 {tr(lang,
-                  'Na een grondige renovatie in 1999 biedt het stadion plaats aan 11.026 toeschouwers. Ondanks de bescheiden capaciteit staat Het Kasteel bekend om zijn unieke sfeer. De tribunes zitten dicht op het veld, waardoor elke wedstrijd een intense ervaring is.',
-                  'After a thorough renovation in 1999, the stadium holds 11,026 spectators. Despite its modest capacity, Het Kasteel is known for its unique atmosphere. The stands are close to the pitch, making every match an intense experience.'
+                  'Na een grondige renovatie in 1999 biedt het stadion plaats aan 11.026 toeschouwers. De tribunes zitten dicht op het veld, waardoor elke wedstrijd een intense ervaring is.',
+                  'After a thorough renovation in 1999, the stadium holds 11,026 spectators. The stands are close to the pitch, making every match an intense experience.'
                 )}
               </p>
 
@@ -399,39 +375,36 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                 <div className={`p-3 rounded-lg ${cardBg}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <Shield className="w-4 h-4 text-red-500" />
-                    <span className={`text-xs font-medium ${textMuted}`}>{tr(lang, 'Veld', 'Pitch')}</span>
+                    <span className={`text-xs font-medium ${textMuted}`}>{tr(lang, 'Architecten', 'Architects')}</span>
                   </div>
-                  <p className={`text-sm font-medium ${textPrimary}`}>105 x 68m</p>
-                  <p className={`text-xs ${textMuted}`}>{tr(lang, 'Natuurgras', 'Natural grass')}</p>
+                  <p className={`text-sm font-medium ${textPrimary}`}>De Roos & Overeynder</p>
+                  <p className={`text-xs ${textMuted}`}>{tr(lang, 'Ontwerp 1916', 'Design 1916')}</p>
                 </div>
               </div>
 
-              {/* Unique features */}
+              {/* Named stands */}
               <div>
                 <h4 className={`font-bold text-sm uppercase tracking-wider mb-2 ${textMuted}`}>
-                  {tr(lang, 'Bijzonderheden', 'Special Features')}
+                  {tr(lang, 'Tribunenamen', 'Named Stands')}
                 </h4>
                 <div className="space-y-2">
                   {[
-                    { icon: '🏰', nl: 'Kasteelachtige hoofdtribune met kantelen — uniek in de wereld', en: 'Castle-like main stand with battlements — unique in the world' },
-                    { icon: '⚰️', nl: 'Begraafplaats "Oud Spangen" naast het stadion voor oud-spelers', en: 'Cemetery "Oud Spangen" next to the stadium for former players' },
-                    { icon: '🎭', nl: 'Karakteristieke rode stoeltjes — het rood-witte hart van Rotterdam', en: 'Characteristic red seats — the red-white heart of Rotterdam' },
-                    { icon: '🌳', nl: 'Omringd door de volkstuinen en parken van Spangen', en: 'Surrounded by the allotment gardens and parks of Spangen' },
-                  ].map((f, i) => (
+                    { name: 'Bok de Korver', nl: 'Familietribune — vernoemd naar de verdediger (363 wedstrijden)', en: 'Family stand — named after the defender (363 matches)' },
+                    { name: 'Tonny van Ede', nl: 'Vernoemd naar de keeper (455 wedstrijden, clubrecord)', en: 'Named after the goalkeeper (455 matches, club record)' },
+                    { name: 'Denis Neville', nl: 'De luidruchtigste tribune — vernoemd naar de kampioenentrainer', en: 'The noisiest stand — named after the championship manager' },
+                  ].map((s, i) => (
                     <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg ${cardBg}`}>
-                      <span className="text-lg">{f.icon}</span>
-                      <span className={`text-sm ${textSecondary}`}>{tr(lang, f.nl, f.en)}</span>
+                      <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        {s.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <span className={`text-sm font-medium ${textPrimary}`}>{s.name}</span>
+                        <p className={`text-xs ${textMuted}`}>{tr(lang, s.nl, s.en)}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-
-              <p className={`text-sm italic leading-relaxed ${textMuted}`}>
-                {tr(lang,
-                  '"Het Kasteel is meer dan een stadion. Het is het hart van Spangen, een plek waar generaties Spartanen hun club hebben aangemoedigd. Je voelt de geschiedenis in elke steen."',
-                  '"Het Kasteel is more than a stadium. It is the heart of Spangen, a place where generations of Spartans have cheered on their club. You can feel the history in every stone."'
-                )}
-              </p>
             </div>
           )}
 
@@ -445,7 +418,6 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                 </span>
               </div>
 
-              {/* Group by position */}
               {(['Keeper', 'Verdediger', 'Middenvelder', 'Aanvaller'] as const).map(posGroup => {
                 const posLabel = { nl: posGroup, en: posGroup === 'Keeper' ? 'Goalkeepers' : posGroup === 'Verdediger' ? 'Defenders' : posGroup === 'Middenvelder' ? 'Midfielders' : 'Forwards' };
                 const players = squad.filter(p => p.position.nl === posGroup);
