@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
@@ -350,6 +350,9 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   });
   const [showClubSuggestions, setShowClubSuggestions] = useState(false);
   const [clubSuggestionQuery, setClubSuggestionQuery] = useState('');
+  const [apiSearchResults, setApiSearchResults] = useState<{ club: string; stadium: string; city: string; country: string; color: string; capacity?: string; fromApi?: boolean }[]>([]);
+  const [apiSearching, setApiSearching] = useState(false);
+  const apiSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLeague, setFilterLeague] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'visited' | 'not_visited' | 'wishlist'>('all');
@@ -540,18 +543,68 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     setCustomStadiums(customStadiums.filter(s => s.id !== id));
   };
 
+  // Search TheSportsDB API for clubs not in local list
+  const searchApiClubs = useCallback(async (query: string) => {
+    if (query.length < 3) { setApiSearchResults([]); return; }
+    setApiSearching(true);
+    try {
+      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.teams) {
+        const results = data.teams
+          .filter((t: any) => t.strSport === 'Soccer')
+          .slice(0, 8)
+          .map((t: any) => {
+            const loc = t.strStadiumLocation || t.strLocation || '';
+            const city = loc.split(',')[0]?.trim() || '';
+            return {
+              club: t.strTeam,
+              stadium: t.strStadium || '',
+              city,
+              country: t.strCountry || '',
+              color: t.strColour1 ? `#${t.strColour1.replace('#', '')}` : '#6b7280',
+              capacity: t.intStadiumCapacity || '',
+              fromApi: true,
+            };
+          });
+        setApiSearchResults(results);
+      } else {
+        setApiSearchResults([]);
+      }
+    } catch {
+      setApiSearchResults([]);
+    } finally {
+      setApiSearching(false);
+    }
+  }, []);
+
+  // Debounced API search when user types
+  useEffect(() => {
+    if (apiSearchTimer.current) clearTimeout(apiSearchTimer.current);
+    if (clubSuggestionQuery.length >= 3 && showClubSuggestions) {
+      apiSearchTimer.current = setTimeout(() => searchApiClubs(clubSuggestionQuery), 400);
+    } else {
+      setApiSearchResults([]);
+    }
+    return () => { if (apiSearchTimer.current) clearTimeout(apiSearchTimer.current); };
+  }, [clubSuggestionQuery, showClubSuggestions, searchApiClubs]);
+
   const filteredClubSuggestions = useMemo(() => {
     if (!clubSuggestionQuery || clubSuggestionQuery.length < 2) return [];
     const q = clubSuggestionQuery.toLowerCase();
-    return CLUB_SUGGESTIONS.filter(s =>
+    const local = CLUB_SUGGESTIONS.filter(s =>
       s.club.toLowerCase().includes(q) ||
       s.stadium.toLowerCase().includes(q) ||
       s.city.toLowerCase().includes(q) ||
       s.aliases?.some(a => a.includes(q))
     ).slice(0, 6);
-  }, [clubSuggestionQuery]);
+    // Merge local + API results, deduplicate by club name
+    const localNames = new Set(local.map(s => s.club.toLowerCase()));
+    const apiExtra = apiSearchResults.filter(s => !localNames.has(s.club.toLowerCase()));
+    return [...local, ...apiExtra].slice(0, 8);
+  }, [clubSuggestionQuery, apiSearchResults]);
 
-  const selectClubSuggestion = (suggestion: typeof CLUB_SUGGESTIONS[0]) => {
+  const selectClubSuggestion = (suggestion: typeof CLUB_SUGGESTIONS[0] & { capacity?: string; fromApi?: boolean }) => {
     setNewStadium(prev => ({
       ...prev,
       club_name: suggestion.club,
@@ -559,9 +612,11 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       city: suggestion.city,
       country: suggestion.country,
       primary_color: suggestion.color,
+      ...(suggestion.capacity ? { capacity: suggestion.capacity } : {}),
     }));
     setShowClubSuggestions(false);
     setClubSuggestionQuery('');
+    setApiSearchResults([]);
     setFoundLocation(null);
     setExistingMatch(null);
   };
@@ -1075,28 +1130,38 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 />
                 {/* Club suggestions dropdown */}
-                {showClubSuggestions && filteredClubSuggestions.length > 0 && (
+                {showClubSuggestions && (filteredClubSuggestions.length > 0 || apiSearching) && (
                   <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto ${
                     theme === 'dark' ? 'bg-slate-700 border border-slate-600' : 'bg-white border border-slate-200'
                   }`}>
                     {filteredClubSuggestions.map((s, i) => (
                       <button
-                        key={i}
+                        key={`${s.club}-${i}`}
                         type="button"
                         onMouseDown={(e) => { e.preventDefault(); selectClubSuggestion(s); }}
                         className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition ${
                           theme === 'dark' ? 'hover:bg-slate-600' : 'hover:bg-slate-50'
                         } ${i > 0 ? (theme === 'dark' ? 'border-t border-slate-600/50' : 'border-t border-slate-100') : ''}`}
                       >
-                        <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        {'fromApi' in s && s.fromApi ? (
+                          <span className="text-base w-6 text-center flex-shrink-0">🌍</span>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{s.club}</div>
                           <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {s.stadium} — {s.city}, {s.country}
+                            {s.stadium ? `${s.stadium} — ` : ''}{s.city}{s.country ? `, ${s.country}` : ''}
                           </div>
                         </div>
                       </button>
                     ))}
+                    {apiSearching && (
+                      <div className={`px-3 py-2.5 flex items-center gap-2 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs">{tr(lang, 'Wereldwijd zoeken...', 'Searching worldwide...')}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
