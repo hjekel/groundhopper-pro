@@ -12,6 +12,95 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Club suggestions database for smart search (top-level clubs)
+const CLUB_SUGGESTIONS: { club: string; stadium: string; city: string; country: string; color: string; aliases?: string[] }[] = [
+  // Eredivisie
+  { club: 'Ajax', stadium: 'Johan Cruijff ArenA', city: 'Amsterdam', country: 'Nederland', color: '#D2122E', aliases: ['afc ajax'] },
+  { club: 'PSV', stadium: 'Philips Stadion', city: 'Eindhoven', country: 'Nederland', color: '#ED1C24', aliases: ['psv eindhoven'] },
+  { club: 'Feyenoord', stadium: 'De Kuip', city: 'Rotterdam', country: 'Nederland', color: '#EE0000' },
+  { club: 'AZ', stadium: 'AFAS Stadion', city: 'Alkmaar', country: 'Nederland', color: '#CC0000', aliases: ['az alkmaar'] },
+  { club: 'FC Twente', stadium: 'De Grolsch Veste', city: 'Enschede', country: 'Nederland', color: '#E4002B' },
+  { club: 'FC Utrecht', stadium: 'Stadion Galgenwaard', city: 'Utrecht', country: 'Nederland', color: '#D00027' },
+  { club: 'Sparta Rotterdam', stadium: 'Het Kasteel', city: 'Rotterdam', country: 'Nederland', color: '#CC0000' },
+  { club: 'sc Heerenveen', stadium: 'Abe Lenstra Stadion', city: 'Heerenveen', country: 'Nederland', color: '#0066B3', aliases: ['heerenveen'] },
+  { club: 'FC Groningen', stadium: 'Euroborg', city: 'Groningen', country: 'Nederland', color: '#009639' },
+  { club: 'Vitesse', stadium: 'GelreDome', city: 'Arnhem', country: 'Nederland', color: '#FFD700' },
+  { club: 'NEC', stadium: 'Goffertstadion', city: 'Nijmegen', country: 'Nederland', color: '#CC0000', aliases: ['nec nijmegen'] },
+  { club: 'Go Ahead Eagles', stadium: 'De Adelaarshorst', city: 'Deventer', country: 'Nederland', color: '#E30613' },
+  { club: 'PEC Zwolle', stadium: 'MAC³PARK stadion', city: 'Zwolle', country: 'Nederland', color: '#003DA5' },
+  { club: 'Fortuna Sittard', stadium: 'Fortuna Sittard Stadion', city: 'Sittard', country: 'Nederland', color: '#006633' },
+  { club: 'Heracles Almelo', stadium: 'Erve Asito', city: 'Almelo', country: 'Nederland', color: '#000000', aliases: ['heracles'] },
+  { club: 'Willem II', stadium: 'Koning Willem II Stadion', city: 'Tilburg', country: 'Nederland', color: '#CC0000' },
+  { club: 'NAC Breda', stadium: 'Rat Verlegh Stadion', city: 'Breda', country: 'Nederland', color: '#FFD700', aliases: ['nac'] },
+  { club: 'RKC Waalwijk', stadium: 'Mandemakers Stadion', city: 'Waalwijk', country: 'Nederland', color: '#FFD700', aliases: ['rkc'] },
+  // Premier League
+  { club: 'Arsenal', stadium: 'Emirates Stadium', city: 'London', country: 'England', color: '#EF0107' },
+  { club: 'Manchester City', stadium: 'Etihad Stadium', city: 'Manchester', country: 'England', color: '#6CABDD', aliases: ['man city'] },
+  { club: 'Manchester United', stadium: 'Old Trafford', city: 'Manchester', country: 'England', color: '#DA291C', aliases: ['man utd', 'man united'] },
+  { club: 'Liverpool', stadium: 'Anfield', city: 'Liverpool', country: 'England', color: '#C8102E', aliases: ['liverpool fc'] },
+  { club: 'Chelsea', stadium: 'Stamford Bridge', city: 'London', country: 'England', color: '#034694' },
+  { club: 'Tottenham Hotspur', stadium: 'Tottenham Hotspur Stadium', city: 'London', country: 'England', color: '#132257', aliases: ['spurs', 'tottenham'] },
+  { club: 'Newcastle United', stadium: "St. James' Park", city: 'Newcastle', country: 'England', color: '#241F20', aliases: ['newcastle'] },
+  { club: 'Aston Villa', stadium: 'Villa Park', city: 'Birmingham', country: 'England', color: '#670E36' },
+  { club: 'West Ham United', stadium: 'London Stadium', city: 'London', country: 'England', color: '#7A263A', aliases: ['west ham'] },
+  { club: 'Brighton & Hove Albion', stadium: 'Amex Stadium', city: 'Brighton', country: 'England', color: '#0057B8', aliases: ['brighton'] },
+  { club: 'Crystal Palace', stadium: 'Selhurst Park', city: 'London', country: 'England', color: '#1B458F' },
+  { club: 'Wolverhampton Wanderers', stadium: 'Molineux Stadium', city: 'Wolverhampton', country: 'England', color: '#FDB913', aliases: ['wolves'] },
+  { club: 'Fulham', stadium: 'Craven Cottage', city: 'London', country: 'England', color: '#000000' },
+  { club: 'Everton', stadium: 'Goodison Park', city: 'Liverpool', country: 'England', color: '#003399' },
+  { club: 'Brentford', stadium: 'Gtech Community Stadium', city: 'London', country: 'England', color: '#E30613' },
+  { club: 'Nottingham Forest', stadium: 'City Ground', city: 'Nottingham', country: 'England', color: '#DD0000' },
+  // Bundesliga
+  { club: 'Bayern Munich', stadium: 'Allianz Arena', city: 'Munich', country: 'Deutschland', color: '#DC052D', aliases: ['bayern', 'bayern munchen', 'fc bayern'] },
+  { club: 'Borussia Dortmund', stadium: 'Signal Iduna Park', city: 'Dortmund', country: 'Deutschland', color: '#FDE100', aliases: ['bvb', 'dortmund'] },
+  { club: 'RB Leipzig', stadium: 'Red Bull Arena', city: 'Leipzig', country: 'Deutschland', color: '#DD0741', aliases: ['leipzig'] },
+  { club: 'Bayer Leverkusen', stadium: 'BayArena', city: 'Leverkusen', country: 'Deutschland', color: '#E32221', aliases: ['leverkusen'] },
+  { club: 'Eintracht Frankfurt', stadium: 'Deutsche Bank Park', city: 'Frankfurt', country: 'Deutschland', color: '#E1000F', aliases: ['frankfurt'] },
+  { club: 'VfB Stuttgart', stadium: 'MHPArena', city: 'Stuttgart', country: 'Deutschland', color: '#E32219', aliases: ['stuttgart'] },
+  { club: 'Borussia Mönchengladbach', stadium: 'Borussia-Park', city: 'Mönchengladbach', country: 'Deutschland', color: '#000000', aliases: ['gladbach', 'monchengladbach'] },
+  { club: 'SC Freiburg', stadium: 'Europa-Park Stadion', city: 'Freiburg', country: 'Deutschland', color: '#E4002B', aliases: ['freiburg'] },
+  { club: '1. FC Union Berlin', stadium: 'Stadion An der Alten Försterei', city: 'Berlin', country: 'Deutschland', color: '#EB1923', aliases: ['union berlin'] },
+  { club: 'Werder Bremen', stadium: 'Wohninvest Weserstadion', city: 'Bremen', country: 'Deutschland', color: '#1D9053', aliases: ['bremen'] },
+  { club: '1. FC Köln', stadium: 'RheinEnergieStadion', city: 'Cologne', country: 'Deutschland', color: '#ED1C24', aliases: ['koln', 'cologne', 'fc koln'] },
+  { club: 'FC St. Pauli', stadium: 'Millerntor-Stadion', city: 'Hamburg', country: 'Deutschland', color: '#6C4023', aliases: ['st pauli', 'st. pauli', 'sankt pauli'] },
+  { club: 'Hamburger SV', stadium: 'Volksparkstadion', city: 'Hamburg', country: 'Deutschland', color: '#005B9A', aliases: ['hsv', 'hamburg'] },
+  { club: 'FC Schalke 04', stadium: 'Veltins-Arena', city: 'Gelsenkirchen', country: 'Deutschland', color: '#004D9D', aliases: ['schalke'] },
+  { club: 'Hertha BSC', stadium: 'Olympiastadion', city: 'Berlin', country: 'Deutschland', color: '#005DAA', aliases: ['hertha berlin'] },
+  // La Liga
+  { club: 'FC Barcelona', stadium: 'Spotify Camp Nou', city: 'Barcelona', country: 'España', color: '#A50044', aliases: ['barca', 'barcelona'] },
+  { club: 'Real Madrid', stadium: 'Santiago Bernabéu', city: 'Madrid', country: 'España', color: '#FEBE10', aliases: ['real'] },
+  { club: 'Atlético Madrid', stadium: 'Cívitas Metropolitano', city: 'Madrid', country: 'España', color: '#CB3524', aliases: ['atletico', 'atletico madrid'] },
+  { club: 'Sevilla FC', stadium: 'Ramón Sánchez Pizjuán', city: 'Sevilla', country: 'España', color: '#D4021D', aliases: ['sevilla'] },
+  { club: 'Real Betis', stadium: 'Benito Villamarín', city: 'Sevilla', country: 'España', color: '#00954C', aliases: ['betis'] },
+  { club: 'Real Sociedad', stadium: 'Reale Arena', city: 'San Sebastián', country: 'España', color: '#003DA5', aliases: ['sociedad'] },
+  { club: 'Athletic Club', stadium: 'San Mamés', city: 'Bilbao', country: 'España', color: '#EE2523', aliases: ['athletic bilbao', 'bilbao'] },
+  { club: 'Valencia CF', stadium: 'Mestalla', city: 'Valencia', country: 'España', color: '#EE3524', aliases: ['valencia'] },
+  // Serie A
+  { club: 'Inter Milan', stadium: 'San Siro', city: 'Milan', country: 'Italia', color: '#0068A8', aliases: ['inter', 'internazionale'] },
+  { club: 'AC Milan', stadium: 'San Siro', city: 'Milan', country: 'Italia', color: '#FB090B', aliases: ['milan'] },
+  { club: 'Juventus', stadium: 'Allianz Stadium', city: 'Turin', country: 'Italia', color: '#000000', aliases: ['juve'] },
+  { club: 'SSC Napoli', stadium: 'Stadio Diego Armando Maradona', city: 'Naples', country: 'Italia', color: '#12A0D7', aliases: ['napoli'] },
+  { club: 'AS Roma', stadium: 'Stadio Olimpico', city: 'Rome', country: 'Italia', color: '#8E1F2F', aliases: ['roma'] },
+  { club: 'Atalanta', stadium: 'Gewiss Stadium', city: 'Bergamo', country: 'Italia', color: '#1E71B8' },
+  // Ligue 1
+  { club: 'Paris Saint-Germain', stadium: 'Parc des Princes', city: 'Paris', country: 'France', color: '#004170', aliases: ['psg'] },
+  { club: 'Olympique de Marseille', stadium: 'Stade Vélodrome', city: 'Marseille', country: 'France', color: '#2FAEE0', aliases: ['marseille', 'om'] },
+  { club: 'Olympique Lyonnais', stadium: 'Groupama Stadium', city: 'Lyon', country: 'France', color: '#1A3E8F', aliases: ['lyon', 'ol'] },
+  // Other popular clubs
+  { club: 'Celtic', stadium: 'Celtic Park', city: 'Glasgow', country: 'Scotland', color: '#16973B' },
+  { club: 'Rangers', stadium: 'Ibrox Stadium', city: 'Glasgow', country: 'Scotland', color: '#0033A0' },
+  { club: 'Benfica', stadium: 'Estádio da Luz', city: 'Lisbon', country: 'Portugal', color: '#FF0000', aliases: ['sl benfica'] },
+  { club: 'FC Porto', stadium: 'Estádio do Dragão', city: 'Porto', country: 'Portugal', color: '#003A70', aliases: ['porto'] },
+  { club: 'Sporting CP', stadium: 'Estádio José Alvalade', city: 'Lisbon', country: 'Portugal', color: '#00843D', aliases: ['sporting'] },
+  { club: 'Galatasaray', stadium: 'RAMS Park', city: 'Istanbul', country: 'Turkey', color: '#FFCD00' },
+  { club: 'Fenerbahçe', stadium: 'Şükrü Saracoğlu Stadium', city: 'Istanbul', country: 'Turkey', color: '#FFED00', aliases: ['fenerbahce'] },
+  { club: 'Beşiktaş', stadium: 'Vodafone Park', city: 'Istanbul', country: 'Turkey', color: '#000000', aliases: ['besiktas'] },
+  { club: 'Club Brugge', stadium: 'Jan Breydelstadion', city: 'Bruges', country: 'België', color: '#0066B3', aliases: ['brugge'] },
+  { club: 'RSC Anderlecht', stadium: 'Lotto Park', city: 'Brussels', country: 'België', color: '#66008C', aliases: ['anderlecht'] },
+  { club: 'Red Bull Salzburg', stadium: 'Red Bull Arena', city: 'Salzburg', country: 'Österreich', color: '#DD0741', aliases: ['salzburg'] },
+  { club: 'Rapid Wien', stadium: 'Allianz Stadion', city: 'Vienna', country: 'Österreich', color: '#009639', aliases: ['rapid vienna'] },
+];
+
 const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
   
@@ -259,6 +348,8 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     primary_color: '#ef4444',
     notes: ''
   });
+  const [showClubSuggestions, setShowClubSuggestions] = useState(false);
+  const [clubSuggestionQuery, setClubSuggestionQuery] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -424,6 +515,8 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     setSearchError('');
     setFoundLocation(null);
     setExistingMatch(null);
+    setShowClubSuggestions(false);
+    setClubSuggestionQuery('');
   };
 
   const goToExistingStadium = () => {
@@ -440,6 +533,32 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     }
     await supabase.from('bram_custom_stadiums').delete().eq('id', id);
     setCustomStadiums(customStadiums.filter(s => s.id !== id));
+  };
+
+  const filteredClubSuggestions = useMemo(() => {
+    if (!clubSuggestionQuery || clubSuggestionQuery.length < 2) return [];
+    const q = clubSuggestionQuery.toLowerCase();
+    return CLUB_SUGGESTIONS.filter(s =>
+      s.club.toLowerCase().includes(q) ||
+      s.stadium.toLowerCase().includes(q) ||
+      s.city.toLowerCase().includes(q) ||
+      s.aliases?.some(a => a.includes(q))
+    ).slice(0, 6);
+  }, [clubSuggestionQuery]);
+
+  const selectClubSuggestion = (suggestion: typeof CLUB_SUGGESTIONS[0]) => {
+    setNewStadium(prev => ({
+      ...prev,
+      club_name: suggestion.club,
+      name: suggestion.stadium,
+      city: suggestion.city,
+      country: suggestion.country,
+      primary_color: suggestion.color,
+    }));
+    setShowClubSuggestions(false);
+    setClubSuggestionQuery('');
+    setFoundLocation(null);
+    setExistingMatch(null);
   };
 
   const allStadiums = useMemo(() => {
@@ -652,21 +771,55 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                  {tr(lang, 'Club naam', 'Club name')}
+                  {tr(lang, 'Club naam', 'Club name')} <span className={`text-xs font-normal ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>({tr(lang, 'zoek of typ', 'search or type')})</span>
                 </label>
                 <input
                   type="text"
-                  value={newStadium.club_name}
-                  onChange={(e) => { setNewStadium(prev => ({ ...prev, club_name: e.target.value })); setFoundLocation(null); setExistingMatch(null); }}
-                  placeholder={tr(lang, 'bijv. Hamburger SV', 'e.g. Tottenham Hotspur')}
+                  value={showClubSuggestions ? clubSuggestionQuery : newStadium.club_name}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setClubSuggestionQuery(val);
+                    setShowClubSuggestions(true);
+                    setNewStadium(prev => ({ ...prev, club_name: val }));
+                    setFoundLocation(null);
+                    setExistingMatch(null);
+                  }}
+                  onFocus={() => { if (newStadium.club_name.length >= 2) { setClubSuggestionQuery(newStadium.club_name); setShowClubSuggestions(true); } }}
+                  onBlur={() => { setTimeout(() => setShowClubSuggestions(false), 200); }}
+                  placeholder={tr(lang, 'bijv. St. Pauli, Bayern, Ajax...', 'e.g. St. Pauli, Bayern, Ajax...')}
                   className={`w-full px-3 py-2.5 rounded-lg text-sm ${
-                    theme === 'dark' 
-                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                    theme === 'dark'
+                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400'
                       : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
                   } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 />
+                {/* Club suggestions dropdown */}
+                {showClubSuggestions && filteredClubSuggestions.length > 0 && (
+                  <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto ${
+                    theme === 'dark' ? 'bg-slate-700 border border-slate-600' : 'bg-white border border-slate-200'
+                  }`}>
+                    {filteredClubSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); selectClubSuggestion(s); }}
+                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition ${
+                          theme === 'dark' ? 'hover:bg-slate-600' : 'hover:bg-slate-50'
+                        } ${i > 0 ? (theme === 'dark' ? 'border-t border-slate-600/50' : 'border-t border-slate-100') : ''}`}
+                      >
+                        <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{s.club}</div>
+                          <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {s.stadium} — {s.city}, {s.country}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
