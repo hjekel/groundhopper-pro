@@ -188,12 +188,14 @@ interface Stadium {
   city?: string;
   address?: string;
   built_year?: number;
+  image_url?: string;
   club?: {
     id: string;
     name: string;
     short_name: string;
     primary_color?: string;
     secondary_color?: string;
+    crest_url?: string;
     current_league?: { division: number; name: string } | null;
   } | null;
 }
@@ -853,12 +855,35 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             >
               <Popup>
                 <div className={`min-w-[280px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  {/* Stadium photo banner */}
+                  {stadium.image_url && (
+                    <div className="w-full h-36 overflow-hidden rounded-t-xl">
+                      <img
+                        src={stadium.image_url}
+                        alt={stadium.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-3 p-4 border-b border-slate-700/30">
-                    <div
-                      className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
-                      style={{ backgroundColor: stadium.club?.primary_color || '#6b7280', color: 'white' }}
-                    >
-                      {stadium.club?.short_name?.substring(0, 2) || '?'}
+                    {/* Club logo with fallback to colored square */}
+                    <div className="relative w-12 h-12 flex-shrink-0">
+                      <div
+                        className="absolute inset-0 rounded-lg flex items-center justify-center text-xl font-bold"
+                        style={{ backgroundColor: stadium.club?.primary_color || '#6b7280', color: 'white' }}
+                      >
+                        {stadium.club?.short_name?.substring(0, 2) || '?'}
+                      </div>
+                      {stadium.club?.crest_url && (
+                        <img
+                          src={stadium.club.crest_url}
+                          alt={stadium.club.name}
+                          className="absolute inset-0 w-12 h-12 rounded-lg object-contain bg-white p-1"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">{stadium.club?.name || 'Unknown'}</h3>
