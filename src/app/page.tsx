@@ -88,7 +88,7 @@ export default function Home() {
           .select(`
             id, name, latitude, longitude, capacity, city, address, built_year, image_url,
             club:clubs (
-              id, name, short_name, primary_color, secondary_color, crest_url,
+              id, name, short_name, primary_color, secondary_color, crest_url, country_id,
               current_league:leagues ( division, name )
             )
           `)
@@ -157,7 +157,7 @@ export default function Home() {
           <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
           <div className={`absolute bottom-2 right-2 z-[1000] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v0.6.0
+            v0.8.0
           </div>
         </main>
       </LanguageContext.Provider>

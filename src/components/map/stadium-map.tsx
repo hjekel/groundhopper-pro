@@ -285,6 +285,7 @@ interface Stadium {
     primary_color?: string;
     secondary_color?: string;
     crest_url?: string;
+    country_id?: string;
     current_league?: { division: number; name: string } | null;
   } | null;
 }
@@ -749,9 +750,12 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
     const leagueColors: Record<string, string> = {
       'Eredivisie': '#E30613', 'Eerste Divisie': '#FF8C00', 'Bundesliga': '#D20515',
-      'Premier League': '#3D195B', 'La Liga': '#EE2A24', 'Serie A': '#008FD7',
-      'Ligue 1': '#DCD509', 'Pro League': '#1D1160', 'Challenger Pro League': '#FF6B00',
-      'NIFL Premiership': '#006400', '3. Liga': '#000000',
+      '2. Bundesliga': '#D20515', '3. Liga': '#8B0000', 'Premier League': '#3D195B',
+      'Championship': '#1E3A5F', 'League One': '#2E8B57', 'League Two': '#4682B4',
+      'La Liga': '#EE2A24', 'Serie A': '#008FD7', 'Ligue 1': '#DCD509',
+      'Pro League': '#1D1160', 'Challenger Pro League': '#FF6B00',
+      'Primeira Liga': '#006400', 'Scottish Premiership': '#1B1464',
+      'Süper Lig': '#E30A17', 'NIFL Premiership': '#006400',
     };
 
     leagueMap.forEach((val, key) => {
@@ -760,6 +764,17 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
     return stats.sort((a, b) => b.total - a.total);
   }, [allStadiums, visits, lang]);
+
+  const countriesVisited = useMemo(() => {
+    const visitedStadiumIds = new Set(visits.map(v => v.stadium_id));
+    const countries = new Set<string>();
+    allStadiums.forEach(s => {
+      if (visitedStadiumIds.has(s.id) && s.club?.country_id) {
+        countries.add(s.club.country_id);
+      }
+    });
+    return countries.size;
+  }, [allStadiums, visits]);
 
   if (!mounted) {
     return (
@@ -1325,6 +1340,35 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
           </div>
         </div>
       )}
+
+      {/* Groundhop Counter Badge */}
+      <div className="absolute bottom-8 left-4 z-[1001]">
+        <div className={`rounded-2xl shadow-xl px-5 py-3 backdrop-blur-sm border ${
+          theme === 'dark'
+            ? 'bg-slate-800/90 border-slate-700'
+            : 'bg-white/90 border-slate-200'
+        }`}>
+          <div className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${
+            theme === 'dark' ? 'text-green-400' : 'text-green-600'
+          }`}>
+            {tr(lang, "Bram's Groundhops", "Bram's Groundhops")}
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className={`text-3xl font-black tabular-nums ${
+              theme === 'dark' ? 'text-white' : 'text-slate-900'
+            }`}>{visits.length}</span>
+            <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              / {allStadiums.length}
+            </span>
+          </div>
+          <div className={`text-[10px] mt-0.5 flex items-center gap-3 ${
+            theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+          }`}>
+            <span>{countriesVisited} {tr(lang, 'landen', 'countries')}</span>
+            <span>{leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}</span>
+          </div>
+        </div>
+      </div>
 
       <MapContainer
         center={[50.0, 10.0]}
