@@ -366,11 +366,15 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes] = await Promise.all([
-      supabase.from('bram_visits').select('stadium_id, visit_date, notes'),
+      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes').eq('is_wishlist', false),
       supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
       supabase.from('bram_custom_stadiums').select('*')
     ]);
-    if (visitsRes.data) setVisits(visitsRes.data);
+    if (visitsRes.data) setVisits(visitsRes.data.map(v => ({
+      stadium_id: v.stadium_id,
+      visit_date: v.first_visit_date,
+      notes: v.notes
+    })));
     if (wishlistRes.data) setWishlist(wishlistRes.data);
     if (customRes.data) setCustomStadiums(customRes.data);
   };
@@ -378,14 +382,21 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const toggleVisit = async (stadiumId: string, date?: string) => {
     const existing = visits.find(v => v.stadium_id === stadiumId);
     if (existing) {
-      await supabase.from('bram_visits').delete().eq('stadium_id', stadiumId);
+      await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId);
       setVisits(visits.filter(v => v.stadium_id !== stadiumId));
     } else {
-      const { data } = await supabase.from('bram_visits').insert({ 
-        stadium_id: stadiumId, 
-        visit_date: date || null 
-      }).select().single();
-      if (data) setVisits([...visits, data]);
+      const { data } = await supabase.from('stadium_visits').insert({
+        stadium_id: stadiumId,
+        first_visit_date: date || null,
+        last_visit_date: date || null,
+        visit_count: 1,
+        is_wishlist: false
+      }).select('stadium_id, first_visit_date, notes').single();
+      if (data) setVisits([...visits, {
+        stadium_id: data.stadium_id,
+        visit_date: data.first_visit_date,
+        notes: data.notes
+      }]);
     }
     // Remove from wishlist if marking as visited
     if (!existing && wishlist.find(w => w.stadium_id === stadiumId)) {
