@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -12,9 +12,33 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false) => {
+const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
   
+  // Custom stadium marker (user added)
+  if (isCustom) {
+    const svg = `
+      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow-c" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
+              fill="${color}" filter="url(#shadow-c)" stroke="#8b5cf6" stroke-width="2.5"/>
+        <circle cx="18" cy="17" r="8" fill="white"/>
+        <text x="18" y="21" text-anchor="middle" font-size="10" font-weight="bold" fill="${color}">+</text>
+      </svg>
+    `;
+    return L.divIcon({
+      html: svg,
+      className: 'custom-stadium-marker custom-added',
+      iconSize: [36, 44],
+      iconAnchor: [18, 44],
+      popupAnchor: [0, -44],
+    });
+  }
+
   if (isVisited) {
     const svg = `
       <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
@@ -134,6 +158,18 @@ function FlyToStadium({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
+// Component to handle map clicks for picking location
+function LocationPicker({ onLocationPick, isActive }: { onLocationPick: (lat: number, lng: number) => void; isActive: boolean }) {
+  useMapEvents({
+    click(e) {
+      if (isActive) {
+        onLocationPick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+}
+
 interface Stadium {
   id: string;
   name: string;
@@ -151,6 +187,20 @@ interface Stadium {
     secondary_color?: string;
     current_league?: { division: number; name: string } | null;
   } | null;
+}
+
+interface CustomStadium {
+  id: string;
+  name: string;
+  club_name: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  capacity?: number;
+  primary_color?: string;
+  notes?: string;
+  created_at: string;
 }
 
 interface Visit {
@@ -177,10 +227,26 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [customStadiums, setCustomStadiums] = useState<CustomStadium[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStadium, setSelectedStadium] = useState<{ lat: number; lng: number } | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
   const [visitDate, setVisitDate] = useState('');
+  
+  // Add stadium modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isPickingLocation, setIsPickingLocation] = useState(false);
+  const [newStadium, setNewStadium] = useState({
+    name: '',
+    club_name: '',
+    city: '',
+    country: '',
+    latitude: '',
+    longitude: '',
+    capacity: '',
+    primary_color: '#ef4444',
+    notes: ''
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -188,12 +254,14 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   }, []);
 
   const loadData = async () => {
-    const [visitsRes, wishlistRes] = await Promise.all([
+    const [visitsRes, wishlistRes, customRes] = await Promise.all([
       supabase.from('bram_visits').select('stadium_id, visit_date, notes'),
-      supabase.from('bram_wishlist').select('stadium_id, priority, notes')
+      supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
+      supabase.from('bram_custom_stadiums').select('*')
     ]);
     if (visitsRes.data) setVisits(visitsRes.data);
     if (wishlistRes.data) setWishlist(wishlistRes.data);
+    if (customRes.data) setCustomStadiums(customRes.data);
   };
 
   const toggleVisit = async (stadiumId: string, date?: string) => {
@@ -226,15 +294,96 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     }
   };
 
+  const handleLocationPick = (lat: number, lng: number) => {
+    setNewStadium(prev => ({
+      ...prev,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6)
+    }));
+    setIsPickingLocation(false);
+  };
+
+  const handleAddStadium = async () => {
+    if (!newStadium.name || !newStadium.latitude || !newStadium.longitude) {
+      alert(tr(lang, 'Vul minimaal naam en locatie in', 'Please fill in at least name and location'));
+      return;
+    }
+
+    const { data, error } = await supabase.from('bram_custom_stadiums').insert({
+      name: newStadium.name,
+      club_name: newStadium.club_name || null,
+      city: newStadium.city || null,
+      country: newStadium.country || null,
+      latitude: parseFloat(newStadium.latitude),
+      longitude: parseFloat(newStadium.longitude),
+      capacity: newStadium.capacity ? parseInt(newStadium.capacity) : null,
+      primary_color: newStadium.primary_color,
+      notes: newStadium.notes || null
+    }).select().single();
+
+    if (error) {
+      console.error('Error adding stadium:', error);
+      alert(tr(lang, 'Fout bij toevoegen: ' + error.message, 'Error adding: ' + error.message));
+      return;
+    }
+
+    if (data) {
+      setCustomStadiums([...customStadiums, data]);
+      setShowAddModal(false);
+      setNewStadium({
+        name: '',
+        club_name: '',
+        city: '',
+        country: '',
+        latitude: '',
+        longitude: '',
+        capacity: '',
+        primary_color: '#ef4444',
+        notes: ''
+      });
+      // Fly to new stadium
+      setSelectedStadium({ lat: data.latitude, lng: data.longitude });
+    }
+  };
+
+  const deleteCustomStadium = async (id: string) => {
+    if (!confirm(tr(lang, 'Weet je zeker dat je dit stadion wilt verwijderen?', 'Are you sure you want to delete this stadium?'))) {
+      return;
+    }
+    await supabase.from('bram_custom_stadiums').delete().eq('id', id);
+    setCustomStadiums(customStadiums.filter(s => s.id !== id));
+  };
+
+  const allStadiums = useMemo(() => {
+    // Combine regular stadiums with custom stadiums
+    const customAsStadiums: Stadium[] = customStadiums.map(cs => ({
+      id: `custom-${cs.id}`,
+      name: cs.name,
+      latitude: cs.latitude,
+      longitude: cs.longitude,
+      capacity: cs.capacity,
+      city: cs.city,
+      club: {
+        id: `custom-club-${cs.id}`,
+        name: cs.club_name || cs.name,
+        short_name: (cs.club_name || cs.name).substring(0, 3).toUpperCase(),
+        primary_color: cs.primary_color || '#8b5cf6',
+        secondary_color: undefined,
+        current_league: null
+      }
+    }));
+    return [...stadiums, ...customAsStadiums];
+  }, [stadiums, customStadiums]);
+
   const filteredStadiums = useMemo(() => {
-    if (!searchQuery.trim()) return stadiums;
+    if (!searchQuery.trim()) return allStadiums;
     const q = searchQuery.toLowerCase();
-    return stadiums.filter(s => 
+    return allStadiums.filter(s => 
       s.name.toLowerCase().includes(q) ||
       s.club?.name.toLowerCase().includes(q) ||
       s.city?.toLowerCase().includes(q)
     );
-  }, [stadiums, searchQuery]);
+  }, [allStadiums, searchQuery]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) return [];
@@ -253,6 +402,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
   return (
     <div className="w-full h-full relative">
+      {/* Search box */}
       <div className="absolute top-20 left-4 z-[1001] w-72">
         <div className={`relative rounded-lg shadow-lg ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
@@ -302,37 +452,289 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 {visits.find(v => v.stadium_id === stadium.id) && (
                   <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                 )}
+                {stadium.id.startsWith('custom-') && (
+                  <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded">
+                    {tr(lang, 'eigen', 'custom')}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      <div className={`absolute top-20 right-4 z-[1001] px-4 py-2 rounded-lg shadow-lg ${
-        theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
-      }`}>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="font-bold">{visits.length}</span>
-            <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {stadiums.length}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-yellow-500" />
-            <span className="font-bold">{wishlist.length}</span>
+      {/* Stats and Add button */}
+      <div className={`absolute top-20 right-4 z-[1001] flex gap-2`}>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
+            theme === 'dark' 
+              ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+              : 'bg-purple-500 hover:bg-purple-600 text-white'
+          }`}
+        >
+          <Plus className="w-4 h-4" />
+          {tr(lang, 'Stadion toevoegen', 'Add stadium')}
+        </button>
+        
+        <div className={`px-4 py-2 rounded-lg shadow-lg ${
+          theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
+        }`}>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-green-500" />
+              <span className="font-bold">{visits.length}</span>
+              <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {allStadiums.length}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Star className="w-4 h-4 text-yellow-500" />
+              <span className="font-bold">{wishlist.length}</span>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Add Stadium Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAddModal(false); setIsPickingLocation(false); }} />
+          <div className={`relative w-full max-w-md rounded-xl shadow-2xl ${
+            theme === 'dark' ? 'bg-slate-800' : 'bg-white'
+          }`}>
+            <div className={`p-4 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                {tr(lang, 'Nieuw stadion toevoegen', 'Add new stadium')}
+              </h2>
+              <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {tr(lang, 'Voeg een stadion toe dat nog niet in de database staat', 'Add a stadium that is not yet in the database')}
+              </p>
+            </div>
+            
+            <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {tr(lang, 'Stadion naam', 'Stadium name')} *
+                </label>
+                <input
+                  type="text"
+                  value={newStadium.name}
+                  onChange={(e) => setNewStadium(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder={tr(lang, 'bijv. Johan Cruijff Arena', 'e.g. Wembley Stadium')}
+                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-slate-700 text-white border-slate-600' 
+                      : 'bg-white text-slate-900 border-slate-300'
+                  } border`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {tr(lang, 'Club naam', 'Club name')}
+                </label>
+                <input
+                  type="text"
+                  value={newStadium.club_name}
+                  onChange={(e) => setNewStadium(prev => ({ ...prev, club_name: e.target.value }))}
+                  placeholder={tr(lang, 'bijv. Ajax', 'e.g. Tottenham Hotspur')}
+                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-slate-700 text-white border-slate-600' 
+                      : 'bg-white text-slate-900 border-slate-300'
+                  } border`}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {tr(lang, 'Stad', 'City')}
+                  </label>
+                  <input
+                    type="text"
+                    value={newStadium.city}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder={tr(lang, 'bijv. Amsterdam', 'e.g. London')}
+                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                      theme === 'dark' 
+                        ? 'bg-slate-700 text-white border-slate-600' 
+                        : 'bg-white text-slate-900 border-slate-300'
+                    } border`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {tr(lang, 'Land', 'Country')}
+                  </label>
+                  <input
+                    type="text"
+                    value={newStadium.country}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, country: e.target.value }))}
+                    placeholder={tr(lang, 'bijv. Nederland', 'e.g. England')}
+                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                      theme === 'dark' 
+                        ? 'bg-slate-700 text-white border-slate-600' 
+                        : 'bg-white text-slate-900 border-slate-300'
+                    } border`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {tr(lang, 'Locatie', 'Location')} *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newStadium.latitude}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, latitude: e.target.value }))}
+                    placeholder="Lat"
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                      theme === 'dark' 
+                        ? 'bg-slate-700 text-white border-slate-600' 
+                        : 'bg-white text-slate-900 border-slate-300'
+                    } border`}
+                  />
+                  <input
+                    type="text"
+                    value={newStadium.longitude}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, longitude: e.target.value }))}
+                    placeholder="Lng"
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                      theme === 'dark' 
+                        ? 'bg-slate-700 text-white border-slate-600' 
+                        : 'bg-white text-slate-900 border-slate-300'
+                    } border`}
+                  />
+                  <button
+                    onClick={() => {
+                      setIsPickingLocation(true);
+                      setShowAddModal(false);
+                    }}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 ${
+                      theme === 'dark' 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    }`}
+                    title={tr(lang, 'Klik op kaart om locatie te kiezen', 'Click on map to pick location')}
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {tr(lang, 'Klik op het pin-icoon om op de kaart te klikken', 'Click the pin icon to pick from the map')}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {tr(lang, 'Capaciteit', 'Capacity')}
+                  </label>
+                  <input
+                    type="number"
+                    value={newStadium.capacity}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, capacity: e.target.value }))}
+                    placeholder="50000"
+                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                      theme === 'dark' 
+                        ? 'bg-slate-700 text-white border-slate-600' 
+                        : 'bg-white text-slate-900 border-slate-300'
+                    } border`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {tr(lang, 'Kleur', 'Colour')}
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={newStadium.primary_color}
+                      onChange={(e) => setNewStadium(prev => ({ ...prev, primary_color: e.target.value }))}
+                      className="w-10 h-10 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={newStadium.primary_color}
+                      onChange={(e) => setNewStadium(prev => ({ ...prev, primary_color: e.target.value }))}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                        theme === 'dark' 
+                          ? 'bg-slate-700 text-white border-slate-600' 
+                          : 'bg-white text-slate-900 border-slate-300'
+                      } border`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {tr(lang, 'Notities', 'Notes')}
+                </label>
+                <textarea
+                  value={newStadium.notes}
+                  onChange={(e) => setNewStadium(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder={tr(lang, 'Optionele notities...', 'Optional notes...')}
+                  rows={2}
+                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-slate-700 text-white border-slate-600' 
+                      : 'bg-white text-slate-900 border-slate-300'
+                  } border`}
+                />
+              </div>
+            </div>
+
+            <div className={`p-4 border-t flex gap-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className={`flex-1 py-2.5 rounded-lg font-medium text-sm ${
+                  theme === 'dark' 
+                    ? 'bg-slate-700 hover:bg-slate-600 text-white' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                }`}
+              >
+                {tr(lang, 'Annuleren', 'Cancel')}
+              </button>
+              <button
+                onClick={handleAddStadium}
+                className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {tr(lang, 'Toevoegen', 'Add')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location picking mode indicator */}
+      {isPickingLocation && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[2000] px-4 py-2 rounded-lg bg-purple-600 text-white shadow-lg flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            {tr(lang, 'Klik op de kaart om locatie te kiezen', 'Click on the map to pick location')}
+          </span>
+          <button 
+            onClick={() => { setIsPickingLocation(false); setShowAddModal(true); }}
+            className="ml-2 p-1 hover:bg-purple-700 rounded"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <MapContainer
         center={[50.0, 10.0]}
         zoom={5}
-        className="w-full h-full"
+        className={`w-full h-full ${isPickingLocation ? 'cursor-crosshair' : ''}`}
         zoomControl={false}
         worldCopyJump={false}
         maxBoundsViscosity={1.0}
       >
         <MapBounds />
+        <LocationPicker onLocationPick={(lat, lng) => { handleLocationPick(lat, lng); setShowAddModal(true); }} isActive={isPickingLocation} />
         {selectedStadium && <FlyToStadium lat={selectedStadium.lat} lng={selectedStadium.lng} />}
         
         <TileLayer
@@ -349,13 +751,15 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
           const isSparta = stadium.club?.short_name === 'SPA';
           const isVisited = visits.some(v => v.stadium_id === stadium.id);
           const isOnWishlist = wishlist.some(w => w.stadium_id === stadium.id);
+          const isCustom = stadium.id.startsWith('custom-');
           const visitData = visits.find(v => v.stadium_id === stadium.id);
+          const customData = isCustom ? customStadiums.find(c => `custom-${c.id}` === stadium.id) : null;
 
           return (
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist, isCustom && !isVisited && !isOnWishlist)}
             >
               <Popup>
                 <div className={`min-w-[280px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -376,13 +780,18 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                           {stadium.club.current_league.name}
                         </span>
                       )}
+                      {isCustom && (
+                        <span className="inline-block mt-1 ml-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                          {tr(lang, 'Eigen toevoeging', 'Custom added')}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="p-4 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Stad', 'City')}</span>
-                      <span className="font-medium">{stadium.city}</span>
+                      <span className="font-medium">{stadium.city || '-'}</span>
                     </div>
                     {stadium.capacity && (
                       <div className="flex justify-between">
@@ -394,6 +803,18 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                       <div className="flex justify-between">
                         <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Gebouwd', 'Built')}</span>
                         <span className="font-medium">{stadium.built_year}</span>
+                      </div>
+                    )}
+                    {customData?.country && (
+                      <div className="flex justify-between">
+                        <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Land', 'Country')}</span>
+                        <span className="font-medium">{customData.country}</span>
+                      </div>
+                    )}
+                    {customData?.notes && (
+                      <div className="flex justify-between">
+                        <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{tr(lang, 'Notities', 'Notes')}</span>
+                        <span className="font-medium text-right max-w-[180px]">{customData.notes}</span>
                       </div>
                     )}
                     {isVisited && visitData?.visit_date && (
@@ -474,13 +895,23 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     )}
 
                     <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stadium.name + ' ' + stadium.city)}`}
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stadium.name + ' ' + (stadium.city || ''))}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block w-full py-2.5 rounded-lg font-medium text-sm text-center bg-blue-600 hover:bg-blue-700 text-white transition"
                     >
                       {tr(lang, 'Open in Google Maps', 'Open in Google Maps')}
                     </a>
+
+                    {isCustom && (
+                      <button
+                        onClick={() => customData && deleteCustomStadium(customData.id)}
+                        className="w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10 transition"
+                      >
+                        <X className="w-4 h-4" />
+                        {tr(lang, 'Verwijderen', 'Delete')}
+                      </button>
+                    )}
                   </div>
                 </div>
               </Popup>
@@ -491,6 +922,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
       <style jsx global>{`
         .custom-stadium-marker { background: transparent; border: none; }
+        .custom-added { filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4)); }
         .sparta-special { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); z-index: 1000 !important; }
         .sparta-pulse { animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
