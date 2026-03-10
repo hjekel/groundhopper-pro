@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3 } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3, Navigation, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -268,6 +268,18 @@ async function geocodeLocation(query: string): Promise<{ lat: number; lng: numbe
   }
 }
 
+// Haversine distance formula - calculates distance between two GPS coordinates in km
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 interface Stadium {
   id: string;
   name: string;
@@ -359,6 +371,14 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [filterStatus, setFilterStatus] = useState<'all' | 'visited' | 'not_visited' | 'wishlist'>('all');
   const [filterCountry, setFilterCountry] = useState<string>('all');
   const [showStats, setShowStats] = useState(false);
+
+  // Nearest unvisited feature
+  const [showNearestPanel, setShowNearestPanel] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  // Timeline feature
+  const [showTimeline, setShowTimeline] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -776,6 +796,50 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     return countries.size;
   }, [allStadiums, visits]);
 
+  // Geolocation handler for "nearest unvisited" feature
+  const findNearestUnvisited = () => {
+    setGeoLoading(true);
+    if (!navigator.geolocation) {
+      setGeoLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setGeoLoading(false);
+        setShowNearestPanel(true);
+      },
+      () => {
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
+  // Computed nearest unvisited stadiums from user location
+  const nearestUnvisited = useMemo(() => {
+    if (!userLocation) return [];
+    return allStadiums
+      .filter(s => !visits.some(v => v.stadium_id === s.id))
+      .map(s => ({
+        ...s,
+        distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5);
+  }, [userLocation, allStadiums, visits]);
+
+  // Timeline data: visits sorted by date with stadium info
+  const timelineData = useMemo(() => {
+    return visits
+      .filter(v => v.visit_date)
+      .map(v => {
+        const stadium = allStadiums.find(s => s.id === v.stadium_id);
+        return { ...v, stadium, date: new Date(v.visit_date!) };
+      })
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [visits, allStadiums]);
+
   if (!mounted) {
     return (
       <div className={`w-full h-full flex items-center justify-center ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
@@ -823,10 +887,20 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   theme === 'dark' ? 'hover:bg-slate-700' : 'hover:bg-slate-50'
                 }`}
               >
-                <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
-                />
+                <div className="relative w-6 h-6 flex-shrink-0">
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
+                  />
+                  {stadium.club?.crest_url && (
+                    <img
+                      src={stadium.club.crest_url}
+                      alt=""
+                      className="absolute inset-0 w-6 h-6 rounded-full object-contain bg-white p-0.5"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {stadium.club?.name || stadium.name}
@@ -1055,6 +1129,21 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Timeline button */}
+            <div className={`p-3 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <button
+                onClick={() => setShowTimeline(true)}
+                className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                  theme === 'dark'
+                    ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30'
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                {tr(lang, 'Bezoek Tijdlijn', 'Visit Timeline')}
+              </button>
             </div>
           </div>
         )}
@@ -1341,6 +1430,121 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         </div>
       )}
 
+      {/* Visit Timeline Modal */}
+      {showTimeline && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowTimeline(false)} />
+          <div className={`relative w-full max-w-md max-h-[80vh] rounded-xl shadow-2xl flex flex-col ${
+            theme === 'dark' ? 'bg-slate-800' : 'bg-white'
+          }`}>
+            {/* Header */}
+            <div className={`p-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  {tr(lang, 'Bezoek Tijdlijn', 'Visit Timeline')}
+                </h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {timelineData.length} {tr(lang, 'bezoeken', 'visits')}
+                </p>
+              </div>
+              <button onClick={() => setShowTimeline(false)}>
+                <X className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+              </button>
+            </div>
+
+            {/* Timeline content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {timelineData.length === 0 ? (
+                <div className={`text-center py-8 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">{tr(lang, 'Nog geen bezoeken met datum', 'No visits with dates yet')}</p>
+                </div>
+              ) : (
+                <div className="relative">
+                  {/* Vertical timeline line */}
+                  <div className={`absolute left-4 top-0 bottom-0 w-0.5 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`} />
+
+                  {timelineData.map((entry, index) => {
+                    const prevEntry = index > 0 ? timelineData[index - 1] : null;
+                    const showMonthHeader = !prevEntry ||
+                      entry.date.getMonth() !== prevEntry.date.getMonth() ||
+                      entry.date.getFullYear() !== prevEntry.date.getFullYear();
+
+                    return (
+                      <div key={entry.stadium_id + entry.visit_date}>
+                        {showMonthHeader && (
+                          <div className={`ml-10 mb-2 ${index > 0 ? 'mt-4' : ''}`}>
+                            <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', { month: 'long', year: 'numeric' })}
+                            </span>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (entry.stadium) {
+                              setSelectedStadium({ lat: entry.stadium.latitude, lng: entry.stadium.longitude });
+                              setShowTimeline(false);
+                            }
+                          }}
+                          className={`w-full text-left flex items-start gap-3 py-2 pl-1 transition ${
+                            theme === 'dark' ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+                          } rounded-lg`}
+                        >
+                          {/* Timeline dot with club crest */}
+                          <div className="relative z-10 mt-0.5">
+                            <div
+                              className="w-8 h-8 rounded-full border-2 flex items-center justify-center"
+                              style={{
+                                borderColor: entry.stadium?.club?.primary_color || '#6b7280',
+                                backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff'
+                              }}
+                            >
+                              {entry.stadium?.club?.crest_url ? (
+                                <img
+                                  src={entry.stadium.club.crest_url}
+                                  alt=""
+                                  className="w-5 h-5 rounded-full object-contain"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div
+                                  className="w-4 h-4 rounded-full"
+                                  style={{ backgroundColor: entry.stadium?.club?.primary_color || '#6b7280' }}
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 pb-3">
+                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                              {entry.stadium?.club?.name || 'Onbekend'}
+                            </div>
+                            <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {entry.stadium?.name} — {entry.stadium?.city}
+                            </div>
+                            <div className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', {
+                                day: 'numeric', month: 'short', year: 'numeric'
+                              })}
+                              {entry.notes && (
+                                <span className={`ml-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  — {entry.notes}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Groundhop Counter Badge */}
       <div className="absolute bottom-8 left-4 z-[1001]">
         <div className={`rounded-2xl shadow-xl px-5 py-3 backdrop-blur-sm border ${
@@ -1369,6 +1573,92 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
           </div>
         </div>
       </div>
+
+      {/* Nearest Unvisited GPS Button */}
+      <div className="absolute bottom-8 right-16 z-[1001]">
+        <button
+          onClick={findNearestUnvisited}
+          disabled={geoLoading}
+          className={`rounded-full shadow-xl p-3 transition ${
+            showNearestPanel
+              ? 'bg-blue-600 text-white'
+              : theme === 'dark'
+                ? 'bg-slate-800/90 border border-slate-700 text-blue-400 hover:bg-slate-700'
+                : 'bg-white/90 border border-slate-200 text-blue-600 hover:bg-slate-50'
+          }`}
+          title={tr(lang, 'Dichtstbijzijnde onbezocht', 'Nearest unvisited')}
+        >
+          {geoLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Navigation className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Nearest Unvisited Panel */}
+      {showNearestPanel && userLocation && (
+        <div className={`absolute bottom-24 right-4 z-[1001] w-72 rounded-xl shadow-xl overflow-hidden ${
+          theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'
+        }`}>
+          <div className={`p-3 flex items-center justify-between border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+            <div>
+              <div className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                {tr(lang, 'Dichtstbijzijnde onbezocht', 'Nearest unvisited')}
+              </div>
+              <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                📍 {tr(lang, 'Vanaf jouw locatie', 'From your location')}
+              </div>
+            </div>
+            <button onClick={() => setShowNearestPanel(false)}>
+              <X className={`w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+            </button>
+          </div>
+          <div className="p-2">
+            {nearestUnvisited.map((stadium, index) => (
+              <button
+                key={stadium.id}
+                onClick={() => {
+                  setSelectedStadium({ lat: stadium.latitude, lng: stadium.longitude });
+                  setShowNearestPanel(false);
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition ${
+                  theme === 'dark' ? 'hover:bg-slate-700' : 'hover:bg-slate-50'
+                }`}
+              >
+                <span className={`text-sm font-bold w-5 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {index + 1}
+                </span>
+                <div className="relative w-6 h-6 flex-shrink-0">
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
+                  />
+                  {stadium.club?.crest_url && (
+                    <img
+                      src={stadium.club.crest_url}
+                      alt=""
+                      className="absolute inset-0 w-6 h-6 rounded-full object-contain bg-white p-0.5"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {stadium.club?.name || stadium.name}
+                  </div>
+                  <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {stadium.name}
+                  </div>
+                </div>
+                <span className={`text-xs font-medium tabular-nums flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {stadium.distance < 1 ? '<1' : Math.round(stadium.distance)} km
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <MapContainer
         center={[50.0, 10.0]}
@@ -1582,6 +1872,62 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                       </button>
                     )}
                   </div>
+
+                  {/* In de buurt - Nearby unvisited suggestions */}
+                  {(() => {
+                    const nearby = allStadiums
+                      .filter(s => s.id !== stadium.id && !visits.some(v => v.stadium_id === s.id))
+                      .map(s => ({
+                        ...s,
+                        distance: haversineDistance(stadium.latitude, stadium.longitude, s.latitude, s.longitude)
+                      }))
+                      .sort((a, b) => a.distance - b.distance)
+                      .slice(0, 3);
+
+                    if (nearby.length === 0) return null;
+
+                    return (
+                      <div className={`rounded-lg p-3 mx-4 mb-3 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                        <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                          📍 {tr(lang, 'In de buurt (onbezocht)', 'Nearby (unvisited)')}
+                        </div>
+                        {nearby.map(ns => (
+                          <button
+                            key={ns.id}
+                            onClick={() => {
+                              setSelectedStadium({ lat: ns.latitude, lng: ns.longitude });
+                            }}
+                            className={`w-full text-left py-1.5 flex items-center gap-2 text-sm rounded transition ${
+                              theme === 'dark' ? 'hover:bg-slate-600/50' : 'hover:bg-slate-100'
+                            }`}
+                          >
+                            <div className="relative w-5 h-5 flex-shrink-0">
+                              <div
+                                className="absolute inset-0 rounded-full"
+                                style={{ backgroundColor: ns.club?.primary_color || '#6b7280' }}
+                              />
+                              {ns.club?.crest_url && (
+                                <img
+                                  src={ns.club.crest_url}
+                                  alt=""
+                                  className="absolute inset-0 w-5 h-5 rounded-full object-contain bg-white p-0.5"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className={`truncate block text-xs font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                                {ns.club?.name || ns.name}
+                              </span>
+                            </div>
+                            <span className={`text-xs tabular-nums flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                              {ns.distance < 1 ? '<1' : Math.round(ns.distance)} km
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </Popup>
             </Marker>
