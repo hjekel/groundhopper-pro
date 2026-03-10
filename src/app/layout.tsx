@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'Groundhopper Pro',
   description: 'The Ultimate European Stadium Tracker - Track your stadium visits across Europe',
   keywords: ['football', 'stadiums', 'groundhopping', 'soccer', 'europe', 'tracker'],
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏟️</text></svg>",
+  },
 }
 
 export default function RootLayout({
