@@ -29,26 +29,75 @@ async function fetchLogoFromSportsDB(clubName: string): Promise<string | null> {
 
 // Name mappings for clubs that don't match exactly in TheSportsDB
 const NAME_MAPPINGS: Record<string, string> = {
-  'sc Heerenveen': 'SC Heerenveen',
-  'Go Ahead Eagles': 'Go Ahead Eagles',
-  'NEC': 'NEC Nijmegen',
+  // Eredivisie
+  'PSV': 'PSV Eindhoven',
+  'sc Heerenveen': 'Heerenveen',
   'AZ': 'AZ Alkmaar',
+  'NEC': 'NEC Nijmegen',
   'NAC Breda': 'NAC Breda',
-  'Bayern Munich': 'Bayern Munich',
+  'FC Utrecht': 'FC Utrecht',
+  'FC Twente': 'FC Twente',
+  'FC Groningen': 'FC Groningen',
+  'Almere City FC': 'Almere City',
+  // Eerste Divisie / Other Dutch
+  'TOP Oss': 'TOP Oss',
+  'Helmond Sport': 'Helmond Sport',
+  'Berchem Sport': 'Berchem Sport',
+  // German
+  'Bayern Munich': 'FC Bayern Munich',
   '1. FC Köln': 'FC Cologne',
-  '1. FC Heidenheim': 'Heidenheim',
+  '1. FC Heidenheim': 'FC Heidenheim',
   '1. FC Union Berlin': 'Union Berlin',
-  'VfB Stuttgart': 'VfB Stuttgart',
-  'VfL Wolfsburg': 'VfL Wolfsburg',
-  'VfL Bochum': 'VfL Bochum',
+  'VfB Stuttgart': 'Stuttgart',
+  'VfL Wolfsburg': 'Wolfsburg',
+  'VfL Bochum': 'Bochum',
   'RB Leipzig': 'RB Leipzig',
-  'TSG Hoffenheim': 'TSG Hoffenheim',
+  'TSG Hoffenheim': 'Hoffenheim',
+  'FSV Mainz 05': 'Mainz 05',
+  'SC Freiburg': 'SC Freiburg',
+  'Eintracht Frankfurt': 'Eintracht Frankfurt',
+  'SV Darmstadt 98': 'SV Darmstadt',
+  'Dynamo Dresden': 'Dynamo Dresden',
+  'Werder Bremen': 'Werder Bremen',
+  'FC Augsburg': 'FC Augsburg',
+  'Borussia Mönchengladbach': 'Borussia Monchengladbach',
+  // English
   'Brighton & Hove Albion': 'Brighton',
-  'Wolverhampton Wanderers': 'Wolverhampton Wanderers',
+  'Wolverhampton Wanderers': 'Wolves',
   'Nottingham Forest': 'Nottingham Forest',
-  'ACF Fiorentina': 'Fiorentina',
+  'Newcastle United': 'Newcastle',
+  'Ipswich Town': 'Ipswich Town',
+  'Leicester City': 'Leicester City',
+  'Liverpool FC': 'Liverpool',
+  'West Ham United': 'West Ham',
+  'Crystal Palace': 'Crystal Palace',
+  'Bournemouth': 'AFC Bournemouth',
+  // Spanish
   'Athletic Club': 'Athletic Bilbao',
   'Atlético Madrid': 'Atletico Madrid',
+  'Real Sociedad': 'Real Sociedad',
+  'Villarreal CF': 'Villarreal',
+  'Valencia CF': 'Valencia',
+  'Sevilla FC': 'Sevilla',
+  'Real Betis': 'Real Betis',
+  'Girona FC': 'Girona',
+  // Italian
+  'ACF Fiorentina': 'Fiorentina',
+  'SSC Napoli': 'Napoli',
+  'AS Roma': 'AS Roma',
+  'Inter Milan': 'Inter Milan',
+  'AC Milan': 'AC Milan',
+  // French
+  'Paris Saint-Germain': 'Paris Saint-Germain',
+  'Olympique Lyonnais': 'Lyon',
+  'Olympique de Marseille': 'Marseille',
+  'LOSC Lille': 'Lille',
+  'AS Monaco': 'AS Monaco',
+  // Belgian
+  'KAS Eupen': 'KAS Eupen',
+  // Northern Irish
+  'Glentoran FC': 'Glentoran',
+  'Linfield FC': 'Linfield',
 };
 
 export async function GET() {
@@ -66,7 +115,21 @@ export async function GET() {
 
   for (const club of clubs || []) {
     const searchName = NAME_MAPPINGS[club.name] || club.name;
-    const logo = await fetchLogoFromSportsDB(searchName);
+
+    // Try mapped name first, then original, then simplified
+    let logo = await fetchLogoFromSportsDB(searchName);
+    if (!logo && searchName !== club.name) {
+      logo = await fetchLogoFromSportsDB(club.name);
+    }
+    if (!logo) {
+      // Try without common prefixes/suffixes
+      const simplified = club.name
+        .replace(/^(FC |SC |SV |VfB |VfL |TSG |FSV |ACF |SSC |1\. )/i, '')
+        .replace(/ (FC|CF|SC|FK)$/i, '');
+      if (simplified !== club.name && simplified !== searchName) {
+        logo = await fetchLogoFromSportsDB(simplified);
+      }
+    }
 
     if (logo) {
       await supabase
