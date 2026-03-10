@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, MapPin } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -15,8 +15,7 @@ const supabase = createClient(
 const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
   
-  // Custom stadium marker (user added)
-  if (isCustom) {
+  if (isCustom && !isVisited && !isWishlist) {
     const svg = `
       <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -158,16 +157,22 @@ function FlyToStadium({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-// Component to handle map clicks for picking location
-function LocationPicker({ onLocationPick, isActive }: { onLocationPick: (lat: number, lng: number) => void; isActive: boolean }) {
-  useMapEvents({
-    click(e) {
-      if (isActive) {
-        onLocationPick(e.latlng.lat, e.latlng.lng);
-      }
-    },
-  });
-  return null;
+// Geocoding function using Nominatim (free, no API key needed)
+async function geocodeLocation(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+      { headers: { 'User-Agent': 'GroundhopperPro/1.0' } }
+    );
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+    return null;
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
 }
 
 interface Stadium {
@@ -235,14 +240,13 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   
   // Add stadium modal state
   const [showAddModal, setShowAddModal] = useState(false);
-  const [isPickingLocation, setIsPickingLocation] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [newStadium, setNewStadium] = useState({
     name: '',
     club_name: '',
     city: '',
     country: '',
-    latitude: '',
-    longitude: '',
     capacity: '',
     primary_color: '#ef4444',
     notes: ''
@@ -294,36 +298,55 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     }
   };
 
-  const handleLocationPick = (lat: number, lng: number) => {
-    setNewStadium(prev => ({
-      ...prev,
-      latitude: lat.toFixed(6),
-      longitude: lng.toFixed(6)
-    }));
-    setIsPickingLocation(false);
-  };
-
   const handleAddStadium = async () => {
-    if (!newStadium.name || !newStadium.latitude || !newStadium.longitude) {
-      alert(tr(lang, 'Vul minimaal naam en locatie in', 'Please fill in at least name and location'));
+    if (!newStadium.name || !newStadium.city) {
+      setSearchError(tr(lang, 'Vul minimaal stadion naam en stad in', 'Please fill in at least stadium name and city'));
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError('');
+
+    // Try to find the location automatically
+    const searchQueries = [
+      `${newStadium.name} stadium ${newStadium.city}`,
+      `${newStadium.name} ${newStadium.city}`,
+      `${newStadium.club_name} stadium ${newStadium.city}`,
+      `stadium ${newStadium.city}`
+    ];
+
+    let location = null;
+    for (const query of searchQueries) {
+      location = await geocodeLocation(query);
+      if (location) break;
+    }
+
+    if (!location) {
+      setIsSearching(false);
+      setSearchError(tr(lang, 
+        'Locatie niet gevonden. Probeer een andere stadion naam of stad.', 
+        'Location not found. Try a different stadium name or city.'
+      ));
       return;
     }
 
     const { data, error } = await supabase.from('bram_custom_stadiums').insert({
       name: newStadium.name,
       club_name: newStadium.club_name || null,
-      city: newStadium.city || null,
+      city: newStadium.city,
       country: newStadium.country || null,
-      latitude: parseFloat(newStadium.latitude),
-      longitude: parseFloat(newStadium.longitude),
+      latitude: location.lat,
+      longitude: location.lng,
       capacity: newStadium.capacity ? parseInt(newStadium.capacity) : null,
       primary_color: newStadium.primary_color,
       notes: newStadium.notes || null
     }).select().single();
 
+    setIsSearching(false);
+
     if (error) {
       console.error('Error adding stadium:', error);
-      alert(tr(lang, 'Fout bij toevoegen: ' + error.message, 'Error adding: ' + error.message));
+      setSearchError(tr(lang, 'Fout bij toevoegen: ' + error.message, 'Error adding: ' + error.message));
       return;
     }
 
@@ -335,12 +358,11 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         club_name: '',
         city: '',
         country: '',
-        latitude: '',
-        longitude: '',
         capacity: '',
         primary_color: '#ef4444',
         notes: ''
       });
+      setSearchError('');
       // Fly to new stadium
       setSelectedStadium({ lat: data.latitude, lng: data.longitude });
     }
@@ -355,7 +377,6 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   };
 
   const allStadiums = useMemo(() => {
-    // Combine regular stadiums with custom stadiums
     const customAsStadiums: Stadium[] = customStadiums.map(cs => ({
       id: `custom-${cs.id}`,
       name: cs.name,
@@ -441,7 +462,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
                 />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {stadium.club?.name || stadium.name}
                   </div>
@@ -453,7 +474,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                 )}
                 {stadium.id.startsWith('custom-') && (
-                  <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded">
+                  <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded flex-shrink-0">
                     {tr(lang, 'eigen', 'custom')}
                   </span>
                 )}
@@ -494,23 +515,29 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         </div>
       </div>
 
-      {/* Add Stadium Modal */}
+      {/* Add Stadium Modal - SIMPLIFIED */}
       {showAddModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAddModal(false); setIsPickingLocation(false); }} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAddModal(false); setSearchError(''); }} />
           <div className={`relative w-full max-w-md rounded-xl shadow-2xl ${
             theme === 'dark' ? 'bg-slate-800' : 'bg-white'
           }`}>
             <div className={`p-4 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
               <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                {tr(lang, 'Nieuw stadion toevoegen', 'Add new stadium')}
+                {tr(lang, '🏟️ Nieuw stadion toevoegen', '🏟️ Add new stadium')}
               </h2>
               <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Voeg een stadion toe dat nog niet in de database staat', 'Add a stadium that is not yet in the database')}
+                {tr(lang, 'Vul de gegevens in - de locatie wordt automatisch opgezocht!', 'Fill in the details - location is found automatically!')}
               </p>
             </div>
             
-            <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
+              {searchError && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                  {searchError}
+                </div>
+              )}
+
               <div>
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                   {tr(lang, 'Stadion naam', 'Stadium name')} *
@@ -519,12 +546,12 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   type="text"
                   value={newStadium.name}
                   onChange={(e) => setNewStadium(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder={tr(lang, 'bijv. Johan Cruijff Arena', 'e.g. Wembley Stadium')}
-                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                  placeholder={tr(lang, 'bijv. Volksparkstadion', 'e.g. Wembley Stadium')}
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
-                      ? 'bg-slate-700 text-white border-slate-600' 
-                      : 'bg-white text-slate-900 border-slate-300'
-                  } border`}
+                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                      : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                  } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 />
               </div>
 
@@ -536,30 +563,30 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   type="text"
                   value={newStadium.club_name}
                   onChange={(e) => setNewStadium(prev => ({ ...prev, club_name: e.target.value }))}
-                  placeholder={tr(lang, 'bijv. Ajax', 'e.g. Tottenham Hotspur')}
-                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                  placeholder={tr(lang, 'bijv. Hamburger SV', 'e.g. Tottenham Hotspur')}
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
-                      ? 'bg-slate-700 text-white border-slate-600' 
-                      : 'bg-white text-slate-900 border-slate-300'
-                  } border`}
+                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                      : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                  } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    {tr(lang, 'Stad', 'City')}
+                    {tr(lang, 'Stad', 'City')} *
                   </label>
                   <input
                     type="text"
                     value={newStadium.city}
                     onChange={(e) => setNewStadium(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder={tr(lang, 'bijv. Amsterdam', 'e.g. London')}
-                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    placeholder={tr(lang, 'bijv. Hamburg', 'e.g. London')}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                       theme === 'dark' 
-                        ? 'bg-slate-700 text-white border-slate-600' 
-                        : 'bg-white text-slate-900 border-slate-300'
-                    } border`}
+                        ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                        : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                    } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                   />
                 </div>
                 <div>
@@ -570,61 +597,14 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     type="text"
                     value={newStadium.country}
                     onChange={(e) => setNewStadium(prev => ({ ...prev, country: e.target.value }))}
-                    placeholder={tr(lang, 'bijv. Nederland', 'e.g. England')}
-                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    placeholder={tr(lang, 'bijv. Duitsland', 'e.g. Germany')}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                       theme === 'dark' 
-                        ? 'bg-slate-700 text-white border-slate-600' 
-                        : 'bg-white text-slate-900 border-slate-300'
-                    } border`}
+                        ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                        : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                    } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                  {tr(lang, 'Locatie', 'Location')} *
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newStadium.latitude}
-                    onChange={(e) => setNewStadium(prev => ({ ...prev, latitude: e.target.value }))}
-                    placeholder="Lat"
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${
-                      theme === 'dark' 
-                        ? 'bg-slate-700 text-white border-slate-600' 
-                        : 'bg-white text-slate-900 border-slate-300'
-                    } border`}
-                  />
-                  <input
-                    type="text"
-                    value={newStadium.longitude}
-                    onChange={(e) => setNewStadium(prev => ({ ...prev, longitude: e.target.value }))}
-                    placeholder="Lng"
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${
-                      theme === 'dark' 
-                        ? 'bg-slate-700 text-white border-slate-600' 
-                        : 'bg-white text-slate-900 border-slate-300'
-                    } border`}
-                  />
-                  <button
-                    onClick={() => {
-                      setIsPickingLocation(true);
-                      setShowAddModal(false);
-                    }}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 ${
-                      theme === 'dark' 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                    title={tr(lang, 'Klik op kaart om locatie te kiezen', 'Click on map to pick location')}
-                  >
-                    <MapPin className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {tr(lang, 'Klik op het pin-icoon om op de kaart te klikken', 'Click the pin icon to pick from the map')}
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -636,30 +616,30 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     type="number"
                     value={newStadium.capacity}
                     onChange={(e) => setNewStadium(prev => ({ ...prev, capacity: e.target.value }))}
-                    placeholder="50000"
-                    className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    placeholder="57000"
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                       theme === 'dark' 
-                        ? 'bg-slate-700 text-white border-slate-600' 
-                        : 'bg-white text-slate-900 border-slate-300'
-                    } border`}
+                        ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                        : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                    } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                   />
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    {tr(lang, 'Kleur', 'Colour')}
+                    {tr(lang, 'Clubkleur', 'Club colour')}
                   </label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
                       value={newStadium.primary_color}
                       onChange={(e) => setNewStadium(prev => ({ ...prev, primary_color: e.target.value }))}
-                      className="w-10 h-10 rounded cursor-pointer"
+                      className="w-10 h-10 rounded cursor-pointer border-0"
                     />
                     <input
                       type="text"
                       value={newStadium.primary_color}
                       onChange={(e) => setNewStadium(prev => ({ ...prev, primary_color: e.target.value }))}
-                      className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                      className={`flex-1 px-3 py-2.5 rounded-lg text-sm ${
                         theme === 'dark' 
                           ? 'bg-slate-700 text-white border-slate-600' 
                           : 'bg-white text-slate-900 border-slate-300'
@@ -678,63 +658,55 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   onChange={(e) => setNewStadium(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder={tr(lang, 'Optionele notities...', 'Optional notes...')}
                   rows={2}
-                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                  className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
-                      ? 'bg-slate-700 text-white border-slate-600' 
-                      : 'bg-white text-slate-900 border-slate-300'
-                  } border`}
+                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-400' 
+                      : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                  } border focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 />
               </div>
             </div>
 
             <div className={`p-4 border-t flex gap-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => { setShowAddModal(false); setSearchError(''); }}
+                disabled={isSearching}
                 className={`flex-1 py-2.5 rounded-lg font-medium text-sm ${
                   theme === 'dark' 
                     ? 'bg-slate-700 hover:bg-slate-600 text-white' 
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
-                }`}
+                } disabled:opacity-50`}
               >
                 {tr(lang, 'Annuleren', 'Cancel')}
               </button>
               <button
                 onClick={handleAddStadium}
-                className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-purple-600 hover:bg-purple-700 text-white"
+                disabled={isSearching}
+                className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {tr(lang, 'Toevoegen', 'Add')}
+                {isSearching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {tr(lang, 'Zoeken...', 'Searching...')}
+                  </>
+                ) : (
+                  tr(lang, 'Toevoegen', 'Add')
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Location picking mode indicator */}
-      {isPickingLocation && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[2000] px-4 py-2 rounded-lg bg-purple-600 text-white shadow-lg flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {tr(lang, 'Klik op de kaart om locatie te kiezen', 'Click on the map to pick location')}
-          </span>
-          <button 
-            onClick={() => { setIsPickingLocation(false); setShowAddModal(true); }}
-            className="ml-2 p-1 hover:bg-purple-700 rounded"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       <MapContainer
         center={[50.0, 10.0]}
         zoom={5}
-        className={`w-full h-full ${isPickingLocation ? 'cursor-crosshair' : ''}`}
+        className="w-full h-full"
         zoomControl={false}
         worldCopyJump={false}
         maxBoundsViscosity={1.0}
       >
         <MapBounds />
-        <LocationPicker onLocationPick={(lat, lng) => { handleLocationPick(lat, lng); setShowAddModal(true); }} isActive={isPickingLocation} />
         {selectedStadium && <FlyToStadium lat={selectedStadium.lat} lng={selectedStadium.lng} />}
         
         <TileLayer
@@ -759,7 +731,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist, isCustom && !isVisited && !isOnWishlist)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist, isCustom)}
             >
               <Popup>
                 <div className={`min-w-[280px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
