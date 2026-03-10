@@ -9,7 +9,8 @@
       "mcp__3e9ea36f-0234-4d2e-8001-099c74b99485__list_tables",
       "mcp__3e9ea36f-0234-4d2e-8001-099c74b99485__execute_sql",
       "WebFetch(domain:groundhopper-pro.vercel.app)",
-      "WebFetch(domain:www.thesportsdb.com)"
+      "WebFetch(domain:www.thesportsdb.com)",
+      "Bash(npx next build)"
     ]
   }
 }

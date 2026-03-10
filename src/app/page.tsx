@@ -157,7 +157,7 @@ export default function Home() {
           <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
           <div className={`absolute bottom-2 right-2 z-[1000] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v0.4.0
+            v0.5.0
           </div>
         </main>
       </LanguageContext.Provider>

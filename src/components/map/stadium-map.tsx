@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -354,6 +354,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [filterLeague, setFilterLeague] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'visited' | 'not_visited' | 'wishlist'>('all');
   const [filterCountry, setFilterCountry] = useState<string>('all');
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -668,6 +669,32 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     return filteredStadiums.slice(0, 8);
   }, [filteredStadiums, searchQuery]);
 
+  const leagueStats = useMemo(() => {
+    const stats: { league: string; total: number; visited: number; color: string }[] = [];
+    const leagueMap = new Map<string, { total: number; visited: number }>();
+
+    allStadiums.forEach(s => {
+      const league = s.club?.current_league?.name || tr(lang, 'Eigen toevoegingen', 'Custom stadiums');
+      if (!leagueMap.has(league)) leagueMap.set(league, { total: 0, visited: 0 });
+      const entry = leagueMap.get(league)!;
+      entry.total++;
+      if (visits.some(v => v.stadium_id === s.id)) entry.visited++;
+    });
+
+    const leagueColors: Record<string, string> = {
+      'Eredivisie': '#E30613', 'Eerste Divisie': '#FF8C00', 'Bundesliga': '#D20515',
+      'Premier League': '#3D195B', 'La Liga': '#EE2A24', 'Serie A': '#008FD7',
+      'Ligue 1': '#DCD509', 'Pro League': '#1D1160', 'Challenger Pro League': '#FF6B00',
+      'NIFL Premiership': '#006400', '3. Liga': '#000000',
+    };
+
+    leagueMap.forEach((val, key) => {
+      stats.push({ league: key, total: val.total, visited: val.visited, color: leagueColors[key] || '#6b7280' });
+    });
+
+    return stats.sort((a, b) => b.total - a.total);
+  }, [allStadiums, visits, lang]);
+
   if (!mounted) {
     return (
       <div className={`w-full h-full flex items-center justify-center ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
@@ -853,34 +880,103 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       </div>
 
       {/* Stats and Add button */}
-      <div className={`absolute top-20 right-4 z-[1001] flex gap-2`}>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
-            theme === 'dark' 
-              ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-              : 'bg-purple-500 hover:bg-purple-600 text-white'
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          {tr(lang, 'Stadion toevoegen', 'Add stadium')}
-        </button>
-        
-        <div className={`px-4 py-2 rounded-lg shadow-lg ${
-          theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
-        }`}>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-green-500" />
-              <span className="font-bold">{visits.length}</span>
-              <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {allStadiums.length}</span>
+      <div className={`absolute top-20 right-4 z-[1001] flex flex-col items-end gap-2 w-72`}>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
+              theme === 'dark'
+                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                : 'bg-purple-500 hover:bg-purple-600 text-white'
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            {tr(lang, 'Stadion toevoegen', 'Add stadium')}
+          </button>
+
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
+              showStats
+                ? 'bg-green-600 text-white'
+                : theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <Check className="w-3.5 h-3.5 text-green-500" />
+            <span className="font-bold">{visits.length}</span>
+            <span className={showStats ? 'text-green-200' : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {allStadiums.length}</span>
+          </button>
+        </div>
+
+        {/* Stats Dashboard */}
+        {showStats && (
+          <div className={`w-full rounded-lg shadow-lg overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className={`p-3 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              {/* Overall progress */}
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang, 'Totale voortgang', 'Total progress')}
+                </span>
+                <span className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  {allStadiums.length > 0 ? Math.round((visits.length / allStadiums.length) * 100) : 0}%
+                </span>
+              </div>
+              <div className={`w-full h-3 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
+                  style={{ width: `${allStadiums.length > 0 ? (visits.length / allStadiums.length) * 100 : 0}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-green-500" />
+                    <span className={theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}>{visits.length} {tr(lang, 'bezocht', 'visited')}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-500" />
+                    <span className={theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}>{wishlist.length} {tr(lang, 'wishlist', 'wishlist')}</span>
+                  </span>
+                </div>
+                <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {allStadiums.length - visits.length} {tr(lang, 'te gaan', 'to go')}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Star className="w-4 h-4 text-yellow-500" />
-              <span className="font-bold">{wishlist.length}</span>
+
+            {/* Per league breakdown */}
+            <div className="p-3 max-h-60 overflow-y-auto space-y-2.5">
+              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {tr(lang, 'Per competitie', 'By league')}
+              </span>
+              {leagueStats.map((ls) => (
+                <div key={ls.league}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: ls.color }} />
+                      <span className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                        {ls.league}
+                      </span>
+                    </div>
+                    <span className={`text-xs tabular-nums ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {ls.visited}/{ls.total}
+                    </span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${ls.total > 0 ? (ls.visited / ls.total) * 100 : 0}%`,
+                        backgroundColor: ls.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Add Stadium Modal - WITH SEARCH FIRST */}
