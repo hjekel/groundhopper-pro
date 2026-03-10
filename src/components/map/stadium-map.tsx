@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -350,6 +350,10 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   });
   const [showClubSuggestions, setShowClubSuggestions] = useState(false);
   const [clubSuggestionQuery, setClubSuggestionQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterLeague, setFilterLeague] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'visited' | 'not_visited' | 'wishlist'>('all');
+  const [filterCountry, setFilterCountry] = useState<string>('all');
 
   useEffect(() => {
     setMounted(true);
@@ -581,15 +585,83 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     return [...stadiums, ...customAsStadiums];
   }, [stadiums, customStadiums]);
 
+  const availableLeagues = useMemo(() => {
+    const leagues = new Map<string, string>();
+    allStadiums.forEach(s => {
+      if (s.club?.current_league) {
+        leagues.set(s.club.current_league.name, s.club.current_league.name);
+      }
+    });
+    return Array.from(leagues.values()).sort();
+  }, [allStadiums]);
+
+  const availableCountries = useMemo(() => {
+    const countries = new Set<string>();
+    allStadiums.forEach(s => {
+      if (s.city) {
+        const league = s.club?.current_league;
+        if (league) {
+          // Derive country from known leagues
+          const leagueCountry: Record<string, string> = {
+            'Eredivisie': 'Nederland', 'Eerste Divisie': 'Nederland',
+            'Premier League': 'England', 'Championship': 'England',
+            'Bundesliga': 'Deutschland', '2. Bundesliga': 'Deutschland', '3. Liga': 'Deutschland',
+            'La Liga': 'España', 'Serie A': 'Italia', 'Ligue 1': 'France',
+            'Pro League': 'België', 'Challenger Pro League': 'België',
+            'NIFL Premiership': 'Northern Ireland',
+          };
+          if (leagueCountry[league.name]) countries.add(leagueCountry[league.name]);
+        }
+      }
+    });
+    return Array.from(countries).sort();
+  }, [allStadiums]);
+
   const filteredStadiums = useMemo(() => {
-    if (!searchQuery.trim()) return allStadiums;
-    const q = searchQuery.toLowerCase();
-    return allStadiums.filter(s => 
-      s.name.toLowerCase().includes(q) ||
-      s.club?.name.toLowerCase().includes(q) ||
-      s.city?.toLowerCase().includes(q)
-    );
-  }, [allStadiums, searchQuery]);
+    let result = allStadiums;
+
+    // Text search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.club?.name.toLowerCase().includes(q) ||
+        s.city?.toLowerCase().includes(q)
+      );
+    }
+
+    // League filter
+    if (filterLeague !== 'all') {
+      result = result.filter(s => s.club?.current_league?.name === filterLeague);
+    }
+
+    // Country filter
+    if (filterCountry !== 'all') {
+      const leaguesByCountry: Record<string, string[]> = {
+        'Nederland': ['Eredivisie', 'Eerste Divisie'],
+        'England': ['Premier League', 'Championship'],
+        'Deutschland': ['Bundesliga', '2. Bundesliga', '3. Liga'],
+        'España': ['La Liga'],
+        'Italia': ['Serie A'],
+        'France': ['Ligue 1'],
+        'België': ['Pro League', 'Challenger Pro League'],
+        'Northern Ireland': ['NIFL Premiership'],
+      };
+      const countryLeagues = leaguesByCountry[filterCountry] || [];
+      result = result.filter(s => s.club?.current_league && countryLeagues.includes(s.club.current_league.name));
+    }
+
+    // Status filter
+    if (filterStatus === 'visited') {
+      result = result.filter(s => visits.some(v => v.stadium_id === s.id));
+    } else if (filterStatus === 'not_visited') {
+      result = result.filter(s => !visits.some(v => v.stadium_id === s.id));
+    } else if (filterStatus === 'wishlist') {
+      result = result.filter(s => wishlist.some(w => w.stadium_id === s.id));
+    }
+
+    return result;
+  }, [allStadiums, searchQuery, filterLeague, filterCountry, filterStatus, visits, wishlist]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) return [];
@@ -665,6 +737,117 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 )}
               </button>
             ))}
+          </div>
+        )}
+        {/* Filter toggle button */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`mt-2 w-full px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center justify-between transition ${
+            showFilters || filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all'
+              ? theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+              : theme === 'dark' ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-white text-slate-700 border border-slate-200'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            {tr(lang, 'Filters', 'Filters')}
+            {(filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all') && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                theme === 'dark' || showFilters || filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all'
+                  ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'
+              }`}>
+                {[filterLeague !== 'all', filterStatus !== 'all', filterCountry !== 'all'].filter(Boolean).length}
+              </span>
+            )}
+          </span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Filter panel */}
+        {showFilters && (
+          <div className={`mt-1 p-3 rounded-lg shadow-lg space-y-3 ${theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+            {/* Status filter */}
+            <div>
+              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {tr(lang, 'Status', 'Status')}
+              </label>
+              <div className="flex flex-wrap gap-1">
+                {([
+                  { value: 'all', label: tr(lang, 'Alle', 'All') },
+                  { value: 'visited', label: tr(lang, 'Bezocht', 'Visited') },
+                  { value: 'not_visited', label: tr(lang, 'Nog niet', 'Not yet') },
+                  { value: 'wishlist', label: tr(lang, 'Wishlist', 'Wishlist') },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilterStatus(opt.value)}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                      filterStatus === opt.value
+                        ? opt.value === 'visited' ? 'bg-green-600 text-white'
+                          : opt.value === 'wishlist' ? 'bg-yellow-500 text-white'
+                          : opt.value === 'not_visited' ? 'bg-slate-600 text-white'
+                          : 'bg-blue-600 text-white'
+                        : theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {opt.value === 'visited' && '✓ '}{opt.value === 'wishlist' && '★ '}{opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Country filter */}
+            <div>
+              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {tr(lang, 'Land', 'Country')}
+              </label>
+              <select
+                value={filterCountry}
+                onChange={(e) => { setFilterCountry(e.target.value); setFilterLeague('all'); }}
+                className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                  theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
+                } border`}
+              >
+                <option value="all">{tr(lang, 'Alle landen', 'All countries')}</option>
+                {availableCountries.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* League filter */}
+            <div>
+              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                {tr(lang, 'Competitie', 'League')}
+              </label>
+              <select
+                value={filterLeague}
+                onChange={(e) => setFilterLeague(e.target.value)}
+                className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                  theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
+                } border`}
+              >
+                <option value="all">{tr(lang, 'Alle competities', 'All leagues')}</option>
+                {availableLeagues.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Active filter count + reset */}
+            {(filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all') && (
+              <div className="flex items-center justify-between pt-1">
+                <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {filteredStadiums.length} {tr(lang, 'stadions', 'stadiums')}
+                </span>
+                <button
+                  onClick={() => { setFilterLeague('all'); setFilterStatus('all'); setFilterCountry('all'); }}
+                  className="text-xs text-red-400 hover:text-red-300 font-medium"
+                >
+                  {tr(lang, 'Reset filters', 'Reset filters')}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

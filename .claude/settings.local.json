@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l \"C:\\\\Users\\\\Jekel\\\\My Drive \\(hjekel@gmail.com\\)\\\\1. Up to date\\\\Projects 2023\\\\Direct Projects - Henk\\\\Bram\\\\groundhopper-pro\\\\.claude\\\\worktrees\\\\magical-zhukovsky\\\\src\\\\components\\\\map\\\\stadium-map.tsx\")",
+      "Bash(head -300 \"C:\\\\Users\\\\Jekel\\\\My Drive \\(hjekel@gmail.com\\)\\\\1. Up to date\\\\Projects 2023\\\\Direct Projects - Henk\\\\Bram\\\\groundhopper-pro\\\\.claude\\\\worktrees\\\\magical-zhukovsky\\\\src\\\\components\\\\map\\\\stadium-map.tsx\")",
+      "Bash(head -600 \"C:\\\\Users\\\\Jekel\\\\My Drive \\(hjekel@gmail.com\\)\\\\1. Up to date\\\\Projects 2023\\\\Direct Projects - Henk\\\\Bram\\\\groundhopper-pro\\\\.claude\\\\worktrees\\\\magical-zhukovsky\\\\src\\\\components\\\\map\\\\stadium-map.tsx\")",
+      "Bash(head -800 \"C:\\\\Users\\\\Jekel\\\\My Drive \\(hjekel@gmail.com\\)\\\\1. Up to date\\\\Projects 2023\\\\Direct Projects - Henk\\\\Bram\\\\groundhopper-pro\\\\.claude\\\\worktrees\\\\magical-zhukovsky\\\\src\\\\components\\\\map\\\\stadium-map.tsx\")",
+      "Bash(tail -300 \"C:\\\\Users\\\\Jekel\\\\My Drive \\(hjekel@gmail.com\\)\\\\1. Up to date\\\\Projects 2023\\\\Direct Projects - Henk\\\\Bram\\\\groundhopper-pro\\\\.claude\\\\worktrees\\\\magical-zhukovsky\\\\src\\\\components\\\\map\\\\stadium-map.tsx\")",
+      "mcp__3e9ea36f-0234-4d2e-8001-099c74b99485__list_tables",
+      "mcp__3e9ea36f-0234-4d2e-8001-099c74b99485__execute_sql",
+      "WebFetch(domain:groundhopper-pro.vercel.app)",
+      "WebFetch(domain:www.thesportsdb.com)"
+    ]
+  }
+}
