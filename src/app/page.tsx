@@ -8,11 +8,11 @@ import { LanguageContext, ThemeContext, Language, Theme } from '@/lib/contexts'
 const StadiumMap = dynamic(() => import('@/components/map/stadium-map'), {
   ssr: false,
   loading: () => (
-    <div className="h-screen w-full flex items-center justify-center bg-slate-900">
+    <div className="h-screen w-full flex items-center justify-center bg-slate-100">
       <div className="text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-500 mx-auto mb-4"></div>
-        <h2 className="text-xl font-bold text-white">Loading Groundhopper Pro...</h2>
-        <p className="text-slate-400 mt-2">Preparing your stadium map</p>
+        <h2 className="text-xl font-bold text-slate-900">Loading Groundhopper Pro...</h2>
+        <p className="text-slate-500 mt-2">Preparing your stadium map</p>
       </div>
     </div>
   ),
@@ -73,7 +73,7 @@ export default function Home() {
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('light')
   const [lang, setLang] = useState<Language>('nl')
   const [showSpartaTribute, setShowSpartaTribute] = useState(false)
 
