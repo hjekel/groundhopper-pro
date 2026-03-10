@@ -12,9 +12,12 @@ interface SpartaTributeProps {
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
 const IMAGES = {
-  kasteel: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Rotterdam_spangen_spartastadion.jpg/800px-Rotterdam_spangen_spartastadion.jpg',
+  kasteel: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Het_Kasteel%2C_Rotterdam.jpg/960px-Het_Kasteel%2C_Rotterdam.jpg',
   badge: 'https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png',
   banner: 'https://r2.thesportsdb.com/images/media/team/banner/r3ujd51722780656.jpg',
+  bokDeKorver: 'https://upload.wikimedia.org/wikipedia/commons/c/cd/BokdeKorver.jpg',
+  vanEde: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tonny_van_Ede_%281962%29.jpg/330px-Tonny_van_Ede_%281962%29.jpg',
+  terlouw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Rinus_Terlouw_%281951%29.jpg/330px-Rinus_Terlouw_%281951%29.jpg',
   neville: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg/300px-Denis_Neville%2C_trainer_van_Sparta%2C_1963.jpg',
   vanTiggelen: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Adri_van_Tiggelen_%28cropped%29.jpg',
   advocaat: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Dick_Advocaat_2021.jpg/500px-Dick_Advocaat_2021.jpg',
@@ -26,7 +29,7 @@ const legends = [
     name: 'Bok de Korver',
     years: '1902-1923',
     role: { nl: 'Verdediger - 363 wedstrijden, 31 interlands', en: 'Defender - 363 matches, 31 caps' },
-    photo: null,
+    photo: IMAGES.bokDeKorver,
     desc: {
       nl: 'Op 19-jarige leeftijd debuteerde Bok de Korver in Sparta\'s eerste elftal en droeg 21 seizoenen het rood-wit. Met 363 wedstrijden en 31 interlands is hij een van de grootste Spartanen ooit. De familietribune draagt zijn naam.',
       en: 'At age 19, Bok de Korver made his Sparta debut and wore the red-white for 21 seasons. With 363 matches and 31 international caps, he is one of the greatest Spartans ever. The family stand bears his name.'
@@ -34,22 +37,22 @@ const legends = [
   },
   {
     name: 'Tonny van Ede',
-    years: '1947-1964',
-    role: { nl: 'Keeper - 455 wedstrijden, clubrecord', en: 'Goalkeeper - 455 matches, club record' },
-    photo: null,
+    years: '1946-1964',
+    role: { nl: 'Aanvaller - 455 wedstrijden, clubrecord', en: 'Forward - 455 matches, club record' },
+    photo: IMAGES.vanEde,
     desc: {
-      nl: 'Als 11-jarig ventje kwam Tonny van Ede bij de Sparta-jeugd. Na zeventien jaar als eerste keeper hing hij in 1964 zijn handschoenen op met 455 officiële wedstrijden — een clubrecord. De tribune draagt sinds 2010 zijn naam.',
-      en: 'Tonny van Ede joined the Sparta youth at age 11. After seventeen years as first-choice keeper, he retired in 1964 with 455 official matches — a club record. The stand has borne his name since 2010.'
+      nl: '"De Schicht" — vanaf zijn elfde lid van Sparta, droeg achttien seizoenen het rood-wit als aanvaller. Met 455 competitiewedstrijden houdt hij het clubrecord. Kampioen in 1959, twee bekers, en #2 in de all-time Sparta top-60. De hoofdtribune draagt sinds 2008 zijn naam.',
+      en: '"The Flash" — a Sparta member from age eleven, he wore the red-white for eighteen seasons as a forward. With 455 competitive matches he holds the club record. Champion in 1959, two cups, and #2 in the all-time Sparta top-60. The main stand has borne his name since 2008.'
     },
   },
   {
     name: 'Rinus Terlouw',
     years: '1948-1958',
     role: { nl: 'Verdediger - 248 wedstrijden, 34 interlands', en: 'Defender - 248 matches, 34 caps' },
-    photo: null,
+    photo: IMAGES.terlouw,
     desc: {
-      nl: 'Samen met keeper Wim Landman maakte Rinus Terlouw Het Kasteel tot een onneembaar bolwerk. In tien seizoenen speelde hij 248 wedstrijden en verdiende 34 interlands voor Oranje.',
-      en: 'Together with goalkeeper Wim Landman, Rinus Terlouw made Het Kasteel an impregnable fortress. In ten seasons he played 248 matches and earned 34 international caps for the Netherlands.'
+      nl: '"De Rots" — samen met keeper Wim Landman maakte Rinus Terlouw Het Kasteel tot een onneembaar bolwerk. In tien seizoenen speelde hij 248 wedstrijden en verdiende 34 interlands voor Oranje.',
+      en: '"The Rock" — together with goalkeeper Wim Landman, Rinus Terlouw made Het Kasteel an impregnable fortress. In ten seasons he played 248 matches and earned 34 international caps for the Netherlands.'
     },
   },
   {
@@ -163,7 +166,7 @@ const milestones = [
   { year: '1909', event: { nl: 'Eerste landskampioenschap', en: 'First national championship' } },
   { year: '1911-15', event: { nl: 'Vier titels in vijf jaar', en: 'Four titles in five years' } },
   { year: '1916', event: { nl: 'Het Kasteel geopend in Spangen', en: 'Het Kasteel opened in Spangen' } },
-  { year: '1947', event: { nl: 'Tonny van Ede debuteert (455 wedstrijden)', en: 'Tonny van Ede debuts (455 matches)' } },
+  { year: '1946', event: { nl: 'Tonny van Ede debuteert — "De Schicht" (455 wedstrijden)', en: 'Tonny van Ede debuts — "The Flash" (455 matches)' } },
   { year: '1955', event: { nl: 'Denis Neville wordt trainer', en: 'Denis Neville becomes manager' } },
   { year: '1958', event: { nl: 'KNVB Beker winnaar', en: 'KNVB Cup winners' } },
   { year: '1959', event: { nl: 'Kampioen (83 goals!) + Europacup', en: 'Champions (83 goals!) + European Cup' } },
