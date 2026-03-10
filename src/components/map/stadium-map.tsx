@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2 } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -158,7 +158,7 @@ function FlyToStadium({ lat, lng }: { lat: number; lng: number }) {
 }
 
 // Geocoding function using Nominatim (free, no API key needed)
-async function geocodeLocation(query: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeLocation(query: string): Promise<{ lat: number; lng: number; display_name: string } | null> {
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
@@ -166,7 +166,11 @@ async function geocodeLocation(query: string): Promise<{ lat: number; lng: numbe
     );
     const data = await response.json();
     if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      return { 
+        lat: parseFloat(data[0].lat), 
+        lng: parseFloat(data[0].lon),
+        display_name: data[0].display_name 
+      };
     }
     return null;
   } catch (error) {
@@ -242,6 +246,8 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [foundLocation, setFoundLocation] = useState<{ lat: number; lng: number; display_name: string } | null>(null);
+  const [existingMatch, setExistingMatch] = useState<Stadium | null>(null);
   const [newStadium, setNewStadium] = useState({
     name: '',
     club_name: '',
@@ -280,6 +286,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       }).select().single();
       if (data) setVisits([...visits, data]);
     }
+    // Remove from wishlist if marking as visited
     if (!existing && wishlist.find(w => w.stadium_id === stadiumId)) {
       await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
       setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
@@ -288,17 +295,32 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   };
 
   const toggleWishlist = async (stadiumId: string) => {
+    // Check if already visited - if so, don't add to wishlist
+    if (visits.find(v => v.stadium_id === stadiumId)) {
+      return;
+    }
+    
     const existing = wishlist.find(w => w.stadium_id === stadiumId);
     if (existing) {
-      await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
-      setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
-    } else if (!visits.find(v => v.stadium_id === stadiumId)) {
-      const { data } = await supabase.from('bram_wishlist').insert({ stadium_id: stadiumId }).select().single();
-      if (data) setWishlist([...wishlist, data]);
+      const { error } = await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
+      if (!error) {
+        setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
+      }
+    } else {
+      const { data, error } = await supabase.from('bram_wishlist').insert({ 
+        stadium_id: stadiumId,
+        priority: 1
+      }).select().single();
+      if (!error && data) {
+        setWishlist([...wishlist, data]);
+      } else {
+        console.error('Wishlist error:', error);
+      }
     }
   };
 
-  const handleAddStadium = async () => {
+  // Search for location before adding
+  const handleSearchLocation = async () => {
     if (!newStadium.name || !newStadium.city) {
       setSearchError(tr(lang, 'Vul minimaal stadion naam en stad in', 'Please fill in at least stadium name and city'));
       return;
@@ -306,8 +328,28 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
     setIsSearching(true);
     setSearchError('');
+    setFoundLocation(null);
+    setExistingMatch(null);
 
-    // Try to find the location automatically
+    // Check if stadium already exists in database
+    const searchName = newStadium.name.toLowerCase();
+    const searchCity = newStadium.city.toLowerCase();
+    const searchClub = newStadium.club_name.toLowerCase();
+    
+    const existing = allStadiums.find(s => 
+      s.name.toLowerCase().includes(searchName) ||
+      s.name.toLowerCase().includes(searchCity) ||
+      s.club?.name.toLowerCase().includes(searchClub) ||
+      (s.city?.toLowerCase().includes(searchCity) && s.club?.name.toLowerCase().includes(searchClub))
+    );
+
+    if (existing) {
+      setExistingMatch(existing);
+      setIsSearching(false);
+      return;
+    }
+
+    // Try to find the location
     const searchQueries = [
       `${newStadium.name} stadium ${newStadium.city}`,
       `${newStadium.name} ${newStadium.city}`,
@@ -321,12 +363,22 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       if (location) break;
     }
 
+    setIsSearching(false);
+
     if (!location) {
-      setIsSearching(false);
       setSearchError(tr(lang, 
         'Locatie niet gevonden. Probeer een andere stadion naam of stad.', 
         'Location not found. Try a different stadium name or city.'
       ));
+      return;
+    }
+
+    setFoundLocation(location);
+  };
+
+  const handleAddStadium = async () => {
+    if (!foundLocation) {
+      setSearchError(tr(lang, 'Zoek eerst de locatie op', 'Search for the location first'));
       return;
     }
 
@@ -335,14 +387,12 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       club_name: newStadium.club_name || null,
       city: newStadium.city,
       country: newStadium.country || null,
-      latitude: location.lat,
-      longitude: location.lng,
+      latitude: foundLocation.lat,
+      longitude: foundLocation.lng,
       capacity: newStadium.capacity ? parseInt(newStadium.capacity) : null,
       primary_color: newStadium.primary_color,
       notes: newStadium.notes || null
     }).select().single();
-
-    setIsSearching(false);
 
     if (error) {
       console.error('Error adding stadium:', error);
@@ -353,18 +403,32 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     if (data) {
       setCustomStadiums([...customStadiums, data]);
       setShowAddModal(false);
-      setNewStadium({
-        name: '',
-        club_name: '',
-        city: '',
-        country: '',
-        capacity: '',
-        primary_color: '#ef4444',
-        notes: ''
-      });
-      setSearchError('');
+      resetAddForm();
       // Fly to new stadium
       setSelectedStadium({ lat: data.latitude, lng: data.longitude });
+    }
+  };
+
+  const resetAddForm = () => {
+    setNewStadium({
+      name: '',
+      club_name: '',
+      city: '',
+      country: '',
+      capacity: '',
+      primary_color: '#ef4444',
+      notes: ''
+    });
+    setSearchError('');
+    setFoundLocation(null);
+    setExistingMatch(null);
+  };
+
+  const goToExistingStadium = () => {
+    if (existingMatch) {
+      setSelectedStadium({ lat: existingMatch.latitude, lng: existingMatch.longitude });
+      setShowAddModal(false);
+      resetAddForm();
     }
   };
 
@@ -515,10 +579,10 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         </div>
       </div>
 
-      {/* Add Stadium Modal - SIMPLIFIED */}
+      {/* Add Stadium Modal - WITH SEARCH FIRST */}
       {showAddModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAddModal(false); setSearchError(''); }} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowAddModal(false); resetAddForm(); }} />
           <div className={`relative w-full max-w-md rounded-xl shadow-2xl ${
             theme === 'dark' ? 'bg-slate-800' : 'bg-white'
           }`}>
@@ -527,14 +591,45 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 {tr(lang, '🏟️ Nieuw stadion toevoegen', '🏟️ Add new stadium')}
               </h2>
               <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Vul de gegevens in - de locatie wordt automatisch opgezocht!', 'Fill in the details - location is found automatically!')}
+                {tr(lang, 'Vul de gegevens in en klik op "Zoek locatie"', 'Fill in the details and click "Search location"')}
               </p>
             </div>
             
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Error message */}
               {searchError && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
                   {searchError}
+                </div>
+              )}
+
+              {/* Existing stadium found */}
+              {existingMatch && (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-yellow-400 text-sm font-medium mb-2">
+                    {tr(lang, '⚠️ Dit stadion staat al in de database!', '⚠️ This stadium is already in the database!')}
+                  </p>
+                  <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <strong>{existingMatch.club?.name}</strong> - {existingMatch.name}, {existingMatch.city}
+                  </p>
+                  <button
+                    onClick={goToExistingStadium}
+                    className="w-full py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium"
+                  >
+                    {tr(lang, 'Ga naar dit stadion', 'Go to this stadium')}
+                  </button>
+                </div>
+              )}
+
+              {/* Location found */}
+              {foundLocation && !existingMatch && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <p className="text-green-400 text-sm font-medium mb-1">
+                    {tr(lang, '✓ Locatie gevonden!', '✓ Location found!')}
+                  </p>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {foundLocation.display_name}
+                  </p>
                 </div>
               )}
 
@@ -545,7 +640,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 <input
                   type="text"
                   value={newStadium.name}
-                  onChange={(e) => setNewStadium(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => { setNewStadium(prev => ({ ...prev, name: e.target.value })); setFoundLocation(null); setExistingMatch(null); }}
                   placeholder={tr(lang, 'bijv. Volksparkstadion', 'e.g. Wembley Stadium')}
                   className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
@@ -562,7 +657,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 <input
                   type="text"
                   value={newStadium.club_name}
-                  onChange={(e) => setNewStadium(prev => ({ ...prev, club_name: e.target.value }))}
+                  onChange={(e) => { setNewStadium(prev => ({ ...prev, club_name: e.target.value })); setFoundLocation(null); setExistingMatch(null); }}
                   placeholder={tr(lang, 'bijv. Hamburger SV', 'e.g. Tottenham Hotspur')}
                   className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
@@ -580,7 +675,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   <input
                     type="text"
                     value={newStadium.city}
-                    onChange={(e) => setNewStadium(prev => ({ ...prev, city: e.target.value }))}
+                    onChange={(e) => { setNewStadium(prev => ({ ...prev, city: e.target.value })); setFoundLocation(null); setExistingMatch(null); }}
                     placeholder={tr(lang, 'bijv. Hamburg', 'e.g. London')}
                     className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                       theme === 'dark' 
@@ -667,32 +762,55 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               </div>
             </div>
 
-            <div className={`p-4 border-t flex gap-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+            <div className={`p-4 border-t space-y-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              {/* Search button - always visible */}
               <button
-                onClick={() => { setShowAddModal(false); setSearchError(''); }}
-                disabled={isSearching}
-                className={`flex-1 py-2.5 rounded-lg font-medium text-sm ${
-                  theme === 'dark' 
-                    ? 'bg-slate-700 hover:bg-slate-600 text-white' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
-                } disabled:opacity-50`}
-              >
-                {tr(lang, 'Annuleren', 'Cancel')}
-              </button>
-              <button
-                onClick={handleAddStadium}
-                disabled={isSearching}
-                className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                onClick={handleSearchLocation}
+                disabled={isSearching || !newStadium.name || !newStadium.city}
+                className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 ${
+                  foundLocation && !existingMatch
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isSearching ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {tr(lang, 'Zoeken...', 'Searching...')}
                   </>
+                ) : foundLocation && !existingMatch ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    {tr(lang, 'Locatie gevonden - Opnieuw zoeken?', 'Location found - Search again?')}
+                  </>
                 ) : (
-                  tr(lang, 'Toevoegen', 'Add')
+                  <>
+                    <Search className="w-4 h-4" />
+                    {tr(lang, 'Zoek locatie', 'Search location')}
+                  </>
                 )}
               </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowAddModal(false); resetAddForm(); }}
+                  className={`flex-1 py-2.5 rounded-lg font-medium text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-slate-700 hover:bg-slate-600 text-white' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                  }`}
+                >
+                  {tr(lang, 'Annuleren', 'Cancel')}
+                </button>
+                <button
+                  onClick={handleAddStadium}
+                  disabled={!foundLocation || !!existingMatch}
+                  className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  {tr(lang, 'Toevoegen', 'Add')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -820,7 +938,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                           </button>
                           <button
                             onClick={() => toggleVisit(stadium.id)}
-                            className={`flex-1 py-1.5 rounded text-sm ${theme === 'dark' ? 'bg-slate-600 text-white' : 'bg-slate-200'}`}
+                            className={`flex-1 py-1.5 rounded text-sm font-medium ${theme === 'dark' ? 'bg-slate-600 hover:bg-slate-500 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-900'}`}
                           >
                             {tr(lang, 'Zonder datum', 'No date')}
                           </button>
@@ -839,12 +957,12 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                       }}
                       className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
                         isVisited
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                          ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-green-600 hover:bg-green-700 text-white'
                       }`}
                     >
                       {isVisited ? (
-                        <><Check className="w-4 h-4" /> {tr(lang, 'Bezocht', 'Visited')}</>
+                        <><Check className="w-4 h-4" /> {tr(lang, 'Bezocht ✓', 'Visited ✓')}</>
                       ) : (
                         <><Calendar className="w-4 h-4" /> {tr(lang, 'Markeer als bezocht', 'Mark as visited')}</>
                       )}
@@ -855,14 +973,14 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                         onClick={() => toggleWishlist(stadium.id)}
                         className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
                           isOnWishlist
-                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30'
+                            ? 'bg-yellow-500 text-white hover:bg-yellow-600'
                             : theme === 'dark'
-                              ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                              ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                              : 'bg-slate-200 hover:bg-slate-300 text-slate-900'
                         }`}
                       >
                         <Star className={`w-4 h-4 ${isOnWishlist ? 'fill-current' : ''}`} />
-                        {isOnWishlist ? tr(lang, 'Op wishlist', 'On wishlist') : tr(lang, 'Toevoegen aan wishlist', 'Add to wishlist')}
+                        {isOnWishlist ? tr(lang, 'Op wishlist ★', 'On wishlist ★') : tr(lang, 'Toevoegen aan wishlist', 'Add to wishlist')}
                       </button>
                     )}
 
@@ -870,15 +988,17 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stadium.name + ' ' + (stadium.city || ''))}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block w-full py-2.5 rounded-lg font-medium text-sm text-center bg-blue-600 hover:bg-blue-700 text-white transition"
+                      className="w-full py-2.5 rounded-lg font-medium text-sm text-center bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50 transition flex items-center justify-center gap-2"
                     >
+                      <MapPin className="w-4 h-4" />
                       {tr(lang, 'Open in Google Maps', 'Open in Google Maps')}
+                      <ExternalLink className="w-3 h-3" />
                     </a>
 
                     {isCustom && (
                       <button
                         onClick={() => customData && deleteCustomStadium(customData.id)}
-                        className="w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10 transition"
+                        className="w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30 transition"
                       >
                         <X className="w-4 h-4" />
                         {tr(lang, 'Verwijderen', 'Delete')}
