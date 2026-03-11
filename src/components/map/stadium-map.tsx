@@ -105,6 +105,50 @@ const CLUB_SUGGESTIONS: { club: string; stadium: string; city: string; country: 
   { club: 'AFC Wimbledon', stadium: 'Plough Lane', city: 'London', country: 'England', color: '#00008B', aliases: ['wimbledon', 'crazy gang'] },
 ];
 
+// Special club stories (Netflix series, famous owners, etc.)
+const CLUB_STORIES: Record<string, { icon: string; label: { nl: string; en: string }; lines: { nl: string[]; en: string[] } }> = {
+  'Wrexham AFC': {
+    icon: '🎬',
+    label: { nl: 'Beroemd verhaal', en: 'Famous story' },
+    lines: {
+      nl: [
+        '🎬 De Disney+ serie "Welcome to Wrexham" volgt de club sinds 2022',
+        '⭐ Eigenaren: Hollywood-sterren Ryan Reynolds & Rob McElhenney',
+        '📈 Kochten de club in 2020 in de 5e divisie — nu terug in de Football League',
+        '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Oudste club van Wales (opgericht 1864) en 3e oudste ter wereld',
+        '🌍 Van lokale amateurclub naar wereldwijd bekende naam',
+      ],
+      en: [
+        '🎬 The Disney+ series "Welcome to Wrexham" has followed the club since 2022',
+        '⭐ Owners: Hollywood stars Ryan Reynolds & Rob McElhenney',
+        '📈 Bought the club in 2020 in the 5th tier — now back in the Football League',
+        '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Oldest club in Wales (founded 1864) and 3rd oldest in the world',
+        '🌍 From local non-league club to a globally recognised name',
+      ],
+    },
+  },
+  'Sunderland AFC': {
+    icon: '🎬',
+    label: { nl: 'Beroemd verhaal', en: 'Famous story' },
+    lines: {
+      nl: [
+        '🎬 Netflix-serie "Sunderland \'Til I Die" (2018-2020, 3 seizoenen)',
+        '📺 Een van de eerste voetbal-docuseries, wereldwijd succes',
+        '😢 Volgt de pijn van degradatie en de hoop op terugkeer',
+        '🏟️ Stadium of Light: 49.000 zitplaatsen, altijd vol passie',
+        '🏆 6x Engels kampioen (lang geleden), maar de fans blijven trouw',
+      ],
+      en: [
+        '🎬 Netflix series "Sunderland \'Til I Die" (2018-2020, 3 seasons)',
+        '📺 One of the first football docuseries, a worldwide hit',
+        '😢 Follows the heartbreak of relegation and the hope of return',
+        '🏟️ Stadium of Light: 49,000 seats, always full of passion',
+        '🏆 6x English champions (long ago), but the fans never give up',
+      ],
+    },
+  },
+};
+
 const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
 
@@ -2257,6 +2301,29 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   {stadium.club?.name && !isCustom && (
                     <ClubPopupDetails clubName={stadium.club.name} theme={theme} lang={lang} />
                   )}
+
+                  {/* Famous club story (Netflix series, etc.) */}
+                  {stadium.club?.name && CLUB_STORIES[stadium.club.name] && (() => {
+                    const story = CLUB_STORIES[stadium.club.name];
+                    const lines = lang === 'nl' ? story.lines.nl : story.lines.en;
+                    const label = lang === 'nl' ? story.label.nl : story.label.en;
+                    return (
+                      <div className={`border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
+                        <div className={`px-4 py-2 ${theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'}`}>
+                          <div className={`font-bold text-[10px] uppercase tracking-wider mb-1.5 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+                            {story.icon} {label}
+                          </div>
+                          <div className="space-y-1">
+                            {lines.map((line, i) => (
+                              <div key={i} className={`text-xs leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Custom stadium notes */}
                   {customData?.notes && (
