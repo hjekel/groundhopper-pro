@@ -234,7 +234,7 @@ export default function Home() {
           )}
 
           <div className={`absolute bottom-2 right-2 z-[1000] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v0.9.4
+            v1.0
           </div>
         </main>
       </LanguageContext.Provider>
