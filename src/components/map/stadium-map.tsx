@@ -147,6 +147,26 @@ const CLUB_STORIES: Record<string, { icon: string; label: { nl: string; en: stri
       ],
     },
   },
+  'Telstar': {
+    icon: '🦁',
+    label: { nl: 'Plaatselijke trots', en: 'Local pride' },
+    lines: {
+      nl: [
+        '🦁 "De Witte Leeuwen" — trots van de IJmond sinds 1963',
+        '⭐ Vernoemd naar de Telstar-satelliet, de eerste live tv-satelliet',
+        '🏟️ Kleinste profstadion van Nederland, maar groot in sfeer',
+        '⚽ Bekende oud-spelers: Frank Rijkaard begon hier als jeugdspeler',
+        '🤍 Altijd in het wit — uniek in het Nederlandse voetbal',
+      ],
+      en: [
+        '🦁 "The White Lions" — pride of the IJmond region since 1963',
+        '⭐ Named after the Telstar satellite, the first live TV satellite',
+        '🏟️ Smallest professional stadium in the Netherlands, but big in spirit',
+        '⚽ Famous alumni: Frank Rijkaard started here in the youth academy',
+        '🤍 Always in white — unique in Dutch football',
+      ],
+    },
+  },
 };
 
 const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
