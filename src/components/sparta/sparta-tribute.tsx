@@ -91,8 +91,7 @@ const legends = [
 // Verified squad via ESPN, Transfermarkt, Sparta-rotterdam.nl (2024-25 season)
 // Note: Sparta uses traditional 1-11 numbering per match — no fixed squad numbers
 const squad = [
-  { name: 'Nick Olij', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: null, note: { nl: '1e keeper', en: '1st choice' } },
-  { name: 'Joel Drommel', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q3r4li1646699927.jpg' },
+  { name: 'Joel Drommel', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/q3r4li1646699927.jpg', note: { nl: '1e keeper', en: '1st choice' } },
   { name: 'Filip Bednarek', position: { nl: 'Keeper', en: 'Goalkeeper' }, nationality: '🇵🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/ksus991696664818.jpg' },
   { name: 'Bruno Martins Indi', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: 'https://r2.thesportsdb.com/images/media/player/thumb/2sx3a31509654666.jpg' },
   { name: 'Patrick van Aanholt', position: { nl: 'Verdediger', en: 'Defender' }, nationality: '🇳🇱', photo: null, note: { nl: 'ex-Chelsea, Crystal Palace', en: 'ex-Chelsea, Crystal Palace' } },
@@ -121,6 +120,7 @@ const exPlayers = [
   { name: 'Henk Fraser', years: '1984-1986', role: { nl: 'Verdediger — Feyenoord, WK \'90, later Sparta-coach', en: 'Defender — Feyenoord, WC \'90, later Sparta coach' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Henk_Fraser_coach.jpg' },
   { name: 'Danny Koevermans', years: '2000-2005', role: { nl: 'Aanvaller — 71 goals in 110 wedstrijden!', en: 'Forward — 71 goals in 110 matches!' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Danny-Koevermans2.jpg/330px-Danny-Koevermans2.jpg' },
   { name: 'Jetro Willems', years: 'Jeugd-2011', role: { nl: 'Verdediger — jongste EK-speler ooit (18 jr)', en: 'Defender — youngest ever Euro Champ player (18)' }, photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/PSV_Eindhoven%2C_Teamcamp_Bad_Erlach%2C_July_2014_%28154%29_%28cropped%29.jpg/330px-PSV_Eindhoven%2C_Teamcamp_Bad_Erlach%2C_July_2014_%28154%29_%28cropped%29.jpg' },
+  { name: 'Nick Olij', years: '2019-2025', role: { nl: 'Keeper — fan-favoriet, 150+ wed., vertrokken naar PSV', en: 'GK — fan favourite, 150+ apps, departed to PSV' }, photo: null },
 ];
 
 // Verified youth academy products via Transfermarkt, Wikipedia, NOS, Squawka

@@ -99,80 +99,68 @@ const CLUB_SUGGESTIONS: { club: string; stadium: string; city: string; country: 
   { club: 'RSC Anderlecht', stadium: 'Lotto Park', city: 'Brussels', country: 'België', color: '#66008C', aliases: ['anderlecht'] },
   { club: 'Red Bull Salzburg', stadium: 'Red Bull Arena', city: 'Salzburg', country: 'Österreich', color: '#DD0741', aliases: ['salzburg'] },
   { club: 'Rapid Wien', stadium: 'Allianz Stadion', city: 'Vienna', country: 'Österreich', color: '#009639', aliases: ['rapid vienna'] },
+  // Notable clubs (Netflix, etc.)
+  { club: 'Wrexham AFC', stadium: 'Racecourse Ground', city: 'Wrexham', country: 'Wales', color: '#E30613', aliases: ['wrexham', 'ryan reynolds'] },
+  { club: 'Sunderland AFC', stadium: 'Stadium of Light', city: 'Sunderland', country: 'England', color: '#EB172B', aliases: ['sunderland', 'sunderland til i die'] },
+  { club: 'AFC Wimbledon', stadium: 'Plough Lane', city: 'London', country: 'England', color: '#00008B', aliases: ['wimbledon', 'crazy gang'] },
 ];
 
 const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
 
-  // --- Sparta: extra large golden-glow pin with crest ---
+  // Status badge (small corner overlay)
+  const badge = isVisited
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
+    : isWishlist
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><polygon points="6,1 7.5,4.5 11,4.5 8,7 9.5,11 6,8.5 2.5,11 4,7 1,4.5 4.5,4.5" fill="white"/></svg></div>`
+    : isCustom
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><path d="M6 2V10M2 6H10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>`
+    : '';
+
+  const borderCol = isVisited ? '#22c55e' : isWishlist ? '#eab308' : isCustom ? '#8b5cf6' : 'white';
+
+  // --- Sparta: larger logo badge with golden ring + glow ---
   if (isSparta) {
-    const logoHtml = crestUrl
-      ? `<img src="${crestUrl}" style="width:22px;height:22px;object-fit:contain;" />`
-      : `<span style="font-size:14px;font-weight:bold;color:#CC0000">S</span>`;
-    const visitBadge = isVisited
-      ? `<div style="position:absolute;top:0;right:2px;width:16px;height:16px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
-      : '';
+    const s = 44;
+    const logo = crestUrl
+      ? `<img src="${crestUrl}" style="width:30px;height:30px;object-fit:contain;" />`
+      : `<span style="font-size:16px;font-weight:bold;color:#CC0000">S</span>`;
     return L.divIcon({
-      html: `
-        <div style="position:relative;width:48px;height:56px;">
-          <svg width="48" height="56" viewBox="0 0 48 56" style="position:absolute;top:0;left:0;">
-            <circle cx="24" cy="22" r="22" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5" class="sparta-pulse"/>
-            <path d="M24 4C13.507 4 5 12.507 5 23c0 10.493 19 29 19 29s19-18.507 19-29C43 12.507 34.493 4 24 4z"
-                  fill="#CC0000" stroke="#FFD700" stroke-width="2.5"/>
-          </svg>
-          <div style="position:absolute;top:10px;left:11px;width:26px;height:26px;border-radius:50%;background:white;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-            ${logoHtml}
-          </div>
-          ${visitBadge}
-        </div>
-      `,
+      html: `<div style="position:relative;width:${s}px;height:${s}px;">
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:white;border:3px solid #FFD700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(255,215,0,0.3);">${logo}</div>
+        ${badge}
+      </div>`,
       className: 'custom-stadium-marker sparta-special',
-      iconSize: [48, 56] as any,
-      iconAnchor: [24, 56] as any,
-      popupAnchor: [0, -56] as any,
-      tooltipAnchor: [0, -56] as any,
+      iconSize: [s, s] as any,
+      iconAnchor: [s / 2, s / 2] as any,
+      popupAnchor: [0, -(s / 2)] as any,
+      tooltipAnchor: [0, -(s / 2)] as any,
     } as any);
   }
 
-  // --- All other markers: pin with club logo + status badge ---
-  let borderStroke = '';
-  let badge = '';
-  let className = 'custom-stadium-marker';
+  // --- All other markers: circular logo badge (crest = the marker) ---
+  const s = 34;
+  const className = isCustom ? 'custom-stadium-marker custom-added' : 'custom-stadium-marker';
 
-  if (isVisited) {
-    borderStroke = 'stroke="#22c55e" stroke-width="3"';
-    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
-  } else if (isWishlist) {
-    borderStroke = 'stroke="#eab308" stroke-width="2"';
-    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><polygon points="6,1 7.5,4.5 11,4.5 8,7 9.5,11 6,8.5 2.5,11 4,7 1,4.5 4.5,4.5" fill="white"/></svg></div>`;
-  } else if (isCustom) {
-    borderStroke = 'stroke="#8b5cf6" stroke-width="2.5"';
-    className = 'custom-stadium-marker custom-added';
-    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M6 2V10M2 6H10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>`;
-  }
-
-  const logoHtml = crestUrl
-    ? `<img src="${crestUrl}" style="width:18px;height:18px;object-fit:contain;" onerror="this.style.display='none'" />`
-    : '';
-
-  return L.divIcon({
-    html: `
-      <div style="position:relative;width:36px;height:44px;">
-        <svg width="36" height="44" viewBox="0 0 36 44" style="position:absolute;top:0;left:0;">
-          <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
-                fill="${color}" ${borderStroke}/>
-        </svg>
-        <div style="position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:50%;background:white;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-          ${logoHtml}
+  const html = crestUrl
+    ? `<div style="position:relative;width:${s}px;height:${s}px;">
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:white;border:2.5px solid ${borderCol};display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <img src="${crestUrl}" style="width:22px;height:22px;object-fit:contain;" onerror="this.parentElement.style.background='${color}'" />
         </div>
         ${badge}
-      </div>
-    `,
+      </div>`
+    : `<div style="position:relative;width:${s}px;height:${s}px;">
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid ${borderCol === 'white' ? 'rgba(255,255,255,0.8)' : borderCol};display:flex;align-items:center;justify-content:center;"></div>
+        ${badge}
+      </div>`;
+
+  return L.divIcon({
+    html,
     className,
-    iconSize: [36, 44] as any,
-    iconAnchor: [18, 44] as any,
-    popupAnchor: [0, -44] as any,
-    tooltipAnchor: [0, -44] as any,
+    iconSize: [s, s] as any,
+    iconAnchor: [s / 2, s / 2] as any,
+    popupAnchor: [0, -(s / 2)] as any,
+    tooltipAnchor: [0, -(s / 2)] as any,
   } as any);
 };
 
@@ -250,6 +238,56 @@ function extractHistoryBullets(description?: string, formedYear?: string, lang?:
     }
   }
   return bullets.slice(0, 4);
+}
+
+// Stadium photo component - uses TheSportsDB as fallback when no database image
+function StadiumPhoto({ clubName, imageUrl, stadiumName, city, builtYear, theme, lang }: {
+  clubName?: string; imageUrl?: string; stadiumName: string; city?: string; builtYear?: number; theme: string; lang: string;
+}) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(imageUrl || null);
+  const [tried, setTried] = useState(false);
+
+  useEffect(() => {
+    if (imageUrl || !clubName || tried) return;
+    // Check cache first
+    const cached = clubDetailsCache.get(clubName);
+    if (cached?.stadiumThumb) { setPhotoUrl(cached.stadiumThumb); return; }
+    if (cached !== undefined) { setTried(true); return; }
+    // Fetch from TheSportsDB
+    fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(clubName)}`)
+      .then(r => r.json())
+      .then(d => {
+        const t = d.teams?.[0];
+        if (t?.strStadiumThumb) {
+          setPhotoUrl(t.strStadiumThumb);
+          // Also update cache so ClubPopupDetails doesn't refetch
+          if (!clubDetailsCache.has(clubName)) {
+            clubDetailsCache.set(clubName, {
+              jersey: t.strTeamJersey || undefined,
+              description: t.strDescriptionEN || '',
+              formedYear: t.intFormedYear || undefined,
+              stadiumThumb: t.strStadiumThumb,
+            });
+          }
+        }
+        setTried(true);
+      })
+      .catch(() => setTried(true));
+  }, [clubName, imageUrl, tried]);
+
+  return (
+    <div className={`w-full h-40 relative overflow-hidden ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`}>
+      {photoUrl ? (
+        <img src={photoUrl} alt={stadiumName} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      ) : (
+        <div className={`w-full h-full flex items-center justify-center text-5xl ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>🏟️</div>
+      )}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-2.5">
+        <div className="text-white font-bold text-sm drop-shadow-md">{stadiumName}</div>
+        <div className="text-white/70 text-xs">{city}{builtYear ? ` · ${lang === 'nl' ? 'Gebouwd' : 'Built'} ${builtYear}` : ''}</div>
+      </div>
+    </div>
+  );
 }
 
 function ClubPopupDetails({ clubName, theme, lang }: { clubName: string; theme: string; lang: string }) {
@@ -2182,18 +2220,16 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     )}
                   </div>
 
-                  {/* Stadium photo with name overlay */}
-                  <div className={`w-full h-40 relative overflow-hidden ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                    {stadium.image_url ? (
-                      <img src={stadium.image_url} alt={stadium.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <div className={`w-full h-full flex items-center justify-center text-5xl ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>🏟️</div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-2.5">
-                      <div className="text-white font-bold text-sm drop-shadow-md">{stadium.name}</div>
-                      <div className="text-white/70 text-xs">{stadium.city}{stadium.built_year ? ` · ${tr(lang, 'Gebouwd', 'Built')} ${stadium.built_year}` : ''}</div>
-                    </div>
-                  </div>
+                  {/* Stadium photo with TheSportsDB fallback */}
+                  <StadiumPhoto
+                    clubName={stadium.club?.name}
+                    imageUrl={stadium.image_url}
+                    stadiumName={stadium.name}
+                    city={stadium.city}
+                    builtYear={stadium.built_year}
+                    theme={theme}
+                    lang={lang}
+                  />
 
                   {/* Stats row */}
                   <div className={`px-4 py-2.5 flex items-center justify-between text-xs border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
