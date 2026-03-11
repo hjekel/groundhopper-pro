@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3, Navigation, Clock } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3, Navigation, Clock, Edit3, Trash2, SortAsc, SortDesc, AlertCircle } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -419,6 +419,14 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
   // Timeline feature
   const [showTimeline, setShowTimeline] = useState(false);
+
+  // Visit manager feature
+  const [showVisitManager, setShowVisitManager] = useState(false);
+  const [editingVisit, setEditingVisit] = useState<string | null>(null);
+  const [editVisitDate, setEditVisitDate] = useState('');
+  const [editVisitNotes, setEditVisitNotes] = useState('');
+  const [visitManagerSort, setVisitManagerSort] = useState<'date' | 'name'>('date');
+  const [visitManagerFilter, setVisitManagerFilter] = useState<'all' | 'no_date'>('all');
 
   useEffect(() => {
     setMounted(true);
@@ -857,6 +865,55 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     );
   };
 
+  // Update visit date and notes
+  const updateVisit = async (stadiumId: string, date: string | null, notes: string) => {
+    const { error } = await supabase
+      .from('stadium_visits')
+      .update({
+        first_visit_date: date || null,
+        last_visit_date: date || null,
+        notes: notes || null
+      })
+      .eq('stadium_id', stadiumId);
+    if (!error) {
+      setVisits(visits.map(v =>
+        v.stadium_id === stadiumId ? { ...v, visit_date: date, notes: notes || undefined } : v
+      ));
+      setEditingVisit(null);
+    }
+  };
+
+  // Delete a single visit
+  const removeVisit = async (stadiumId: string) => {
+    await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId);
+    setVisits(visits.filter(v => v.stadium_id !== stadiumId));
+  };
+
+  // Visit manager data: enriched visits with stadium info, sorted
+  const visitManagerData = useMemo(() => {
+    let data = visits.map(v => {
+      const stadium = allStadiums.find(s => s.id === v.stadium_id);
+      return { ...v, stadium };
+    }).filter(v => v.stadium);
+
+    if (visitManagerFilter === 'no_date') {
+      data = data.filter(v => !v.visit_date);
+    }
+
+    if (visitManagerSort === 'date') {
+      data.sort((a, b) => {
+        if (!a.visit_date && !b.visit_date) return 0;
+        if (!a.visit_date) return 1;
+        if (!b.visit_date) return -1;
+        return new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime();
+      });
+    } else {
+      data.sort((a, b) => (a.stadium?.club?.name || a.stadium?.name || '').localeCompare(b.stadium?.club?.name || b.stadium?.name || ''));
+    }
+
+    return data;
+  }, [visits, allStadiums, visitManagerSort, visitManagerFilter]);
+
   // Computed nearest unvisited stadiums from user location
   const nearestUnvisited = useMemo(() => {
     if (!userLocation) return [];
@@ -1192,8 +1249,8 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               ))}
             </div>
 
-            {/* Timeline button */}
-            <div className={`p-3 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+            {/* Timeline + Visit Manager buttons */}
+            <div className={`p-3 border-t space-y-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
               <button
                 onClick={() => setShowTimeline(true)}
                 className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
@@ -1204,6 +1261,24 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               >
                 <Clock className="w-4 h-4" />
                 {tr(lang, 'Bezoek Tijdlijn', 'Visit Timeline')}
+              </button>
+              <button
+                onClick={() => setShowVisitManager(true)}
+                className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                  theme === 'dark'
+                    ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-500/30'
+                    : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                }`}
+              >
+                <Edit3 className="w-4 h-4" />
+                {tr(lang, 'Mijn Bezoeken', 'My Visits')}
+                {visits.filter(v => !v.visit_date).length > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    theme === 'dark' ? 'bg-amber-500/30 text-amber-400' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {visits.filter(v => !v.visit_date).length} {tr(lang, 'zonder datum', 'no date')}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -1596,6 +1671,238 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                             </div>
                           </div>
                         </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visit Manager Modal */}
+      {showVisitManager && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowVisitManager(false); setEditingVisit(null); }} />
+          <div className={`relative w-full max-w-lg max-h-[85vh] rounded-xl shadow-2xl flex flex-col ${
+            theme === 'dark' ? 'bg-slate-800' : 'bg-white'
+          }`}>
+            {/* Header */}
+            <div className={`p-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  {tr(lang, 'Mijn Bezoeken', 'My Visits')}
+                </h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {visits.length} {tr(lang, 'stadions bezocht', 'stadiums visited')}
+                  {visits.filter(v => !v.visit_date).length > 0 && (
+                    <span className="text-amber-500 ml-2">
+                      ({visits.filter(v => !v.visit_date).length} {tr(lang, 'zonder datum', 'missing date')})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button onClick={() => { setShowVisitManager(false); setEditingVisit(null); }}>
+                <X className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+              </button>
+            </div>
+
+            {/* Sort & Filter bar */}
+            <div className={`px-4 py-2 flex items-center gap-2 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <button
+                onClick={() => setVisitManagerSort(visitManagerSort === 'date' ? 'name' : 'date')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+                  theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {visitManagerSort === 'date' ? <SortDesc className="w-3 h-3" /> : <SortAsc className="w-3 h-3" />}
+                {visitManagerSort === 'date' ? tr(lang, 'Op datum', 'By date') : tr(lang, 'Op naam', 'By name')}
+              </button>
+              <button
+                onClick={() => setVisitManagerFilter(visitManagerFilter === 'all' ? 'no_date' : 'all')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+                  visitManagerFilter === 'no_date'
+                    ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+                    : theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <AlertCircle className="w-3 h-3" />
+                {tr(lang, 'Zonder datum', 'Missing date')}
+                {visits.filter(v => !v.visit_date).length > 0 && (
+                  <span className="font-bold">{visits.filter(v => !v.visit_date).length}</span>
+                )}
+              </button>
+            </div>
+
+            {/* Visit list */}
+            <div className="flex-1 overflow-y-auto">
+              {visitManagerData.length === 0 ? (
+                <div className={`text-center py-12 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">
+                    {visitManagerFilter === 'no_date'
+                      ? tr(lang, 'Alle bezoeken hebben een datum!', 'All visits have a date!')
+                      : tr(lang, 'Nog geen bezoeken', 'No visits yet')}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y" style={{ borderColor: theme === 'dark' ? '#334155' : '#e2e8f0' }}>
+                  {visitManagerData.map((entry) => {
+                    const isEditing = editingVisit === entry.stadium_id;
+                    return (
+                      <div
+                        key={entry.stadium_id}
+                        className={`px-4 py-3 transition ${
+                          isEditing
+                            ? theme === 'dark' ? 'bg-slate-700/50' : 'bg-blue-50/50'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Club logo */}
+                          <div className="relative w-8 h-8 flex-shrink-0">
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{ backgroundColor: entry.stadium?.club?.primary_color || '#6b7280' }}
+                            />
+                            {entry.stadium?.club?.crest_url && (
+                              <img
+                                src={entry.stadium.club.crest_url}
+                                alt=""
+                                className="absolute inset-0 w-8 h-8 rounded-full object-contain bg-white p-0.5"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                              {entry.stadium?.club?.name || entry.stadium?.name}
+                            </div>
+                            <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {entry.stadium?.name} — {entry.stadium?.city}
+                            </div>
+                          </div>
+
+                          {/* Date display */}
+                          <div className="flex-shrink-0 text-right">
+                            {entry.visit_date ? (
+                              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                                {new Date(entry.visit_date).toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-amber-500 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                {tr(lang, 'Geen datum', 'No date')}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                if (isEditing) {
+                                  setEditingVisit(null);
+                                } else {
+                                  setEditingVisit(entry.stadium_id);
+                                  setEditVisitDate(entry.visit_date || '');
+                                  setEditVisitNotes(entry.notes || '');
+                                }
+                              }}
+                              className={`p-1.5 rounded transition ${
+                                isEditing
+                                  ? 'bg-blue-500 text-white'
+                                  : theme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-600' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                              }`}
+                              title={tr(lang, 'Bewerken', 'Edit')}
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(tr(lang,
+                                  `Bezoek aan ${entry.stadium?.club?.name || entry.stadium?.name} verwijderen?`,
+                                  `Remove visit to ${entry.stadium?.club?.name || entry.stadium?.name}?`
+                                ))) {
+                                  removeVisit(entry.stadium_id);
+                                }
+                              }}
+                              className={`p-1.5 rounded transition ${
+                                theme === 'dark' ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                              }`}
+                              title={tr(lang, 'Verwijderen', 'Remove')}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Edit panel */}
+                        {isEditing && (
+                          <div className={`mt-3 p-3 rounded-lg ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-50'}`}>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                  {tr(lang, 'Datum bezoek', 'Visit date')}
+                                </label>
+                                <input
+                                  type="date"
+                                  value={editVisitDate}
+                                  onChange={(e) => setEditVisitDate(e.target.value)}
+                                  className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white border-slate-500' : 'bg-white text-slate-900 border-slate-300'
+                                  } border`}
+                                />
+                              </div>
+                              <div>
+                                <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                  {tr(lang, 'Notities', 'Notes')}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editVisitNotes}
+                                  onChange={(e) => setEditVisitNotes(e.target.value)}
+                                  placeholder={tr(lang, 'bijv. 2-1 winst!', 'e.g. 2-1 win!')}
+                                  className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white border-slate-500 placeholder-slate-400' : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                                  } border`}
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={() => updateVisit(entry.stadium_id, editVisitDate || null, editVisitNotes)}
+                                className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium flex items-center justify-center gap-1.5"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                {tr(lang, 'Opslaan', 'Save')}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedStadium({ lat: entry.stadium!.latitude, lng: entry.stadium!.longitude });
+                                  setShowVisitManager(false);
+                                  setEditingVisit(null);
+                                }}
+                                className={`flex-1 py-1.5 rounded text-sm font-medium flex items-center justify-center gap-1.5 ${
+                                  theme === 'dark' ? 'bg-slate-600 hover:bg-slate-500 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-900'
+                                }`}
+                              >
+                                <MapPin className="w-3.5 h-3.5" />
+                                {tr(lang, 'Bekijk op kaart', 'View on map')}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Notes display (when not editing) */}
+                        {!isEditing && entry.notes && (
+                          <div className={`mt-1 ml-11 text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                            📝 {entry.notes}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
