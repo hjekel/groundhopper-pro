@@ -548,11 +548,12 @@ interface StadiumMapProps {
   stadiums: Stadium[];
   theme: 'dark' | 'light';
   lang: 'nl' | 'en';
+  addStadiumTrigger?: number;
 }
 
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
-export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
+export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -635,6 +636,11 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     setMounted(true);
     loadData();
   }, []);
+
+  // Open add modal from header button
+  useEffect(() => {
+    if (addStadiumTrigger && addStadiumTrigger > 0) setShowAddModal(true);
+  }, [addStadiumTrigger]);
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
@@ -1492,7 +1498,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   return (
     <div className="w-full h-full relative">
       {/* Row 2: Search + Filters + Stats + Achievements */}
-      <div className="absolute top-10 left-2 right-2 z-[1001] flex items-start gap-2">
+      <div className="absolute top-10 left-2 right-2 z-[1001] flex items-start gap-1">
         {/* Search box */}
         <div className="relative flex-1 min-w-0">
           <div className={`relative rounded-lg shadow-lg ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
@@ -1674,19 +1680,6 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             </div>
           )}
         </div>
-
-        {/* Add stadium button */}
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={`flex-shrink-0 p-2 rounded-lg shadow-lg transition ${
-            theme === 'dark'
-              ? 'bg-purple-600 hover:bg-purple-700 text-white'
-              : 'bg-purple-500 hover:bg-purple-600 text-white'
-          }`}
-          title={tr(lang, 'Stadion toevoegen', 'Add stadium')}
-        >
-          <Plus className="w-4 h-4" />
-        </button>
 
         {/* Stats button */}
         <div className="relative flex-shrink-0">

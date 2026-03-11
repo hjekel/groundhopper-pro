@@ -83,6 +83,7 @@ export default function Home() {
   const [showSpartaTribute, setShowSpartaTribute] = useState(false)
   const [showGroundhopInfo, setShowGroundhopInfo] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [addStadiumTrigger, setAddStadiumTrigger] = useState(0)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
@@ -147,20 +148,24 @@ export default function Home() {
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
           <header className={`absolute top-0 left-0 right-0 z-[1000] px-3 py-1.5 ${theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'}`}>
-            <div className="flex items-center gap-2 max-w-7xl mx-auto">
-              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-2 hover:opacity-80 transition flex-shrink-0">
-                <svg width="24" height="24" viewBox="0 0 100 100" className="flex-shrink-0">
+            <div className="flex items-center gap-1 max-w-7xl mx-auto">
+              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-1.5 hover:opacity-80 transition flex-shrink-0">
+                <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
                   <circle cx="50" cy="50" r="48" fill="white" stroke="#333" strokeWidth="3"/>
-                  <path d="M50 2 L60 20 L80 15 L75 38 L98 45 L82 62 L92 82 L70 78 L58 98 L50 80 L42 98 L30 78 L8 82 L18 62 L2 45 L25 38 L20 15 L40 20 Z" fill="none" stroke="#333" strokeWidth="2"/>
-                  <polygon points="50,15 58,35 42,35" fill="#333"/>
-                  <polygon points="78,35 68,52 82,55" fill="#333"/>
-                  <polygon points="22,35 32,52 18,55" fill="#333"/>
-                  <polygon points="35,75 45,58 28,55" fill="#333"/>
-                  <polygon points="65,75 55,58 72,55" fill="#333"/>
+                  <polygon points="50,10 62,30 38,30" fill="#333"/>
+                  <polygon points="85,40 70,50 78,28" fill="#333"/>
+                  <polygon points="15,40 30,50 22,28" fill="#333"/>
+                  <polygon points="75,78 58,65 72,50" fill="#333"/>
+                  <polygon points="25,78 42,65 28,50" fill="#333"/>
+                  <path d="M38,30 L62,30 L72,50 L58,65 L42,65 L28,50 Z" fill="none" stroke="#333" strokeWidth="2"/>
+                  <circle cx="50" cy="50" r="12" fill="none" stroke="#333" strokeWidth="1.5" opacity="0.3"/>
                 </svg>
                 <h1 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
               </button>
-              <div className="flex-1" />
+              <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
+                + {t('Stadion toevoegen', 'Add stadium')}
+              </button>
+              <div className="flex-1 min-w-1" />
               <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition text-sm ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
                 <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-6 h-6 object-contain" />
                 <span className="hidden sm:inline font-medium">Sparta</span>
@@ -176,7 +181,7 @@ export default function Home() {
               </button>
             </div>
           </header>
-          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
+          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
 
           {/* Groundhopping Info Modal */}
