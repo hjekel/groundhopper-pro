@@ -245,7 +245,57 @@ const ACHIEVEMENTS = [
   { id: 'explorer', icon: '🆕', title_nl: 'Ontdekker', title_en: 'Explorer', desc_nl: '1 eigen stadion toegevoegd', desc_en: '1 custom stadium added', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, cs: number) => cs >= 1, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, cs: number) => `${cs}/1` },
   { id: 'wishlist_warrior', icon: '🎯', title_nl: 'Wishlist Warrior', title_en: 'Wishlist Warrior', desc_nl: '5 stadions op wishlist', desc_en: '5 stadiums on wishlist', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, wl: number) => wl >= 5, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, wl: number) => `${wl}/5` },
   { id: 'homeland', icon: '🏠', title_nl: 'Thuisland', title_en: 'Homeland', desc_nl: '10 Nederlandse stadions bezocht', desc_en: '10 Dutch stadiums visited', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, nl: number) => nl >= 10, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, nl: number) => `${nl}/10` },
+  // v1.2 achievements
+  { id: 'reporter', icon: '📝', title_nl: 'Verslaggever', title_en: 'Reporter', desc_nl: '5 wedstrijden met score gelogd', desc_en: '5 matches with score logged', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, ml: number) => ml >= 5, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, ml: number) => `${ml}/5` },
+  { id: 'goalhunter', icon: '⚽', title_nl: 'Doelpuntenjager', title_en: 'Goal Hunter', desc_nl: '20+ doelpunten gezien', desc_en: '20+ goals witnessed', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, tg: number) => tg >= 20, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, tg: number) => `${tg}/20` },
+  { id: 'topreviewer', icon: '🌟', title_nl: 'Toprecensent', title_en: 'Top Reviewer', desc_nl: '5 stadions beoordeeld', desc_en: '5 stadiums rated', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, rc: number) => rc >= 5, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, rc: number) => `${rc}/5` },
+  { id: 'roadtripper', icon: '🚗', title_nl: 'Roadtripper', title_en: 'Roadtripper', desc_nl: '1.000+ km gereisd', desc_en: '1,000+ km traveled', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, _rc: number, km: number) => km >= 1000, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, _rc: number, km: number) => `${km}/1000` },
 ];
+
+const COMPETITIONS = [
+  'Eredivisie', 'Eerste Divisie', 'KNVB Beker', 'Johan Cruijff Schaal',
+  'Bundesliga', '2. Bundesliga', 'DFB-Pokal',
+  'Premier League', 'FA Cup', 'League Cup',
+  'La Liga', 'Serie A', 'Ligue 1',
+  'Champions League', 'Europa League', 'Conference League',
+  'EK', 'WK', 'Oefenwedstrijd',
+];
+
+// Star rating inline component
+const StarRating = ({ rating, setRating, size = 'md', theme }: { rating: number; setRating?: (r: number) => void; size?: 'sm' | 'md'; theme: string }) => {
+  const starSize = size === 'sm' ? 'text-sm' : 'text-lg';
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => setRating?.(rating === star ? 0 : star)}
+          disabled={!setRating}
+          className={`${starSize} transition ${setRating ? 'cursor-pointer hover:scale-110' : 'cursor-default'} ${
+            star <= rating
+              ? 'text-amber-400'
+              : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'
+          }`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Season helper: "2024/25" for Aug 2024 - Jul 2025
+const getSeasonFromDate = (dateStr: string | null): string => {
+  if (!dateStr) return 'unknown';
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0-11
+  // Aug(7)-Dec(11) = current year start, Jan(0)-Jul(6) = previous year start
+  const startYear = month >= 7 ? year : year - 1;
+  const endYear = startYear + 1;
+  return `${startYear}/${String(endYear).slice(-2)}`;
+};
 
 function MapBounds() {
   const map = useMap();
@@ -481,6 +531,11 @@ interface Visit {
   stadium_id: string;
   visit_date: string | null;
   notes?: string;
+  match_home_team?: string;
+  match_away_team?: string;
+  match_score?: string;
+  match_competition?: string;
+  rating?: number;
 }
 
 interface WishlistItem {
@@ -560,6 +615,18 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   const [editVisitNotes, setEditVisitNotes] = useState('');
   const [visitManagerSort, setVisitManagerSort] = useState<'date' | 'name'>('date');
   const [visitManagerFilter, setVisitManagerFilter] = useState<'all' | 'no_date'>('all');
+  const [visitManagerSeason, setVisitManagerSeason] = useState<string>('all');
+  // Match fields for popup date picker
+  const [matchHomeTeam, setMatchHomeTeam] = useState('');
+  const [matchAwayTeam, setMatchAwayTeam] = useState('');
+  const [matchScore, setMatchScore] = useState('');
+  const [matchCompetition, setMatchCompetition] = useState('');
+  // Match fields for Visit Manager edit
+  const [editMatchHome, setEditMatchHome] = useState('');
+  const [editMatchAway, setEditMatchAway] = useState('');
+  const [editMatchScore, setEditMatchScore] = useState('');
+  const [editMatchComp, setEditMatchComp] = useState('');
+  const [editRating, setEditRating] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -568,7 +635,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
-      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes').eq('is_wishlist', false),
+      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating').eq('is_wishlist', false),
       supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
       supabase.from('bram_custom_stadiums').select('*'),
       supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').order('created_at', { ascending: true })
@@ -576,7 +643,12 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     if (visitsRes.data) setVisits(visitsRes.data.map(v => ({
       stadium_id: v.stadium_id,
       visit_date: v.first_visit_date,
-      notes: v.notes
+      notes: v.notes,
+      match_home_team: v.match_home_team,
+      match_away_team: v.match_away_team,
+      match_score: v.match_score,
+      match_competition: v.match_competition,
+      rating: v.rating,
     })));
     if (wishlistRes.data) setWishlist(wishlistRes.data);
     if (customRes.data) setCustomStadiums(customRes.data);
@@ -589,17 +661,29 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId);
       setVisits(visits.filter(v => v.stadium_id !== stadiumId));
     } else {
-      const { data } = await supabase.from('stadium_visits').insert({
+      const insertData: Record<string, unknown> = {
         stadium_id: stadiumId,
         first_visit_date: date || null,
         last_visit_date: date || null,
         visit_count: 1,
-        is_wishlist: false
-      }).select('stadium_id, first_visit_date, notes').single();
+        is_wishlist: false,
+      };
+      if (matchHomeTeam) insertData.match_home_team = matchHomeTeam;
+      if (matchAwayTeam) insertData.match_away_team = matchAwayTeam;
+      if (matchScore) insertData.match_score = matchScore;
+      if (matchCompetition) insertData.match_competition = matchCompetition;
+
+      const { data } = await supabase.from('stadium_visits').insert(insertData)
+        .select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating').single();
       if (data) setVisits([...visits, {
         stadium_id: data.stadium_id,
         visit_date: data.first_visit_date,
-        notes: data.notes
+        notes: data.notes,
+        match_home_team: data.match_home_team,
+        match_away_team: data.match_away_team,
+        match_score: data.match_score,
+        match_competition: data.match_competition,
+        rating: data.rating,
       }]);
     }
     // Remove from wishlist if marking as visited
@@ -608,6 +692,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
     }
     setShowDatePicker(null);
+    setMatchHomeTeam(''); setMatchAwayTeam(''); setMatchScore(''); setMatchCompetition('');
   };
 
   const toggleWishlist = async (stadiumId: string) => {
@@ -996,14 +1081,79 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     const visitedStadiumIds = new Set(visits.map(v => v.stadium_id));
     const nlVisits = allStadiums.filter(s => visitedStadiumIds.has(s.id) && (s.club?.current_league?.name === 'Eredivisie' || s.club?.current_league?.name === 'Eerste Divisie')).length;
 
+    // v1.2 stats for new achievements
+    const ml = visits.filter(v => v.match_score).length;
+    const tg = visits.reduce((sum, v) => {
+      if (!v.match_score) return sum;
+      const parts = v.match_score.split('-').map(s => parseInt(s.trim()));
+      return (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) ? sum + parts[0] + parts[1] : sum;
+    }, 0);
+    const rc = visits.filter(v => v.rating && v.rating > 0).length;
+    const ROTTERDAM = { lat: 51.9225, lng: 4.4792 };
+    const km = Math.round(visits.reduce((total, v) => {
+      const st = allStadiums.find(s => s.id === v.stadium_id);
+      return st ? total + haversineDistance(ROTTERDAM.lat, ROTTERDAM.lng, st.latitude, st.longitude) * 2 : total;
+    }, 0));
+
     return ACHIEVEMENTS.map(a => ({
       ...a,
-      earned: a.check(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits),
-      progressText: a.progress(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits),
+      earned: a.check(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits, ml, tg, rc, km),
+      progressText: a.progress(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits, ml, tg, rc, km),
     }));
   }, [visits, allStadiums, countriesVisited, leagueStats, customStadiums, wishlist, lang]);
 
   const earnedCount = achievements.filter(a => a.earned).length;
+
+  // Total travel kilometers (from Rotterdam: 51.9225, 4.4792)
+  const totalKilometers = useMemo(() => {
+    const ROTTERDAM = { lat: 51.9225, lng: 4.4792 };
+    return Math.round(visits.reduce((total, v) => {
+      const stadium = allStadiums.find(s => s.id === v.stadium_id);
+      if (!stadium) return total;
+      const dist = haversineDistance(ROTTERDAM.lat, ROTTERDAM.lng, stadium.latitude, stadium.longitude);
+      return total + dist * 2; // Heen en terug
+    }, 0));
+  }, [visits, allStadiums]);
+
+  // Average rating + top rated stadiums
+  const ratingStats = useMemo(() => {
+    const rated = visits.filter(v => v.rating && v.rating > 0);
+    if (rated.length === 0) return { avg: 0, count: 0, top: [] as { name: string; rating: number }[] };
+    const avg = rated.reduce((sum, v) => sum + (v.rating || 0), 0) / rated.length;
+    const top = rated
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 3)
+      .map(v => {
+        const stadium = allStadiums.find(s => s.id === v.stadium_id);
+        return { name: stadium?.club?.name || stadium?.name || '?', rating: v.rating || 0 };
+      });
+    return { avg: Math.round(avg * 10) / 10, count: rated.length, top };
+  }, [visits, allStadiums]);
+
+  // Total goals seen
+  const totalGoals = useMemo(() => {
+    return visits.reduce((sum, v) => {
+      if (!v.match_score) return sum;
+      const parts = v.match_score.split('-').map(s => parseInt(s.trim()));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return sum + parts[0] + parts[1];
+      }
+      return sum;
+    }, 0);
+  }, [visits]);
+
+  // Matches logged count
+  const matchesLogged = useMemo(() => visits.filter(v => v.match_score).length, [visits]);
+
+  // Season list for filter
+  const seasonList = useMemo(() => {
+    const seasons = new Set<string>();
+    visits.forEach(v => {
+      const season = getSeasonFromDate(v.visit_date || null);
+      if (season !== 'unknown') seasons.add(season);
+    });
+    return Array.from(seasons).sort().reverse();
+  }, [visits]);
 
   // Photo upload handler
   const uploadVisitPhoto = async (stadiumId: string, file: File) => {
@@ -1100,43 +1250,62 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       ctx.roundRect(140, 460, Math.max(30, 800 * (visits.length / Math.max(totalStadiums, 1))), 30, 15);
       ctx.fill();
 
-      // Stats grid
-      const statsY = 550;
-      const statsData = [
+      // Stats grid - row 1
+      const statsY = 540;
+      const statsRow1 = [
         { icon: '🌍', value: `${countriesVisited}`, label: lang === 'nl' ? 'landen' : 'countries' },
         { icon: '🏆', value: `${leagueStats.filter(l => l.visited > 0).length}`, label: lang === 'nl' ? 'competities' : 'leagues' },
-        { icon: '⭐', value: `${earnedCount}/${ACHIEVEMENTS.length}`, label: 'achievements' },
+        { icon: '🛣️', value: totalKilometers >= 1000 ? `${(totalKilometers / 1000).toFixed(1)}k` : `${totalKilometers}`, label: 'km' },
       ];
-      statsData.forEach((stat, i) => {
+      statsRow1.forEach((stat, i) => {
         const x = 200 + i * 280;
-        ctx.font = '40px system-ui';
+        ctx.font = '36px system-ui';
         ctx.fillText(stat.icon, x, statsY);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
-        ctx.fillText(stat.value, x, statsY + 60);
+        ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.value, x, statsY + 50);
         ctx.fillStyle = '#94a3b8';
-        ctx.font = '22px system-ui, -apple-system, sans-serif';
-        ctx.fillText(stat.label, x, statsY + 90);
+        ctx.font = '20px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.label, x, statsY + 78);
+        ctx.fillStyle = '#ffffff';
+      });
+      // Stats grid - row 2
+      const statsY2 = statsY + 120;
+      const statsRow2 = [
+        { icon: '⚽', value: `${matchesLogged}`, label: lang === 'nl' ? 'wedstrijden' : 'matches' },
+        { icon: '🥅', value: `${totalGoals}`, label: 'goals' },
+        { icon: '⭐', value: `${earnedCount}/${ACHIEVEMENTS.length}`, label: 'achievements' },
+      ];
+      statsRow2.forEach((stat, i) => {
+        const x = 200 + i * 280;
+        ctx.font = '36px system-ui';
+        ctx.fillText(stat.icon, x, statsY2);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.value, x, statsY2 + 50);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '20px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.label, x, statsY2 + 78);
         ctx.fillStyle = '#ffffff';
       });
 
       // Earned achievements
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(200, 680); ctx.lineTo(880, 680); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(200, 800); ctx.lineTo(880, 800); ctx.stroke();
 
       ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
-      ctx.fillText(lang === 'nl' ? 'ACHIEVEMENTS' : 'ACHIEVEMENTS', 540, 720);
+      ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+      ctx.fillText(lang === 'nl' ? 'ACHIEVEMENTS' : 'ACHIEVEMENTS', 540, 835);
 
       const earned = achievements.filter(a => a.earned);
-      const iconsPerRow = 8;
+      const iconsPerRow = 10;
       earned.forEach((a, i) => {
         const row = Math.floor(i / iconsPerRow);
         const col = i % iconsPerRow;
-        const startX = 540 - (Math.min(earned.length - row * iconsPerRow, iconsPerRow) * 65) / 2;
-        ctx.font = '44px system-ui';
-        ctx.fillText(a.icon, startX + col * 65, 775 + row * 65);
+        const startX = 540 - (Math.min(earned.length - row * iconsPerRow, iconsPerRow) * 55) / 2;
+        ctx.font = '36px system-ui';
+        ctx.fillText(a.icon, startX + col * 55, 880 + row * 55);
       });
 
       // Footer
@@ -1186,19 +1355,38 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     );
   };
 
-  // Update visit date and notes
-  const updateVisit = async (stadiumId: string, date: string | null, notes: string) => {
+  // Update visit date, notes, match info, and rating
+  const updateVisit = async (stadiumId: string, date: string | null, notes: string, matchData?: { home?: string; away?: string; score?: string; comp?: string; rating?: number }) => {
+    const updatePayload: Record<string, unknown> = {
+      first_visit_date: date || null,
+      last_visit_date: date || null,
+      notes: notes || null,
+    };
+    if (matchData) {
+      updatePayload.match_home_team = matchData.home || null;
+      updatePayload.match_away_team = matchData.away || null;
+      updatePayload.match_score = matchData.score || null;
+      updatePayload.match_competition = matchData.comp || null;
+      if (matchData.rating !== undefined) updatePayload.rating = matchData.rating || null;
+    }
     const { error } = await supabase
       .from('stadium_visits')
-      .update({
-        first_visit_date: date || null,
-        last_visit_date: date || null,
-        notes: notes || null
-      })
+      .update(updatePayload)
       .eq('stadium_id', stadiumId);
     if (!error) {
       setVisits(visits.map(v =>
-        v.stadium_id === stadiumId ? { ...v, visit_date: date, notes: notes || undefined } : v
+        v.stadium_id === stadiumId ? {
+          ...v,
+          visit_date: date,
+          notes: notes || undefined,
+          ...(matchData ? {
+            match_home_team: matchData.home || undefined,
+            match_away_team: matchData.away || undefined,
+            match_score: matchData.score || undefined,
+            match_competition: matchData.comp || undefined,
+            rating: matchData.rating || undefined,
+          } : {})
+        } : v
       ));
       setEditingVisit(null);
     }
@@ -1221,6 +1409,10 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       data = data.filter(v => !v.visit_date);
     }
 
+    if (visitManagerSeason !== 'all') {
+      data = data.filter(v => getSeasonFromDate(v.visit_date || null) === visitManagerSeason);
+    }
+
     if (visitManagerSort === 'date') {
       data.sort((a, b) => {
         if (!a.visit_date && !b.visit_date) return 0;
@@ -1233,7 +1425,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     }
 
     return data;
-  }, [visits, allStadiums, visitManagerSort, visitManagerFilter]);
+  }, [visits, allStadiums, visitManagerSort, visitManagerFilter, visitManagerSeason]);
 
   // Computed nearest unvisited stadiums from user location
   const nearestUnvisited = useMemo(() => {
@@ -1559,6 +1751,35 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Dagboek stats: km, matches, rating */}
+            <div className={`p-3 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <div className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {totalKilometers >= 1000 ? `${(totalKilometers / 1000).toFixed(1)}k` : totalKilometers}
+                  </div>
+                  <div className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>🛣️ km</div>
+                </div>
+                <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <div className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {matchesLogged}
+                  </div>
+                  <div className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>⚽ {tr(lang, 'wedstr.', 'matches')}</div>
+                </div>
+                <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <div className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {totalGoals}
+                  </div>
+                  <div className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>⚽ {tr(lang, 'goals', 'goals')}</div>
+                </div>
+              </div>
+              {ratingStats.count > 0 && (
+                <div className={`mt-2 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang, 'Gem. beoordeling', 'Avg. rating')}: <span className="text-amber-400">{'★'.repeat(Math.round(ratingStats.avg))}</span> ({ratingStats.avg})
+                </div>
+              )}
             </div>
 
             {/* Timeline + Visit Manager buttons */}
@@ -1987,12 +2208,24 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                               {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', {
                                 day: 'numeric', month: 'short', year: 'numeric'
                               })}
-                              {entry.notes && (
+                              {entry.match_score && (
+                                <span className={`ml-2 font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                                  {entry.match_home_team || '?'} {entry.match_score} {entry.match_away_team || '?'}
+                                </span>
+                              )}
+                              {!entry.match_score && entry.notes && (
                                 <span className={`ml-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                                   — {entry.notes}
                                 </span>
                               )}
                             </div>
+                            {entry.rating && entry.rating > 0 && (
+                              <div className="flex items-center gap-0.5 mt-0.5">
+                                {[1, 2, 3, 4, 5].map(s => (
+                                  <span key={s} className={`text-[10px] ${s <= entry.rating! ? 'text-amber-400' : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>★</span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </button>
                       </div>
@@ -2138,6 +2371,23 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   <span className="font-bold">{visits.filter(v => !v.visit_date).length}</span>
                 )}
               </button>
+              {seasonList.length > 0 && (
+                <div className="relative ml-auto">
+                  <select
+                    value={visitManagerSeason}
+                    onChange={(e) => setVisitManagerSeason(e.target.value)}
+                    className={`appearance-none px-2.5 py-1 pr-6 rounded text-xs font-medium transition ${
+                      visitManagerSeason !== 'all'
+                        ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30'
+                        : theme === 'dark' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    <option value="all">📅 {tr(lang, 'Alle seizoenen', 'All seasons')}</option>
+                    {seasonList.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+                </div>
+              )}
             </div>
 
             {/* Visit list */}
@@ -2215,6 +2465,11 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                                   setEditingVisit(entry.stadium_id);
                                   setEditVisitDate(entry.visit_date || '');
                                   setEditVisitNotes(entry.notes || '');
+                                  setEditMatchHome(entry.match_home_team || entry.stadium?.club?.name || '');
+                                  setEditMatchAway(entry.match_away_team || '');
+                                  setEditMatchScore(entry.match_score || '');
+                                  setEditMatchComp(entry.match_competition || '');
+                                  setEditRating(entry.rating || 0);
                                 }
                               }}
                               className={`p-1.5 rounded transition ${
@@ -2270,16 +2525,76 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                                   type="text"
                                   value={editVisitNotes}
                                   onChange={(e) => setEditVisitNotes(e.target.value)}
-                                  placeholder={tr(lang, 'bijv. 2-1 winst!', 'e.g. 2-1 win!')}
+                                  placeholder={tr(lang, 'bijv. leuke sfeer', 'e.g. great atmosphere')}
                                   className={`w-full px-2.5 py-1.5 rounded text-sm ${
                                     theme === 'dark' ? 'bg-slate-600 text-white border-slate-500 placeholder-slate-400' : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
                                   } border`}
                                 />
                               </div>
                             </div>
+
+                            {/* Match fields */}
+                            <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-600' : 'border-slate-200'}`}>
+                              <label className={`text-xs font-medium mb-1.5 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                ⚽ {tr(lang, 'Wedstrijd', 'Match')}
+                              </label>
+                              <div className="grid grid-cols-5 gap-1.5 items-center">
+                                <input
+                                  type="text"
+                                  value={editMatchHome}
+                                  onChange={(e) => setEditMatchHome(e.target.value)}
+                                  placeholder={tr(lang, 'Thuis', 'Home')}
+                                  className={`col-span-2 px-2 py-1.5 rounded text-sm ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400 border-slate-500' : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                                  } border`}
+                                />
+                                <input
+                                  type="text"
+                                  value={editMatchScore}
+                                  onChange={(e) => setEditMatchScore(e.target.value)}
+                                  placeholder="0-0"
+                                  className={`col-span-1 px-2 py-1.5 rounded text-sm text-center font-bold ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400 border-slate-500' : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                                  } border`}
+                                />
+                                <input
+                                  type="text"
+                                  value={editMatchAway}
+                                  onChange={(e) => setEditMatchAway(e.target.value)}
+                                  placeholder={tr(lang, 'Uit', 'Away')}
+                                  className={`col-span-2 px-2 py-1.5 rounded text-sm ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400 border-slate-500' : 'bg-white text-slate-900 border-slate-300 placeholder-slate-400'
+                                  } border`}
+                                />
+                              </div>
+                              <div className="mt-1.5 relative">
+                                <select
+                                  value={editMatchComp}
+                                  onChange={(e) => setEditMatchComp(e.target.value)}
+                                  className={`w-full px-2 py-1.5 rounded text-sm appearance-none ${
+                                    theme === 'dark' ? 'bg-slate-600 text-white border-slate-500' : 'bg-white text-slate-900 border-slate-300'
+                                  } border`}
+                                >
+                                  <option value="">{tr(lang, '— Competitie —', '— Competition —')}</option>
+                                  {COMPETITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+                              </div>
+                            </div>
+
+                            {/* Star rating */}
+                            <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-600' : 'border-slate-200'}`}>
+                              <label className={`text-xs font-medium mb-1.5 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                ⭐ {tr(lang, 'Beoordeling', 'Rating')}
+                              </label>
+                              <StarRating rating={editRating} setRating={setEditRating} theme={theme} />
+                            </div>
+
                             <div className="flex gap-2 mt-3">
                               <button
-                                onClick={() => updateVisit(entry.stadium_id, editVisitDate || null, editVisitNotes)}
+                                onClick={() => updateVisit(entry.stadium_id, editVisitDate || null, editVisitNotes, {
+                                  home: editMatchHome, away: editMatchAway, score: editMatchScore, comp: editMatchComp, rating: editRating
+                                })}
                                 className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium flex items-center justify-center gap-1.5"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -2302,8 +2617,27 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                           </div>
                         )}
 
+                        {/* Match info display (when not editing) */}
+                        {!isEditing && entry.match_score && (
+                          <div className={`mt-1 ml-11 text-xs font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                            ⚽ {entry.match_home_team || '?'} {entry.match_score} {entry.match_away_team || '?'}
+                            {entry.match_competition && (
+                              <span className={`ml-1.5 font-normal ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                ({entry.match_competition})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Rating display (when not editing) */}
+                        {!isEditing && entry.rating && entry.rating > 0 && (
+                          <div className="mt-0.5 ml-11 flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map(s => (
+                              <span key={s} className={`text-[10px] ${s <= entry.rating! ? 'text-amber-400' : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>★</span>
+                            ))}
+                          </div>
+                        )}
                         {/* Notes display (when not editing) */}
-                        {!isEditing && entry.notes && (
+                        {!isEditing && entry.notes && !entry.match_score && (
                           <div className={`mt-1 ml-11 text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                             📝 {entry.notes}
                           </div>
@@ -2357,6 +2691,10 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 {tr(lang, `Stadions uit ${leagueStats.filter(l => l.visited > 0).length} competities bezocht`, `Visited stadiums from ${leagueStats.filter(l => l.visited > 0).length} leagues`)}
               </span>
             </span>
+          </div>
+          <div className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            🛣️ {totalKilometers.toLocaleString()} km
+            {matchesLogged > 0 && <span className="ml-2">⚽ {matchesLogged} {tr(lang, 'wedstr.', 'matches')}</span>}
           </div>
           {/* Earned achievements badges */}
           {earnedCount > 0 && (
@@ -2471,8 +2809,8 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       )}
 
       <MapContainer
-        center={[50.0, 10.0]}
-        zoom={5}
+        center={[52.2, 5.5]}
+        zoom={8}
         className="w-full h-full"
         zoomControl={false}
         worldCopyJump={false}
@@ -2639,6 +2977,35 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     )}
                   </div>
 
+                  {/* Match info + Rating for visited stadiums */}
+                  {isVisited && visitData && (visitData.match_score || visitData.rating) && (
+                    <div className={`px-4 py-2.5 border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
+                      {visitData.match_score && (
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {visitData.match_home_team || '?'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded font-bold text-sm ${theme === 'dark' ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                            {visitData.match_score}
+                          </span>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {visitData.match_away_team || '?'}
+                          </span>
+                        </div>
+                      )}
+                      {visitData.match_competition && (
+                        <div className={`text-center text-[10px] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {visitData.match_competition}
+                        </div>
+                      )}
+                      {visitData.rating && (
+                        <div className="flex justify-center mt-1">
+                          <StarRating rating={visitData.rating} size="sm" theme={theme} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Club details from TheSportsDB (jersey + history) */}
                   {stadium.club?.name && !isCustom && (
                     <ClubPopupDetails clubName={stadium.club.name} theme={theme} lang={lang} />
@@ -2678,7 +3045,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                   <div className="p-3 space-y-2">
                     {showDatePicker === stadium.id && (
                       <div className={`p-3 rounded-lg mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-amber-50'}`}>
-                        <label className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <label className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                           {tr(lang, 'Wanneer bezocht?', 'When did you visit?')}
                         </label>
                         <input
@@ -2689,7 +3056,57 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                             theme === 'dark' ? 'bg-slate-600 text-white' : 'bg-white text-slate-900 border border-amber-300'
                           }`}
                         />
-                        <div className="flex gap-2 mt-2">
+
+                        {/* Match details (optional) */}
+                        <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-600' : 'border-amber-200'}`}>
+                          <label className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            ⚽ {tr(lang, 'Wedstrijd (optioneel)', 'Match (optional)')}
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5 mt-1.5 items-center">
+                            <input
+                              type="text"
+                              value={matchHomeTeam}
+                              onChange={(e) => setMatchHomeTeam(e.target.value)}
+                              placeholder={tr(lang, 'Thuis', 'Home')}
+                              className={`col-span-2 px-2 py-1.5 rounded text-sm ${
+                                theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400' : 'bg-white text-slate-900 border border-amber-300 placeholder-slate-400'
+                              }`}
+                            />
+                            <input
+                              type="text"
+                              value={matchScore}
+                              onChange={(e) => setMatchScore(e.target.value)}
+                              placeholder="0-0"
+                              className={`col-span-1 px-2 py-1.5 rounded text-sm text-center font-bold ${
+                                theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400' : 'bg-white text-slate-900 border border-amber-300 placeholder-slate-400'
+                              }`}
+                            />
+                            <input
+                              type="text"
+                              value={matchAwayTeam}
+                              onChange={(e) => setMatchAwayTeam(e.target.value)}
+                              placeholder={tr(lang, 'Uit', 'Away')}
+                              className={`col-span-2 px-2 py-1.5 rounded text-sm ${
+                                theme === 'dark' ? 'bg-slate-600 text-white placeholder-slate-400' : 'bg-white text-slate-900 border border-amber-300 placeholder-slate-400'
+                              }`}
+                            />
+                          </div>
+                          <div className="mt-1.5 relative">
+                            <select
+                              value={matchCompetition}
+                              onChange={(e) => setMatchCompetition(e.target.value)}
+                              className={`w-full px-2 py-1.5 rounded text-sm appearance-none ${
+                                theme === 'dark' ? 'bg-slate-600 text-white' : 'bg-white text-slate-900 border border-amber-300'
+                              }`}
+                            >
+                              <option value="">{tr(lang, '— Competitie —', '— Competition —')}</option>
+                              {COMPETITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-3">
                           <button onClick={() => toggleVisit(stadium.id, visitDate)} className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium">
                             {tr(lang, 'Opslaan', 'Save')}
                           </button>
@@ -2702,7 +3119,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
                     <button
                       onClick={() => {
-                        if (isVisited) { toggleVisit(stadium.id); } else { setShowDatePicker(stadium.id); setVisitDate(''); }
+                        if (isVisited) { toggleVisit(stadium.id); } else { setShowDatePicker(stadium.id); setVisitDate(''); setMatchHomeTeam(stadium.club?.name || ''); setMatchAwayTeam(''); setMatchScore(''); setMatchCompetition(''); }
                       }}
                       className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
                         isVisited ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-600 hover:bg-green-700 text-white'
