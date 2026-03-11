@@ -146,30 +146,34 @@ export default function Home() {
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
-          <header className={`absolute top-0 left-0 right-0 z-[1000] p-4 ${theme === 'dark' ? 'bg-gradient-to-b from-slate-900 to-transparent' : 'bg-gradient-to-b from-white to-transparent'}`}>
-            <div className="flex items-center justify-between max-w-7xl mx-auto">
-              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-3 hover:opacity-80 transition">
-                <span className="text-3xl">⚽</span>
-                <div className="text-left">
-                  <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
-                  <p className="text-slate-500 text-sm">{loading ? t('Laden...', 'Loading...') : `${stadiums.length} ${t('stadions', 'stadiums')}`}</p>
-                </div>
+          <header className={`absolute top-0 left-0 right-0 z-[1000] px-3 py-1.5 ${theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'}`}>
+            <div className="flex items-center gap-2 max-w-7xl mx-auto">
+              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-2 hover:opacity-80 transition flex-shrink-0">
+                <svg width="24" height="24" viewBox="0 0 100 100" className="flex-shrink-0">
+                  <circle cx="50" cy="50" r="48" fill="white" stroke="#333" strokeWidth="3"/>
+                  <path d="M50 2 L60 20 L80 15 L75 38 L98 45 L82 62 L92 82 L70 78 L58 98 L50 80 L42 98 L30 78 L8 82 L18 62 L2 45 L25 38 L20 15 L40 20 Z" fill="none" stroke="#333" strokeWidth="2"/>
+                  <polygon points="50,15 58,35 42,35" fill="#333"/>
+                  <polygon points="78,35 68,52 82,55" fill="#333"/>
+                  <polygon points="22,35 32,52 18,55" fill="#333"/>
+                  <polygon points="35,75 45,58 28,55" fill="#333"/>
+                  <polygon points="65,75 55,58 72,55" fill="#333"/>
+                </svg>
+                <h1 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
               </button>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
-                  <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-7 h-7 object-contain" />
-                  <span className="hidden sm:inline font-medium">Sparta</span>
-                </button>
-                <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`px-2 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
-                  <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-6 h-4 object-cover rounded-sm" />
-                </button>
-                <button onClick={toggleTheme} className={`p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
-                  <FloodlightIcon isOn={theme === 'dark'} />
-                </button>
-                <button onClick={() => setShowHelp(true)} className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 border border-slate-200'}`} title={t('Help & info', 'Help & info')}>
-                  ?
-                </button>
-              </div>
+              <div className="flex-1" />
+              <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition text-sm ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
+                <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-6 h-6 object-contain" />
+                <span className="hidden sm:inline font-medium">Sparta</span>
+              </button>
+              <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
+                <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-6 h-4 object-cover rounded-sm" />
+              </button>
+              <button onClick={toggleTheme} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
+                <FloodlightIcon isOn={theme === 'dark'} />
+              </button>
+              <button onClick={() => setShowHelp(true)} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 border border-slate-200'}`} title={t('Help & info', 'Help & info')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </button>
             </div>
           </header>
           <StadiumMap stadiums={stadiums} theme={theme} lang={lang} />
@@ -304,8 +308,8 @@ export default function Home() {
             </div>
           )}
 
-          <div className={`absolute bottom-2 right-2 z-[1000] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v1.2
+          <div className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
+            v1.3
           </div>
         </main>
       </LanguageContext.Provider>

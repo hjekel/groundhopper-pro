@@ -596,6 +596,9 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   // Timeline feature
   const [showTimeline, setShowTimeline] = useState(false);
 
+  // Bottom stats bar
+  const [bottomExpanded, setBottomExpanded] = useState(false);
+
   // Achievements feature
   const [showAchievements, setShowAchievements] = useState(false);
 
@@ -1488,87 +1491,91 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
 
   return (
     <div className="w-full h-full relative">
-      {/* Search box */}
-      <div className="absolute top-20 left-4 z-[1001] w-72">
-        <div className={`relative rounded-lg shadow-lg ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
-          <input
-            type="text"
-            placeholder={tr(lang, 'Zoek stadion, club of stad...', 'Search stadium, club or city...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full pl-10 pr-8 py-2.5 rounded-lg text-sm ${
-              theme === 'dark' 
-                ? 'bg-slate-800 text-white placeholder-slate-400 border border-slate-700' 
-                : 'bg-white text-slate-900 placeholder-slate-500 border border-slate-200'
-            }`}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className={`w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
-            </button>
+      {/* Row 2: Search + Filters + Stats + Achievements */}
+      <div className="absolute top-10 left-2 right-2 z-[1001] flex items-start gap-2">
+        {/* Search box */}
+        <div className="relative flex-1 min-w-0">
+          <div className={`relative rounded-lg shadow-lg ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+            <input
+              type="text"
+              placeholder={tr(lang, 'Zoek stadion, club of stad...', 'Search stadium, club or city...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full pl-9 pr-8 py-2 rounded-lg text-sm ${
+                theme === 'dark'
+                  ? 'bg-slate-800 text-white placeholder-slate-400 border border-slate-700'
+                  : 'bg-white text-slate-900 placeholder-slate-500 border border-slate-200'
+              }`}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                <X className={`w-4 h-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+              </button>
+            )}
+          </div>
+
+          {searchResults.length > 0 && (
+            <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg shadow-lg overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'} z-10`}>
+              {searchResults.map(stadium => (
+                <button
+                  key={stadium.id}
+                  onClick={() => {
+                    setSelectedStadium({ lat: stadium.latitude, lng: stadium.longitude });
+                    setSearchQuery('');
+                  }}
+                  className={`w-full px-4 py-2.5 text-left flex items-center gap-3 ${
+                    theme === 'dark' ? 'hover:bg-slate-700' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="relative w-6 h-6 flex-shrink-0">
+                    <div
+                      className="absolute inset-0 rounded-full"
+                      style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
+                    />
+                    {stadium.club?.crest_url && (
+                      <img
+                        src={stadium.club.crest_url}
+                        alt=""
+                        className="absolute inset-0 w-6 h-6 rounded-full object-contain bg-white p-0.5"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                      {stadium.club?.name || stadium.name}
+                    </div>
+                    <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {stadium.name} - {stadium.city}
+                    </div>
+                  </div>
+                  {visits.find(v => v.stadium_id === stadium.id) && (
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  )}
+                  {stadium.id.startsWith('custom-') && (
+                    <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded flex-shrink-0">
+                      {tr(lang, 'eigen', 'custom')}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           )}
         </div>
-        
-        {searchResults.length > 0 && (
-          <div className={`mt-1 rounded-lg shadow-lg overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
-            {searchResults.map(stadium => (
-              <button
-                key={stadium.id}
-                onClick={() => {
-                  setSelectedStadium({ lat: stadium.latitude, lng: stadium.longitude });
-                  setSearchQuery('');
-                }}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-3 ${
-                  theme === 'dark' ? 'hover:bg-slate-700' : 'hover:bg-slate-50'
-                }`}
-              >
-                <div className="relative w-6 h-6 flex-shrink-0">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: stadium.club?.primary_color || '#6b7280' }}
-                  />
-                  {stadium.club?.crest_url && (
-                    <img
-                      src={stadium.club.crest_url}
-                      alt=""
-                      className="absolute inset-0 w-6 h-6 rounded-full object-contain bg-white p-0.5"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                    {stadium.club?.name || stadium.name}
-                  </div>
-                  <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {stadium.name} - {stadium.city}
-                  </div>
-                </div>
-                {visits.find(v => v.stadium_id === stadium.id) && (
-                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                )}
-                {stadium.id.startsWith('custom-') && (
-                  <span className="text-xs px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded flex-shrink-0">
-                    {tr(lang, 'eigen', 'custom')}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+
         {/* Filter toggle button */}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`mt-2 w-full px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center justify-between transition ${
-            showFilters || filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all'
-              ? theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
-              : theme === 'dark' ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-white text-slate-700 border border-slate-200'
-          }`}
-        >
-          <span className="flex items-center gap-2">
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-3 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-1.5 transition ${
+              showFilters || filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all'
+                ? theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                : theme === 'dark' ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-white text-slate-700 border border-slate-200'
+            }`}
+          >
             <Filter className="w-4 h-4" />
-            {tr(lang, 'Filters', 'Filters')}
+            <span className="hidden sm:inline">{tr(lang, 'Filters', 'Filters')}</span>
             {(filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all') && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 theme === 'dark' || showFilters || filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all'
@@ -1577,143 +1584,128 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                 {[filterLeague !== 'all', filterStatus !== 'all', filterCountry !== 'all'].filter(Boolean).length}
               </span>
             )}
-          </span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </button>
+          </button>
 
-        {/* Filter panel */}
-        {showFilters && (
-          <div className={`mt-1 p-3 rounded-lg shadow-lg space-y-3 ${theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}>
-            {/* Status filter */}
-            <div>
-              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Status', 'Status')}
-              </label>
-              <div className="flex flex-wrap gap-1">
-                {([
-                  { value: 'all', label: tr(lang, 'Alle', 'All') },
-                  { value: 'visited', label: tr(lang, 'Bezocht', 'Visited') },
-                  { value: 'not_visited', label: tr(lang, 'Nog niet', 'Not yet') },
-                  { value: 'wishlist', label: tr(lang, 'Wishlist', 'Wishlist') },
-                ] as const).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setFilterStatus(opt.value)}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                      filterStatus === opt.value
-                        ? opt.value === 'visited' ? 'bg-green-600 text-white'
-                          : opt.value === 'wishlist' ? 'bg-yellow-500 text-white'
-                          : opt.value === 'not_visited' ? 'bg-slate-600 text-white'
-                          : 'bg-blue-600 text-white'
-                        : theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {opt.value === 'visited' && '✓ '}{opt.value === 'wishlist' && '★ '}{opt.label}
-                  </button>
-                ))}
+          {/* Filter panel - dropdown */}
+          {showFilters && (
+            <div className={`absolute top-full right-0 mt-1 w-64 p-3 rounded-lg shadow-lg space-y-3 z-10 ${theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+              {/* Status filter */}
+              <div>
+                <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang, 'Status', 'Status')}
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    { value: 'all', label: tr(lang, 'Alle', 'All') },
+                    { value: 'visited', label: tr(lang, 'Bezocht', 'Visited') },
+                    { value: 'not_visited', label: tr(lang, 'Nog niet', 'Not yet') },
+                    { value: 'wishlist', label: tr(lang, 'Wishlist', 'Wishlist') },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setFilterStatus(opt.value)}
+                      className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                        filterStatus === opt.value
+                          ? opt.value === 'visited' ? 'bg-green-600 text-white'
+                            : opt.value === 'wishlist' ? 'bg-yellow-500 text-white'
+                            : opt.value === 'not_visited' ? 'bg-slate-600 text-white'
+                            : 'bg-blue-600 text-white'
+                          : theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {opt.value === 'visited' && '✓ '}{opt.value === 'wishlist' && '★ '}{opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Country filter */}
-            <div>
-              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Land', 'Country')}
-              </label>
-              <select
-                value={filterCountry}
-                onChange={(e) => { setFilterCountry(e.target.value); setFilterLeague('all'); }}
-                className={`w-full px-2.5 py-1.5 rounded text-sm ${
-                  theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
-                } border`}
-              >
-                <option value="all">{tr(lang, 'Alle landen', 'All countries')}</option>
-                {availableCountries.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* League filter */}
-            <div>
-              <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Competitie', 'League')}
-              </label>
-              <select
-                value={filterLeague}
-                onChange={(e) => setFilterLeague(e.target.value)}
-                className={`w-full px-2.5 py-1.5 rounded text-sm ${
-                  theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
-                } border`}
-              >
-                <option value="all">{tr(lang, 'Alle competities', 'All leagues')}</option>
-                {availableLeagues.map(l => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Active filter count + reset */}
-            {(filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all') && (
-              <div className="flex items-center justify-between pt-1">
-                <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {filteredStadiums.length} {tr(lang, 'stadions', 'stadiums')}
-                </span>
-                <button
-                  onClick={() => { setFilterLeague('all'); setFilterStatus('all'); setFilterCountry('all'); }}
-                  className="text-xs text-red-400 hover:text-red-300 font-medium"
+              {/* Country filter */}
+              <div>
+                <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang, 'Land', 'Country')}
+                </label>
+                <select
+                  value={filterCountry}
+                  onChange={(e) => { setFilterCountry(e.target.value); setFilterLeague('all'); }}
+                  className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                    theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  } border`}
                 >
-                  {tr(lang, 'Reset filters', 'Reset filters')}
-                </button>
+                  <option value="all">{tr(lang, 'Alle landen', 'All countries')}</option>
+                  {availableCountries.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Stats and Add button */}
-      <div className={`absolute top-20 right-4 z-[1001] flex flex-col items-end gap-2 w-72`}>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
-              theme === 'dark'
-                ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                : 'bg-purple-500 hover:bg-purple-600 text-white'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            {tr(lang, 'Stadion toevoegen', 'Add stadium')}
-          </button>
+              {/* League filter */}
+              <div>
+                <label className={`text-xs font-medium mb-1 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang, 'Competitie', 'League')}
+                </label>
+                <select
+                  value={filterLeague}
+                  onChange={(e) => setFilterLeague(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded text-sm ${
+                    theme === 'dark' ? 'bg-slate-700 text-white border-slate-600' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  } border`}
+                >
+                  <option value="all">{tr(lang, 'Alle competities', 'All leagues')}</option>
+                  {availableLeagues.map(l => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
 
-          <button
-            onClick={() => setShowStats(!showStats)}
-            className={`px-4 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-2 transition ${
-              showStats
-                ? 'bg-green-600 text-white'
-                : theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <Check className="w-3.5 h-3.5 text-green-500" />
-            <span className="font-bold">{visits.length}</span>
-            <span className={showStats ? 'text-green-200' : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {allStadiums.length}</span>
-          </button>
-
-          <button
-            onClick={() => setShowAchievements(true)}
-            className={`px-3 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-1.5 transition ${
-              theme === 'dark' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
-            }`}
-          >
-            <Trophy className="w-4 h-4" />
-            <span className="font-bold">{earnedCount}</span>
-            <span className="text-amber-200 text-xs">/{ACHIEVEMENTS.length}</span>
-          </button>
+              {/* Active filter count + reset */}
+              {(filterLeague !== 'all' || filterStatus !== 'all' || filterCountry !== 'all') && (
+                <div className="flex items-center justify-between pt-1">
+                  <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {filteredStadiums.length} {tr(lang, 'stadions', 'stadiums')}
+                  </span>
+                  <button
+                    onClick={() => { setFilterLeague('all'); setFilterStatus('all'); setFilterCountry('all'); }}
+                    className="text-xs text-red-400 hover:text-red-300 font-medium"
+                  >
+                    {tr(lang, 'Reset filters', 'Reset filters')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Stats Dashboard */}
-        {showStats && (
-          <div className={`w-full rounded-lg shadow-lg overflow-hidden ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
+        {/* Add stadium button */}
+        <button
+          onClick={() => setShowAddModal(true)}
+          className={`flex-shrink-0 p-2 rounded-lg shadow-lg transition ${
+            theme === 'dark'
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-purple-500 hover:bg-purple-600 text-white'
+          }`}
+          title={tr(lang, 'Stadion toevoegen', 'Add stadium')}
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+
+        {/* Stats button */}
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className={`px-3 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-1.5 transition ${
+              showStats
+                ? 'bg-green-600 text-white'
+                : theme === 'dark' ? 'bg-slate-800 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
+            }`}
+          >
+            <Check className="w-3.5 h-3.5 text-green-500" />
+            <span className="font-bold">{visits.length}</span>
+            <span className={showStats ? 'text-green-200' : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/{allStadiums.length}</span>
+          </button>
+
+          {/* Stats Dashboard - dropdown */}
+          {showStats && (
+          <div className={`absolute top-full right-0 mt-1 w-72 rounded-lg shadow-lg overflow-hidden z-10 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'}`}>
             <div className={`p-3 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
               {/* Overall progress */}
               <div className="flex items-center justify-between mb-2">
@@ -1862,6 +1854,19 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             </div>
           </div>
         )}
+        </div>
+
+        {/* Achievements button */}
+        <button
+          onClick={() => setShowAchievements(true)}
+          className={`flex-shrink-0 px-3 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-1.5 transition ${
+            theme === 'dark' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+          }`}
+        >
+          <Trophy className="w-4 h-4" />
+          <span className="font-bold">{earnedCount}</span>
+          <span className="text-amber-200 text-xs">/{ACHIEVEMENTS.length}</span>
+        </button>
       </div>
 
       {/* Add Stadium Modal - WITH SEARCH FIRST */}
@@ -2686,101 +2691,94 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         </div>
       )}
 
-      {/* Groundhop Counter Badge */}
-      <div className="absolute bottom-8 left-4 z-[1001]">
-        <div className={`rounded-2xl shadow-xl px-5 py-3 backdrop-blur-sm border ${
-          theme === 'dark'
-            ? 'bg-slate-800/90 border-slate-700'
-            : 'bg-white/90 border-slate-200'
-        }`}>
-          <div className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${
-            theme === 'dark' ? 'text-green-400' : 'text-green-600'
-          }`}>
-            {tr(lang, "Bram's Groundhops", "Bram's Groundhops")}
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-3xl font-black tabular-nums ${
-              theme === 'dark' ? 'text-white' : 'text-slate-900'
-            }`}>{visits.length}</span>
-            <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-              / {allStadiums.length}
-            </span>
-          </div>
-          <div className={`text-[10px] mt-1 flex items-center gap-3 ${
-            theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-          }`}>
-            <span className="group relative cursor-help">
-              🌍 {countriesVisited} {tr(lang, 'landen', 'countries')}
-              <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
-                theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'
-              }`}>
-                {tr(lang, `Bram heeft stadions bezocht in ${countriesVisited} verschillende landen`, `Bram has visited stadiums in ${countriesVisited} different countries`)}
-              </span>
-            </span>
-            <span className="group relative cursor-help">
-              🏆 {leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}
-              <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
-                theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'
-              }`}>
-                {tr(lang, `Stadions uit ${leagueStats.filter(l => l.visited > 0).length} competities bezocht`, `Visited stadiums from ${leagueStats.filter(l => l.visited > 0).length} leagues`)}
-              </span>
-            </span>
-          </div>
-          <div className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-            🛣️ {totalKilometers.toLocaleString()} km
-            {matchesLogged > 0 && <span className="ml-2">⚽ {matchesLogged} {tr(lang, 'wedstr.', 'matches')}</span>}
-          </div>
-          {/* Earned achievements badges */}
-          {earnedCount > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {achievements.filter(a => a.earned).map(a => (
-                <span
-                  key={a.id}
-                  title={`${lang === 'nl' ? a.title_nl : a.title_en}`}
-                  className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30"
-                >
-                  {a.icon}
-                  <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50 ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                    {lang === 'nl' ? a.title_nl : a.title_en} — {lang === 'nl' ? a.desc_nl : a.desc_en}
-                  </span>
-                </span>
-              ))}
-              <button
-                onClick={() => setShowAchievements(true)}
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-amber-500/20 hover:text-amber-500 hover:border-amber-500/30 transition"
-              >
-                +{ACHIEVEMENTS.length - earnedCount} 🔒
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Nearest Unvisited GPS Button */}
-      <div className="absolute bottom-8 right-16 z-[1001]">
+      {/* Collapsible Bottom Bar — Bram's Groundhops */}
+      <div className={`absolute bottom-0 left-0 right-0 z-[1001] transition-all duration-300 ${
+        theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm border-t border-slate-700' : 'bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-lg'
+      }`}>
+        {/* Collapsed bar — always visible, clickable */}
         <button
-          onClick={findNearestUnvisited}
-          disabled={geoLoading}
-          className={`rounded-full shadow-xl p-3 transition ${
-            showNearestPanel
-              ? 'bg-blue-600 text-white'
-              : theme === 'dark'
-                ? 'bg-slate-800/90 border border-slate-700 text-blue-400 hover:bg-slate-700'
-                : 'bg-white/90 border border-slate-200 text-blue-600 hover:bg-slate-50'
-          }`}
-          title={tr(lang, 'Dichtstbijzijnde onbezocht', 'Nearest unvisited')}
+          onClick={() => setBottomExpanded(!bottomExpanded)}
+          className="w-full flex items-center justify-between px-4 py-2"
         >
-          {geoLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Navigation className="w-5 h-5" />
-          )}
+          <div className="flex items-center gap-3">
+            <span className={`text-xs uppercase tracking-wider font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+              {tr(lang, "Bram's Groundhops", "Bram's Groundhops")}
+            </span>
+            <span className={`text-sm font-black tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+              {visits.length}/{allStadiums.length}
+            </span>
+            <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              · 🌍 {countriesVisited} · 🏆 {leagueStats.filter(l => l.visited > 0).length} · 🛣️ {totalKilometers.toLocaleString()} km
+            </span>
+            {earnedCount > 0 && (
+              <span className={`text-xs ${theme === 'dark' ? 'text-amber-400' : 'text-amber-500'}`}>
+                · {earnedCount} 🏅
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* GPS button inline */}
+            <div
+              onClick={(e) => { e.stopPropagation(); findNearestUnvisited(); }}
+              className={`rounded-full p-1.5 transition cursor-pointer ${
+                showNearestPanel
+                  ? 'bg-blue-600 text-white'
+                  : theme === 'dark'
+                    ? 'text-blue-400 hover:bg-slate-700'
+                    : 'text-blue-600 hover:bg-slate-100'
+              }`}
+              title={tr(lang, 'Dichtstbijzijnde onbezocht', 'Nearest unvisited')}
+            >
+              {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+            </div>
+            <ChevronDown className={`w-4 h-4 transition-transform ${bottomExpanded ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+          </div>
         </button>
+
+        {/* Expanded panel */}
+        {bottomExpanded && (
+          <div className={`px-4 pb-3 border-t ${theme === 'dark' ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+            <div className="flex items-baseline gap-3 mt-2">
+              <span className={`text-3xl font-black tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                {visits.length}
+              </span>
+              <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                / {allStadiums.length}
+              </span>
+            </div>
+            <div className={`text-xs mt-1 flex items-center gap-4 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span>🌍 {countriesVisited} {tr(lang, 'landen', 'countries')}</span>
+              <span>🏆 {leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}</span>
+              <span>🛣️ {totalKilometers.toLocaleString()} km</span>
+              {matchesLogged > 0 && <span>⚽ {matchesLogged} {tr(lang, 'wedstr.', 'matches')}</span>}
+            </div>
+            {/* Earned badges */}
+            {earnedCount > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {achievements.filter(a => a.earned).map(a => (
+                  <span
+                    key={a.id}
+                    title={lang === 'nl' ? a.title_nl : a.title_en}
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30"
+                  >
+                    {a.icon}
+                  </span>
+                ))}
+                <button
+                  onClick={() => setShowAchievements(true)}
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-amber-500/20 hover:text-amber-500 hover:border-amber-500/30 transition"
+                >
+                  +{ACHIEVEMENTS.length - earnedCount} 🔒
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Nearest Unvisited Panel */}
       {showNearestPanel && userLocation && (
-        <div className={`absolute bottom-24 right-4 z-[1001] w-72 rounded-xl shadow-xl overflow-hidden ${
+        <div className={`absolute bottom-12 right-4 z-[1001] w-72 rounded-xl shadow-xl overflow-hidden ${
           theme === 'dark' ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'
         }`}>
           <div className={`p-3 flex items-center justify-between border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
