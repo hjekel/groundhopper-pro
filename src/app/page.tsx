@@ -256,7 +256,7 @@ export default function Home() {
                   <div className="text-center">
                     <div className="mx-auto w-48 h-28 rounded-xl overflow-hidden mb-2 shadow-lg">
                       <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Sparta_Stadion_Het_Kasteel_02.jpg/480px-Sparta_Stadion_Het_Kasteel_02.jpg"
+                        src="/het-kasteel.jpg"
                         alt="Het Kasteel - Sparta Rotterdam"
                         className="w-full h-full object-cover"
                       />
