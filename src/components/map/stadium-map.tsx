@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createClient } from '@supabase/supabase-js';
-import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3, Navigation, Clock, Edit3, Trash2, SortAsc, SortDesc, AlertCircle } from 'lucide-react';
+import { Search, X, Check, Star, Calendar, Plus, Loader2, MapPin, ExternalLink, Filter, ChevronDown, BarChart3, Navigation, Clock, Edit3, Trash2, SortAsc, SortDesc, AlertCircle, Trophy, Share2, Download, Camera, Image } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 const supabase = createClient(
@@ -227,6 +227,25 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
     tooltipAnchor: [0, -(s / 2)] as any,
   } as any);
 };
+
+// Achievement definitions
+const ACHIEVEMENTS = [
+  { id: 'first_visit', icon: '🏟️', title_nl: 'Eerste Bezoek', title_en: 'First Visit', desc_nl: '1 stadion bezocht', desc_en: '1 stadium visited', check: (v: number) => v >= 1, progress: (v: number) => `${v}/1` },
+  { id: 'five', icon: '⚽', title_nl: 'Vijf-klapper', title_en: 'High Five', desc_nl: '5 stadions bezocht', desc_en: '5 stadiums visited', check: (v: number) => v >= 5, progress: (v: number) => `${v}/5` },
+  { id: 'ten', icon: '🔟', title_nl: 'Dubbele Cijfers', title_en: 'Double Digits', desc_nl: '10 stadions bezocht', desc_en: '10 stadiums visited', check: (v: number) => v >= 10, progress: (v: number) => `${v}/10` },
+  { id: 'twentyfive', icon: '🏅', title_nl: 'Kwart Century', title_en: 'Quarter Century', desc_nl: '25 stadions bezocht', desc_en: '25 stadiums visited', check: (v: number) => v >= 25, progress: (v: number) => `${v}/25` },
+  { id: 'halfway', icon: '💯', title_nl: 'Halverwege', title_en: 'Halfway There', desc_nl: '50% van alle stadions', desc_en: '50% of all stadiums', check: (v: number, t: number) => t > 0 && v >= t / 2, progress: (v: number, t: number) => `${Math.round((v / Math.max(t, 1)) * 100)}%` },
+  { id: 'two_countries', icon: '🌍', title_nl: 'Grensverlegger', title_en: 'Border Crosser', desc_nl: '2 landen bezocht', desc_en: '2 countries visited', check: (_v: number, _t: number, c: number) => c >= 2, progress: (_v: number, _t: number, c: number) => `${c}/2` },
+  { id: 'five_countries', icon: '🗺️', title_nl: 'Europeaan', title_en: 'European', desc_nl: '5 landen bezocht', desc_en: '5 countries visited', check: (_v: number, _t: number, c: number) => c >= 5, progress: (_v: number, _t: number, c: number) => `${c}/5` },
+  { id: 'ten_countries', icon: '🌐', title_nl: 'Globetrotter', title_en: 'Globetrotter', desc_nl: '10 landen bezocht', desc_en: '10 countries visited', check: (_v: number, _t: number, c: number) => c >= 10, progress: (_v: number, _t: number, c: number) => `${c}/10` },
+  { id: 'league_complete', icon: '⭐', title_nl: 'Competitie Compleet', title_en: 'League Complete', desc_nl: 'Alle stadions in 1 competitie', desc_en: 'All stadiums in 1 league', check: (_v: number, _t: number, _c: number, lc: number) => lc >= 1, progress: (_v: number, _t: number, _c: number, lc: number) => `${lc}/1` },
+  { id: 'league_king', icon: '👑', title_nl: 'Competitie Koning', title_en: 'League King', desc_nl: '3 volledige competities', desc_en: '3 complete leagues', check: (_v: number, _t: number, _c: number, lc: number) => lc >= 3, progress: (_v: number, _t: number, _c: number, lc: number) => `${lc}/3` },
+  { id: 'sparta', icon: '🔴⚪', title_nl: 'Sparta Fan', title_en: 'Sparta Fan', desc_nl: 'Het Kasteel bezocht', desc_en: 'Visited Het Kasteel', check: (_v: number, _t: number, _c: number, _lc: number, sp: boolean) => sp, progress: (_v: number, _t: number, _c: number, _lc: number, sp: boolean) => sp ? '✅' : '❌' },
+  { id: 'diary', icon: '📅', title_nl: 'Dagboek', title_en: 'Diary', desc_nl: '5 bezoeken met datum', desc_en: '5 visits with date', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, dd: number) => dd >= 5, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, dd: number) => `${dd}/5` },
+  { id: 'explorer', icon: '🆕', title_nl: 'Ontdekker', title_en: 'Explorer', desc_nl: '1 eigen stadion toegevoegd', desc_en: '1 custom stadium added', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, cs: number) => cs >= 1, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, cs: number) => `${cs}/1` },
+  { id: 'wishlist_warrior', icon: '🎯', title_nl: 'Wishlist Warrior', title_en: 'Wishlist Warrior', desc_nl: '5 stadions op wishlist', desc_en: '5 stadiums on wishlist', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, wl: number) => wl >= 5, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, wl: number) => `${wl}/5` },
+  { id: 'homeland', icon: '🏠', title_nl: 'Thuisland', title_en: 'Homeland', desc_nl: '10 Nederlandse stadions bezocht', desc_en: '10 Dutch stadiums visited', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, nl: number) => nl >= 10, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, nl: number) => `${nl}/10` },
+];
 
 function MapBounds() {
   const map = useMap();
@@ -522,6 +541,18 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   // Timeline feature
   const [showTimeline, setShowTimeline] = useState(false);
 
+  // Achievements feature
+  const [showAchievements, setShowAchievements] = useState(false);
+
+  // Photo upload feature
+  const [visitPhotos, setVisitPhotos] = useState<{ id: string; stadium_id: string; photo_url: string }[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoUploadStadium, setPhotoUploadStadium] = useState<string | null>(null);
+
+  // Share feature
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+
   // Visit manager feature
   const [showVisitManager, setShowVisitManager] = useState(false);
   const [editingVisit, setEditingVisit] = useState<string | null>(null);
@@ -536,10 +567,11 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
   }, []);
 
   const loadData = async () => {
-    const [visitsRes, wishlistRes, customRes] = await Promise.all([
+    const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
       supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes').eq('is_wishlist', false),
       supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
-      supabase.from('bram_custom_stadiums').select('*')
+      supabase.from('bram_custom_stadiums').select('*'),
+      supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').order('created_at', { ascending: true })
     ]);
     if (visitsRes.data) setVisits(visitsRes.data.map(v => ({
       stadium_id: v.stadium_id,
@@ -548,6 +580,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     })));
     if (wishlistRes.data) setWishlist(wishlistRes.data);
     if (customRes.data) setCustomStadiums(customRes.data);
+    if (photosRes.data) setVisitPhotos(photosRes.data);
   };
 
   const toggleVisit = async (stadiumId: string, date?: string) => {
@@ -947,6 +980,192 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     return countries.size;
   }, [allStadiums, visits]);
 
+  // Compute achievements
+  const achievements = useMemo(() => {
+    const visitCount = visits.length;
+    const totalStadiums = allStadiums.length;
+    const countriesCount = countriesVisited;
+    const completedLeagues = leagueStats.filter(ls => ls.total > 0 && ls.visited === ls.total && ls.league !== tr(lang, 'Eigen toevoegingen', 'Custom stadiums')).length;
+    const spartaVisited = visits.some(v => {
+      const s = allStadiums.find(st => st.id === v.stadium_id);
+      return s?.club?.name === 'Sparta Rotterdam';
+    });
+    const datedVisits = visits.filter(v => v.visit_date).length;
+    const customCount = customStadiums.length;
+    const wishlistCount = wishlist.length;
+    const visitedStadiumIds = new Set(visits.map(v => v.stadium_id));
+    const nlVisits = allStadiums.filter(s => visitedStadiumIds.has(s.id) && (s.club?.current_league?.name === 'Eredivisie' || s.club?.current_league?.name === 'Eerste Divisie')).length;
+
+    return ACHIEVEMENTS.map(a => ({
+      ...a,
+      earned: a.check(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits),
+      progressText: a.progress(visitCount, totalStadiums, countriesCount, completedLeagues, spartaVisited, datedVisits, customCount, wishlistCount, nlVisits),
+    }));
+  }, [visits, allStadiums, countriesVisited, leagueStats, customStadiums, wishlist, lang]);
+
+  const earnedCount = achievements.filter(a => a.earned).length;
+
+  // Photo upload handler
+  const uploadVisitPhoto = async (stadiumId: string, file: File) => {
+    if (file.size > 5 * 1024 * 1024) return; // Max 5MB
+    const existingPhotos = visitPhotos.filter(p => p.stadium_id === stadiumId);
+    if (existingPhotos.length >= 3) return; // Max 3 per stadium
+
+    setUploadingPhoto(true);
+    try {
+      const fileName = `${stadiumId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const { error: uploadError } = await supabase.storage.from('visit-photos').upload(fileName, file, { contentType: file.type });
+      if (uploadError) { console.error('Upload error:', uploadError); setUploadingPhoto(false); return; }
+      const { data: urlData } = supabase.storage.from('visit-photos').getPublicUrl(fileName);
+      const { data, error } = await supabase.from('bram_visit_photos').insert({
+        stadium_id: stadiumId,
+        photo_url: urlData.publicUrl,
+      }).select('id, stadium_id, photo_url').single();
+      if (!error && data) setVisitPhotos([...visitPhotos, data]);
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+    }
+    setUploadingPhoto(false);
+    setPhotoUploadStadium(null);
+  };
+
+  const deleteVisitPhoto = async (photoId: string) => {
+    const photo = visitPhotos.find(p => p.id === photoId);
+    if (!photo) return;
+    // Extract path from URL
+    const urlParts = photo.photo_url.split('/visit-photos/');
+    if (urlParts[1]) {
+      await supabase.storage.from('visit-photos').remove([decodeURIComponent(urlParts[1])]);
+    }
+    await supabase.from('bram_visit_photos').delete().eq('id', photoId);
+    setVisitPhotos(visitPhotos.filter(p => p.id !== photoId));
+  };
+
+  // Share stats card generator
+  const generateShareCard = async () => {
+    setIsGeneratingShare(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d')!;
+
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      // Decorative border
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(40, 40, 1000, 1000);
+      ctx.strokeStyle = '#f59e0b44';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(50, 50, 980, 980);
+
+      // Title
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 56px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('GROUNDHOPPER PRO', 540, 150);
+
+      // Subtitle
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '24px system-ui, -apple-system, sans-serif';
+      ctx.fillText(lang === 'nl' ? 'Mijn Stadion Statistieken' : 'My Stadium Statistics', 540, 195);
+
+      // Divider
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(200, 230); ctx.lineTo(880, 230); ctx.stroke();
+
+      // Big stats
+      const percentage = totalStadiums > 0 ? Math.round((visits.length / totalStadiums) * 100) : 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 120px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${visits.length}`, 540, 370);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`/ ${totalStadiums} ${lang === 'nl' ? 'stadions' : 'stadiums'} (${percentage}%)`, 540, 420);
+
+      // Progress bar
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.roundRect(140, 460, 800, 30, 15);
+      ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.roundRect(140, 460, Math.max(30, 800 * (visits.length / Math.max(totalStadiums, 1))), 30, 15);
+      ctx.fill();
+
+      // Stats grid
+      const statsY = 550;
+      const statsData = [
+        { icon: '🌍', value: `${countriesVisited}`, label: lang === 'nl' ? 'landen' : 'countries' },
+        { icon: '🏆', value: `${leagueStats.filter(l => l.visited > 0).length}`, label: lang === 'nl' ? 'competities' : 'leagues' },
+        { icon: '⭐', value: `${earnedCount}/${ACHIEVEMENTS.length}`, label: 'achievements' },
+      ];
+      statsData.forEach((stat, i) => {
+        const x = 200 + i * 280;
+        ctx.font = '40px system-ui';
+        ctx.fillText(stat.icon, x, statsY);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.value, x, statsY + 60);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '22px system-ui, -apple-system, sans-serif';
+        ctx.fillText(stat.label, x, statsY + 90);
+        ctx.fillStyle = '#ffffff';
+      });
+
+      // Earned achievements
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(200, 680); ctx.lineTo(880, 680); ctx.stroke();
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      ctx.fillText(lang === 'nl' ? 'ACHIEVEMENTS' : 'ACHIEVEMENTS', 540, 720);
+
+      const earned = achievements.filter(a => a.earned);
+      const iconsPerRow = 8;
+      earned.forEach((a, i) => {
+        const row = Math.floor(i / iconsPerRow);
+        const col = i % iconsPerRow;
+        const startX = 540 - (Math.min(earned.length - row * iconsPerRow, iconsPerRow) * 65) / 2;
+        ctx.font = '44px system-ui';
+        ctx.fillText(a.icon, startX + col * 65, 775 + row * 65);
+      });
+
+      // Footer
+      ctx.fillStyle = '#475569';
+      ctx.font = '20px system-ui, -apple-system, sans-serif';
+      ctx.fillText('groundhopper-pro.vercel.app', 540, 980);
+
+      // Convert to blob and share/download
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob(b => resolve(b!), 'image/png'));
+      const file = new File([blob], 'groundhopper-stats.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Groundhopper Pro Stats' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'groundhopper-stats.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Share card generation failed:', err);
+    }
+    setIsGeneratingShare(false);
+  };
+
+  const totalStadiums = allStadiums.length;
+
   // Geolocation handler for "nearest unvisited" feature
   const findNearestUnvisited = () => {
     setGeoLoading(true);
@@ -1039,26 +1258,6 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       })
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [visits, allStadiums]);
-
-  // Milestone badges - achievements based on Bram's groundhopping journey
-  const milestones = useMemo(() => {
-    const earned: { icon: string; label: string; detail: string }[] = [];
-    const v = visits.length;
-    const c = countriesVisited;
-    const l = leagueStats.filter(ls => ls.visited > 0).length;
-
-    if (v >= 1) earned.push({ icon: '🎯', label: tr(lang, 'Eerste Groundhop', 'First Groundhop'), detail: '1' });
-    if (v >= 10) earned.push({ icon: '🔟', label: tr(lang, 'Dubbele Cijfers', 'Double Digits'), detail: '10' });
-    if (v >= 25) earned.push({ icon: '🏅', label: '25 Club', detail: '25' });
-    if (v >= 50) earned.push({ icon: '⭐', label: 'Half Century', detail: '50' });
-    if (v >= 100) earned.push({ icon: '💯', label: 'Century Club', detail: '100' });
-    if (c >= 2) earned.push({ icon: '✈️', label: tr(lang, 'Internationaal', 'International'), detail: `${c} ${tr(lang, 'landen', 'countries')}` });
-    if (c >= 5) earned.push({ icon: '🌍', label: tr(lang, 'Wereldreiziger', 'Globe Trotter'), detail: `${c} ${tr(lang, 'landen', 'countries')}` });
-    if (l >= 3) earned.push({ icon: '🏆', label: tr(lang, 'Multi-competitie', 'Multi-league'), detail: `${l} ${tr(lang, 'competities', 'leagues')}` });
-    if (l >= 5) earned.push({ icon: '👑', label: tr(lang, 'Competitie Koning', 'League King'), detail: `${l} ${tr(lang, 'competities', 'leagues')}` });
-
-    return earned;
-  }, [visits, countriesVisited, leagueStats, lang]);
 
   if (!mounted) {
     return (
@@ -1282,6 +1481,17 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             <span className="font-bold">{visits.length}</span>
             <span className={showStats ? 'text-green-200' : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>/ {allStadiums.length}</span>
           </button>
+
+          <button
+            onClick={() => setShowAchievements(true)}
+            className={`px-3 py-2 rounded-lg shadow-lg font-medium text-sm flex items-center gap-1.5 transition ${
+              theme === 'dark' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span className="font-bold">{earnedCount}</span>
+            <span className="text-amber-200 text-xs">/{ACHIEVEMENTS.length}</span>
+          </button>
         </div>
 
         {/* Stats Dashboard */}
@@ -1381,6 +1591,18 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     {visits.filter(v => !v.visit_date).length} {tr(lang, 'zonder datum', 'no date')}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={generateShareCard}
+                disabled={isGeneratingShare}
+                className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                  theme === 'dark'
+                    ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-500/30'
+                    : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                }`}
+              >
+                {isGeneratingShare ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                {isGeneratingShare ? tr(lang, 'Genereren...', 'Generating...') : tr(lang, 'Deel mijn stats 📤', 'Share my stats 📤')}
               </button>
             </div>
           </div>
@@ -1783,6 +2005,87 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
         </div>
       )}
 
+      {/* Achievements Modal */}
+      {showAchievements && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAchievements(false)} />
+          <div className={`relative w-full max-w-md max-h-[85vh] rounded-xl shadow-2xl flex flex-col ${
+            theme === 'dark' ? 'bg-slate-800' : 'bg-white'
+          }`}>
+            <div className={`p-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div>
+                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                  🏆 {tr(lang, 'Achievements', 'Achievements')}
+                </h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {earnedCount}/{ACHIEVEMENTS.length} {tr(lang, 'behaald', 'earned')}
+                </p>
+              </div>
+              <button onClick={() => setShowAchievements(false)}>
+                <X className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 gap-3">
+                {achievements.map(a => (
+                  <div
+                    key={a.id}
+                    className={`p-3 rounded-xl border transition ${
+                      a.earned
+                        ? theme === 'dark'
+                          ? 'bg-amber-500/10 border-amber-500/30'
+                          : 'bg-amber-50 border-amber-200'
+                        : theme === 'dark'
+                          ? 'bg-slate-700/50 border-slate-600/50 opacity-50'
+                          : 'bg-slate-50 border-slate-200 opacity-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`text-2xl ${a.earned ? '' : 'grayscale'}`}>{a.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-bold text-sm ${
+                          a.earned
+                            ? theme === 'dark' ? 'text-amber-400' : 'text-amber-700'
+                            : theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                        }`}>
+                          {lang === 'nl' ? a.title_nl : a.title_en}
+                        </div>
+                        <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {lang === 'nl' ? a.desc_nl : a.desc_en}
+                        </div>
+                      </div>
+                      <div className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        a.earned
+                          ? 'bg-green-500/20 text-green-500'
+                          : theme === 'dark' ? 'bg-slate-600 text-slate-400' : 'bg-slate-200 text-slate-500'
+                      }`}>
+                        {a.earned ? '✓' : a.progressText}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={`p-3 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <button
+                onClick={() => { setShowAchievements(false); generateShareCard(); }}
+                disabled={isGeneratingShare}
+                className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition ${
+                  theme === 'dark'
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                }`}
+              >
+                {isGeneratingShare ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                {tr(lang, 'Deel mijn stats', 'Share my stats')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Visit Manager Modal */}
       {showVisitManager && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
@@ -2055,63 +2358,27 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               </span>
             </span>
           </div>
-          {/* Milestone badges */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {visits.length >= 1 && (
-              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-500/20 text-green-500 border border-green-500/30">
-                🎯 {tr(lang, 'Eerste!', 'First!')}
-                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                  {tr(lang, 'Eerste stadion bezocht!', 'First stadium visited!')}
-                </span>
-              </span>
-            )}
-            {visits.length >= 10 && (
-              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/20 text-blue-500 border border-blue-500/30">
-                ⭐ Top 10
-                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                  {tr(lang, '10+ stadions bezocht', '10+ stadiums visited')}
-                </span>
-              </span>
-            )}
-            {visits.length >= 25 && (
-              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-500 border border-purple-500/30">
-                🏅 Quarter
-                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                  {tr(lang, '25+ stadions - een kwart eeuw aan ervaringen!', '25+ stadiums - a quarter century of experiences!')}
-                </span>
-              </span>
-            )}
-            {countriesVisited >= 3 && (
-              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                ✈️ {tr(lang, 'Reiziger', 'Traveler')}
-                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                  {tr(lang, `Stadions bezocht in ${countriesVisited}+ landen!`, `Visited stadiums in ${countriesVisited}+ countries!`)}
-                </span>
-              </span>
-            )}
-            {visits.length >= 50 && (
-              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">
-                👑 {tr(lang, 'Halve eeuw', 'Half Century')}
-                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
-                  {tr(lang, '50+ stadions bezocht - legendarisch!', '50+ stadiums visited - legendary!')}
-                </span>
-              </span>
-            )}
-          </div>
-          {/* Milestone badges */}
-          {milestones.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-dashed" style={{ borderColor: theme === 'dark' ? '#475569' : '#cbd5e1' }}>
-              {milestones.map((m, i) => (
+          {/* Earned achievements badges */}
+          {earnedCount > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {achievements.filter(a => a.earned).map(a => (
                 <span
-                  key={i}
-                  title={`${m.label} (${m.detail})`}
-                  className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    theme === 'dark' ? 'bg-slate-700/80' : 'bg-slate-100'
-                  }`}
+                  key={a.id}
+                  title={`${lang === 'nl' ? a.title_nl : a.title_en}`}
+                  className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30"
                 >
-                  {m.icon}
+                  {a.icon}
+                  <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50 ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                    {lang === 'nl' ? a.title_nl : a.title_en} — {lang === 'nl' ? a.desc_nl : a.desc_en}
+                  </span>
                 </span>
               ))}
+              <button
+                onClick={() => setShowAchievements(true)}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-amber-500/20 hover:text-amber-500 hover:border-amber-500/30 transition"
+              >
+                +{ACHIEVEMENTS.length - earnedCount} 🔒
+              </button>
             </div>
           )}
         </div>
@@ -2294,6 +2561,61 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
                     theme={theme}
                     lang={lang}
                   />
+
+                  {/* User's own visit photos */}
+                  {isVisited && (() => {
+                    const photos = visitPhotos.filter(p => p.stadium_id === stadium.id);
+                    return (
+                      <div className={`px-3 py-2 border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                            📸 {tr(lang, 'Mijn foto\'s', 'My photos')}
+                          </span>
+                          {photos.length < 3 && (
+                            <button
+                              onClick={() => {
+                                setPhotoUploadStadium(stadium.id);
+                                fileInputRef.current?.click();
+                              }}
+                              disabled={uploadingPhoto}
+                              className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 transition ${
+                                theme === 'dark'
+                                  ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                                  : 'bg-green-50 text-green-600 hover:bg-green-100'
+                              }`}
+                            >
+                              {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                              {tr(lang, 'Foto toevoegen', 'Add photo')}
+                            </button>
+                          )}
+                        </div>
+                        {photos.length > 0 ? (
+                          <div className="flex gap-1.5 overflow-x-auto">
+                            {photos.map(photo => (
+                              <div key={photo.id} className="relative group flex-shrink-0">
+                                <img
+                                  src={photo.photo_url}
+                                  alt=""
+                                  className="w-16 h-16 rounded-lg object-cover border-2 border-green-500/30"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteVisitPhoto(photo.id); }}
+                                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="w-2.5 h-2.5 text-white" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={`text-[10px] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {tr(lang, 'Nog geen foto\'s — voeg er een toe!', 'No photos yet — add one!')}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Stats row */}
                   <div className={`px-4 py-2.5 flex items-center justify-between text-xs border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
@@ -2479,6 +2801,21 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
           );
         })}
       </MapContainer>
+
+      {/* Hidden file input for photo upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && photoUploadStadium) {
+            uploadVisitPhoto(photoUploadStadium, file);
+          }
+          e.target.value = '';
+        }}
+      />
 
       <style jsx global>{`
         .custom-stadium-marker { background: transparent; border: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
