@@ -776,6 +776,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       'Pro League': '#1D1160', 'Challenger Pro League': '#FF6B00',
       'Primeira Liga': '#006400', 'Scottish Premiership': '#1B1464',
       'Süper Lig': '#E30A17', 'NIFL Premiership': '#006400',
+      'Superligaen': '#C8102E',
     };
 
     leagueMap.forEach((val, key) => {
@@ -839,6 +840,26 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       })
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [visits, allStadiums]);
+
+  // Milestone badges - achievements based on Bram's groundhopping journey
+  const milestones = useMemo(() => {
+    const earned: { icon: string; label: string; detail: string }[] = [];
+    const v = visits.length;
+    const c = countriesVisited;
+    const l = leagueStats.filter(ls => ls.visited > 0).length;
+
+    if (v >= 1) earned.push({ icon: '🎯', label: tr(lang, 'Eerste Groundhop', 'First Groundhop'), detail: '1' });
+    if (v >= 10) earned.push({ icon: '🔟', label: tr(lang, 'Dubbele Cijfers', 'Double Digits'), detail: '10' });
+    if (v >= 25) earned.push({ icon: '🏅', label: '25 Club', detail: '25' });
+    if (v >= 50) earned.push({ icon: '⭐', label: 'Half Century', detail: '50' });
+    if (v >= 100) earned.push({ icon: '💯', label: 'Century Club', detail: '100' });
+    if (c >= 2) earned.push({ icon: '✈️', label: tr(lang, 'Internationaal', 'International'), detail: `${c} ${tr(lang, 'landen', 'countries')}` });
+    if (c >= 5) earned.push({ icon: '🌍', label: tr(lang, 'Wereldreiziger', 'Globe Trotter'), detail: `${c} ${tr(lang, 'landen', 'countries')}` });
+    if (l >= 3) earned.push({ icon: '🏆', label: tr(lang, 'Multi-competitie', 'Multi-league'), detail: `${l} ${tr(lang, 'competities', 'leagues')}` });
+    if (l >= 5) earned.push({ icon: '👑', label: tr(lang, 'Competitie Koning', 'League King'), detail: `${l} ${tr(lang, 'competities', 'leagues')}` });
+
+    return earned;
+  }, [visits, countriesVisited, leagueStats, lang]);
 
   if (!mounted) {
     return (
@@ -1571,6 +1592,22 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             <span>{countriesVisited} {tr(lang, 'landen', 'countries')}</span>
             <span>{leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}</span>
           </div>
+          {/* Milestone badges */}
+          {milestones.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-dashed" style={{ borderColor: theme === 'dark' ? '#475569' : '#cbd5e1' }}>
+              {milestones.map((m, i) => (
+                <span
+                  key={i}
+                  title={`${m.label} (${m.detail})`}
+                  className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    theme === 'dark' ? 'bg-slate-700/80' : 'bg-slate-100'
+                  }`}
+                >
+                  {m.icon}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

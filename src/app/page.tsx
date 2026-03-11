@@ -141,12 +141,12 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
-                  <span className="text-lg">🏰</span>
+                <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
+                  <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-7 h-7 object-contain" />
                   <span className="hidden sm:inline font-medium">Sparta</span>
                 </button>
-                <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`px-3 py-2 rounded-lg font-medium transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
-                  {lang === 'nl' ? '🇳🇱 NL' : '🇬🇧 EN'}
+                <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`px-2 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
+                  <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-6 h-4 object-cover rounded-sm" />
                 </button>
                 <button onClick={toggleTheme} className={`p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
                   <FloodlightIcon isOn={theme === 'dark'} />
