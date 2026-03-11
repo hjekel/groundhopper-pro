@@ -1333,6 +1333,31 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
     setIsGeneratingShare(false);
   };
 
+  // Export backup as JSON
+  const exportBackup = async () => {
+    const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
+      supabase.from('stadium_visits').select('*').eq('is_wishlist', false),
+      supabase.from('bram_wishlist').select('*'),
+      supabase.from('bram_custom_stadiums').select('*'),
+      supabase.from('bram_visit_photos').select('*'),
+    ]);
+    const backup = {
+      exported_at: new Date().toISOString(),
+      version: '1.2',
+      visits: visitsRes.data || [],
+      wishlist: wishlistRes.data || [],
+      custom_stadiums: customRes.data || [],
+      photos: photosRes.data || [],
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `groundhopper-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalStadiums = allStadiums.length;
 
   // Geolocation handler for "nearest unvisited" feature
@@ -1824,6 +1849,15 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               >
                 {isGeneratingShare ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                 {isGeneratingShare ? tr(lang, 'Genereren...', 'Generating...') : tr(lang, 'Deel mijn stats 📤', 'Share my stats 📤')}
+              </button>
+              <button
+                onClick={exportBackup}
+                className={`w-full py-1.5 text-[10px] flex items-center justify-center gap-1 transition opacity-50 hover:opacity-100 ${
+                  theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <Download className="w-3 h-3" />
+                {tr(lang, 'Backup exporteren', 'Export backup')}
               </button>
             </div>
           </div>
