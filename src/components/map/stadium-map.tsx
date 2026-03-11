@@ -101,126 +101,76 @@ const CLUB_SUGGESTIONS: { club: string; stadium: string; city: string; country: 
   { club: 'Rapid Wien', stadium: 'Allianz Stadion', city: 'Vienna', country: 'Österreich', color: '#009639', aliases: ['rapid vienna'] },
 ];
 
-const createClubIcon = (primaryColor: string, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
+const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
   const color = primaryColor || '#ef4444';
-  
-  if (isCustom && !isVisited && !isWishlist) {
-    const svg = `
-      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="shadow-c" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-          </filter>
-        </defs>
-        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
-              fill="${color}" filter="url(#shadow-c)" stroke="#8b5cf6" stroke-width="2.5"/>
-        <circle cx="18" cy="17" r="8" fill="white"/>
-        <text x="18" y="21" text-anchor="middle" font-size="10" font-weight="bold" fill="${color}">+</text>
-      </svg>
-    `;
+
+  // --- Sparta: extra large golden-glow pin with crest ---
+  if (isSparta) {
+    const logoHtml = crestUrl
+      ? `<img src="${crestUrl}" style="width:22px;height:22px;object-fit:contain;" />`
+      : `<span style="font-size:14px;font-weight:bold;color:#CC0000">S</span>`;
+    const visitBadge = isVisited
+      ? `<div style="position:absolute;top:0;right:2px;width:16px;height:16px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
+      : '';
     return L.divIcon({
-      html: svg,
-      className: 'custom-stadium-marker custom-added',
-      iconSize: [36, 44],
-      iconAnchor: [18, 44],
-      popupAnchor: [0, -44],
+      html: `
+        <div style="position:relative;width:48px;height:56px;">
+          <svg width="48" height="56" viewBox="0 0 48 56" style="position:absolute;top:0;left:0;">
+            <circle cx="24" cy="22" r="22" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5" class="sparta-pulse"/>
+            <path d="M24 4C13.507 4 5 12.507 5 23c0 10.493 19 29 19 29s19-18.507 19-29C43 12.507 34.493 4 24 4z"
+                  fill="#CC0000" stroke="#FFD700" stroke-width="2.5"/>
+          </svg>
+          <div style="position:absolute;top:10px;left:11px;width:26px;height:26px;border-radius:50%;background:white;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            ${logoHtml}
+          </div>
+          ${visitBadge}
+        </div>
+      `,
+      className: 'custom-stadium-marker sparta-special',
+      iconSize: [48, 56] as any,
+      iconAnchor: [24, 56] as any,
+      popupAnchor: [0, -56] as any,
     });
   }
+
+  // --- All other markers: pin with club logo + status badge ---
+  let borderStroke = '';
+  let badge = '';
+  let className = 'custom-stadium-marker';
 
   if (isVisited) {
-    const svg = `
-      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="shadow-v" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-          </filter>
-        </defs>
-        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
-              fill="${color}" filter="url(#shadow-v)" stroke="#22c55e" stroke-width="3"/>
-        <circle cx="18" cy="17" r="8" fill="white"/>
-        <path d="M13 17 L16 20 L23 13" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-    return L.divIcon({
-      html: svg,
-      className: 'custom-stadium-marker visited',
-      iconSize: [36, 44],
-      iconAnchor: [18, 44],
-      popupAnchor: [0, -44],
-    });
+    borderStroke = 'stroke="#22c55e" stroke-width="3"';
+    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+  } else if (isWishlist) {
+    borderStroke = 'stroke="#eab308" stroke-width="2"';
+    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><polygon points="6,1 7.5,4.5 11,4.5 8,7 9.5,11 6,8.5 2.5,11 4,7 1,4.5 4.5,4.5" fill="white"/></svg></div>`;
+  } else if (isCustom) {
+    borderStroke = 'stroke="#8b5cf6" stroke-width="2.5"';
+    className = 'custom-stadium-marker custom-added';
+    badge = `<div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="8" height="8" viewBox="0 0 12 12"><path d="M6 2V10M2 6H10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>`;
   }
 
-  if (isWishlist) {
-    const svg = `
-      <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="shadow-w" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-          </filter>
-        </defs>
-        <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
-              fill="${color}" filter="url(#shadow-w)" stroke="#eab308" stroke-width="2"/>
-        <circle cx="18" cy="17" r="8" fill="white"/>
-        <polygon points="18,12 19.5,16 24,16 20.5,18.5 22,23 18,20 14,23 15.5,18.5 12,16 16.5,16" fill="#eab308"/>
-      </svg>
-    `;
-    return L.divIcon({
-      html: svg,
-      className: 'custom-stadium-marker wishlist',
-      iconSize: [36, 44],
-      iconAnchor: [18, 44],
-      popupAnchor: [0, -44],
-    });
-  }
+  const logoHtml = crestUrl
+    ? `<img src="${crestUrl}" style="width:18px;height:18px;object-fit:contain;" onerror="this.style.display='none'" />`
+    : '';
 
-  if (isSparta) {
-    const svg = `
-      <svg width="48" height="56" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="sparta-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feFlood flood-color="#FFD700" flood-opacity="0.6"/>
-            <feComposite in2="blur" operator="in"/>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <circle cx="24" cy="22" r="20" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5" class="sparta-pulse"/>
-        <path d="M24 4C13.507 4 5 12.507 5 23c0 10.493 19 29 19 29s19-18.507 19-29C43 12.507 34.493 4 24 4z"
-              fill="#CC0000" filter="url(#sparta-glow)" stroke="#FFD700" stroke-width="2"/>
-        <circle cx="24" cy="22" r="10" fill="white"/>
-        <text x="24" y="26" text-anchor="middle" font-size="12" fill="#CC0000">S</text>
-      </svg>
-    `;
-    return L.divIcon({
-      html: svg,
-      className: 'custom-stadium-marker sparta-special',
-      iconSize: [48, 56],
-      iconAnchor: [24, 56],
-      popupAnchor: [0, -56],
-    });
-  }
-
-  const svg = `
-    <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="shadow-d" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 24 16 24s16-15.163 16-24C32 7.163 24.837 0 16 0z"
-            fill="${color}" filter="url(#shadow-d)"/>
-      <circle cx="16" cy="16" r="6" fill="white"/>
-    </svg>
-  `;
   return L.divIcon({
-    html: svg,
-    className: 'custom-stadium-marker',
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
-    popupAnchor: [0, -40],
+    html: `
+      <div style="position:relative;width:36px;height:44px;">
+        <svg width="36" height="44" viewBox="0 0 36 44" style="position:absolute;top:0;left:0;">
+          <path d="M18 0C8.059 0 0 8.059 0 18c0 9.941 18 26 18 26s18-16.059 18-26C36 8.059 27.941 0 18 0z"
+                fill="${color}" ${borderStroke}/>
+        </svg>
+        <div style="position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:50%;background:white;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+          ${logoHtml}
+        </div>
+        ${badge}
+      </div>
+    `,
+    className,
+    iconSize: [36, 44] as any,
+    iconAnchor: [18, 44] as any,
+    popupAnchor: [0, -44] as any,
   });
 };
 
@@ -1361,11 +1311,68 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
               / {allStadiums.length}
             </span>
           </div>
-          <div className={`text-[10px] mt-0.5 flex items-center gap-3 ${
+          <div className={`text-[10px] mt-1 flex items-center gap-3 ${
             theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
           }`}>
-            <span>{countriesVisited} {tr(lang, 'landen', 'countries')}</span>
-            <span>{leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}</span>
+            <span className="group relative cursor-help">
+              🌍 {countriesVisited} {tr(lang, 'landen', 'countries')}
+              <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
+                theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'
+              }`}>
+                {tr(lang, `Bram heeft stadions bezocht in ${countriesVisited} verschillende landen`, `Bram has visited stadiums in ${countriesVisited} different countries`)}
+              </span>
+            </span>
+            <span className="group relative cursor-help">
+              🏆 {leagueStats.filter(l => l.visited > 0).length} {tr(lang, 'competities', 'leagues')}
+              <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${
+                theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'
+              }`}>
+                {tr(lang, `Stadions uit ${leagueStats.filter(l => l.visited > 0).length} competities bezocht`, `Visited stadiums from ${leagueStats.filter(l => l.visited > 0).length} leagues`)}
+              </span>
+            </span>
+          </div>
+          {/* Milestone badges */}
+          <div className="flex flex-wrap gap-1 mt-2">
+            {visits.length >= 1 && (
+              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-500/20 text-green-500 border border-green-500/30">
+                🎯 {tr(lang, 'Eerste!', 'First!')}
+                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                  {tr(lang, 'Eerste stadion bezocht!', 'First stadium visited!')}
+                </span>
+              </span>
+            )}
+            {visits.length >= 10 && (
+              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/20 text-blue-500 border border-blue-500/30">
+                ⭐ Top 10
+                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                  {tr(lang, '10+ stadions bezocht', '10+ stadiums visited')}
+                </span>
+              </span>
+            )}
+            {visits.length >= 25 && (
+              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-500 border border-purple-500/30">
+                🏅 Quarter
+                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                  {tr(lang, '25+ stadions - een kwart eeuw aan ervaringen!', '25+ stadiums - a quarter century of experiences!')}
+                </span>
+              </span>
+            )}
+            {countriesVisited >= 3 && (
+              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                ✈️ {tr(lang, 'Reiziger', 'Traveler')}
+                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                  {tr(lang, `Stadions bezocht in ${countriesVisited}+ landen!`, `Visited stadiums in ${countriesVisited}+ countries!`)}
+                </span>
+              </span>
+            )}
+            {visits.length >= 50 && (
+              <span className="group relative cursor-help inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">
+                👑 {tr(lang, 'Halve eeuw', 'Half Century')}
+                <span className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg ${theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-white'}`}>
+                  {tr(lang, '50+ stadions bezocht - legendarisch!', '50+ stadiums visited - legendary!')}
+                </span>
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1403,7 +1410,7 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', isSparta, isVisited, isOnWishlist, isCustom)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', stadium.club?.crest_url, isSparta, isVisited, isOnWishlist, isCustom)}
             >
               <Popup>
                 <div className={`min-w-[280px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -1590,9 +1597,9 @@ export default function StadiumMap({ stadiums, theme, lang }: StadiumMapProps) {
       </MapContainer>
 
       <style jsx global>{`
-        .custom-stadium-marker { background: transparent; border: none; }
-        .custom-added { filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4)); }
-        .sparta-special { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); z-index: 1000 !important; }
+        .custom-stadium-marker { background: transparent; border: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .custom-added { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)) drop-shadow(0 0 6px rgba(139, 92, 246, 0.4)); }
+        .sparta-special { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); z-index: 1000 !important; }
         .sparta-pulse { animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
         html.dark .leaflet-popup-content-wrapper { background: #1e293b; border-radius: 12px; padding: 0; }
