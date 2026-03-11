@@ -82,8 +82,17 @@ export default function Home() {
   const [lang, setLang] = useState<Language>('nl')
   const [showSpartaTribute, setShowSpartaTribute] = useState(false)
   const [showGroundhopInfo, setShowGroundhopInfo] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
+
+  // Show welcome screen on first visit
+  useEffect(() => {
+    if (!localStorage.getItem('groundhopper-welcomed')) {
+      setShowHelp(true)
+      localStorage.setItem('groundhopper-welcomed', 'true')
+    }
+  }, [])
   const t = (nl: string, en: string) => (lang === 'nl' ? nl : en)
 
   useEffect(() => {
@@ -157,6 +166,9 @@ export default function Home() {
                 <button onClick={toggleTheme} className={`p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
                   <FloodlightIcon isOn={theme === 'dark'} />
                 </button>
+                <button onClick={() => setShowHelp(true)} className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 border border-slate-200'}`} title={t('Help & info', 'Help & info')}>
+                  ?
+                </button>
               </div>
             </div>
           </header>
@@ -226,6 +238,59 @@ export default function Home() {
                         'Begin gewoon! Ga naar een wedstrijd bij een club waar je nog nooit bent geweest. Zoek op sociale media naar #groundhopping of sluit je aan bij communities op Facebook en Reddit. En gebruik deze app om je voortgang bij te houden! 🏟️',
                         'Just start! Go to a match at a ground you\'ve never been to before. Search #groundhopping on social media or join communities on Facebook and Reddit. And use this app to track your progress! 🏟️'
                       )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Welcome / Help Modal */}
+          {showHelp && (
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+              <div className={`relative max-w-md w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl ${theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'}`} onClick={e => e.stopPropagation()}>
+                <button onClick={() => setShowHelp(false)} className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-lg ${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
+                  &times;
+                </button>
+                <div className="p-6 space-y-4">
+                  <div className="text-center">
+                    <span className="text-5xl">🏟️</span>
+                    <h2 className="text-2xl font-bold mt-2">{t('Welkom bij Groundhopper Pro!', 'Welcome to Groundhopper Pro!')}</h2>
+                    <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {t(
+                        "Bram's persoonlijk voetbaldagboek — track bezochte stadions, wedstrijden en reis-statistieken op de kaart.",
+                        "Bram's personal football diary — track visited stadiums, matches and travel stats on the map."
+                      )}
+                    </p>
+                  </div>
+
+                  <div className={`rounded-xl p-4 space-y-3 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    {[
+                      { icon: '📍', nl: 'Kaart — Klik op een stadion voor details', en: 'Map — Click a stadium for details' },
+                      { icon: '✅', nl: 'Bezocht — Markeer stadions + vul wedstrijd in', en: 'Visited — Mark stadiums + log match info' },
+                      { icon: '⭐', nl: 'Rating — Geef stadions 1-5 sterren', en: 'Rating — Rate stadiums 1-5 stars' },
+                      { icon: '📊', nl: 'Stats — Voortgang per competitie', en: 'Stats — Progress per league' },
+                      { icon: '📅', nl: 'Tijdlijn — Alle bezoeken op datum', en: 'Timeline — All visits by date' },
+                      { icon: '🏆', nl: 'Badges — Verdien achievements', en: 'Badges — Earn achievements' },
+                      { icon: '📤', nl: 'Delen — Deel je stats als afbeelding', en: 'Share — Share your stats as image' },
+                      { icon: '💾', nl: 'Backup — Exporteer je data als JSON', en: 'Backup — Export your data as JSON' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="text-lg flex-shrink-0">{item.icon}</span>
+                        <span className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{t(item.nl, item.en)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={`text-center pt-2 border-t space-y-1 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {t('Gemaakt door', 'Made by')} <span className="font-medium">Henk Jekel</span>
+                    </p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      The AppFabrique — an initiative of Incredible Projects
+                    </p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
+                      {t('Laatste update', 'Last update')}: 11 {t('maart', 'March')} 2026 · v1.2
                     </p>
                   </div>
                 </div>
