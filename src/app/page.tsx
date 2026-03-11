@@ -254,7 +254,13 @@ export default function Home() {
                 </button>
                 <div className="p-6 space-y-4">
                   <div className="text-center">
-                    <span className="text-5xl">🏟️</span>
+                    <div className="mx-auto w-48 h-28 rounded-xl overflow-hidden mb-2 shadow-lg">
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Het_Kasteel%2C_Rotterdam.jpg/480px-Het_Kasteel%2C_Rotterdam.jpg"
+                        alt="Het Kasteel - Sparta Rotterdam"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <h2 className="text-2xl font-bold mt-2">{t('Welkom bij Groundhopper Pro!', 'Welcome to Groundhopper Pro!')}</h2>
                     <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       {t(
