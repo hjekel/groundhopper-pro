@@ -261,6 +261,10 @@ const CHALLENGES = [
   { id: 'big_ten', icon: '🏟️', title_nl: "Europa's Grootste", title_en: "Europe's Biggest", desc_nl: 'Top 10 grootste stadions bezocht', desc_en: 'Visit the 10 biggest stadiums', type: 'biggest' as const, count: 10 },
   { id: 'century', icon: '💯', title_nl: '100 Club', title_en: '100 Club', desc_nl: '100 stadions bezoeken', desc_en: 'Visit 100 stadiums', type: 'visit_count' as const, target: 100 },
   { id: 'ten_countries', icon: '🌍', title_nl: '10 Landen Tour', title_en: '10 Countries Tour', desc_nl: 'Stadions in 10 landen', desc_en: 'Stadiums in 10 countries', type: 'country_count' as const, target: 10 },
+  { id: 'bucket_list', icon: '⭐', title_nl: 'European Bucket List', title_en: 'European Bucket List', desc_nl: '10 iconische Europese stadions', desc_en: '10 iconic European stadiums', type: 'specific_stadiums' as const, stadiumNames: [
+    'Spotify Camp Nou', 'Santiago Bernabéu', 'Signal Iduna Park', 'Anfield', 'Old Trafford',
+    'San Siro', 'Allianz Arena', 'Stadio Olimpico', 'Celtic Park', 'De Kuip'
+  ]},
 ];
 
 const COMPETITIONS = [
@@ -823,11 +827,17 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       if (location) break;
     }
 
+    // If stadium-specific search failed, try city-only as fallback
+    if (!location && newStadium.city) {
+      const cityQuery = `${newStadium.city}, ${newStadium.country || 'Netherlands'}`;
+      location = await geocodeLocation(cityQuery);
+    }
+
     setIsSearching(false);
 
     if (!location) {
-      setSearchError(tr(lang, 
-        'Locatie niet gevonden. Probeer een andere stadion naam of stad.', 
+      setSearchError(tr(lang,
+        'Locatie niet gevonden. Probeer een andere stadion naam of stad.',
         'Location not found. Try a different stadium name or city.'
       ));
       return;
@@ -1244,6 +1254,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       } else if (ch.type === 'country_count') {
         visited = countriesVisited;
         total = ch.target;
+      } else if (ch.type === 'specific_stadiums') {
+        const targets = allStadiums.filter(s => ch.stadiumNames.includes(s.name));
+        total = ch.stadiumNames.length;
+        visited = targets.filter(s => visitedIds.has(s.id)).length;
       }
 
       return {

@@ -292,6 +292,31 @@ export default function Home() {
                     ))}
                   </div>
 
+                  <div className={`rounded-xl p-4 space-y-2 ${theme === 'dark' ? 'bg-emerald-900/30 border border-emerald-800/30' : 'bg-emerald-50 border border-emerald-100'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📱</span>
+                      <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                        {t('Zet op je beginscherm', 'Add to home screen')}
+                      </span>
+                    </div>
+                    <div className={`text-xs space-y-1.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      <div>
+                        <span className="font-medium">iPhone/iPad:</span>{' '}
+                        {t(
+                          'Open in Safari → tik op het Deel-icoon (vierkantje met pijl omhoog) → "Zet op beginscherm"',
+                          'Open in Safari → tap Share icon (square with arrow) → "Add to Home Screen"'
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-medium">Android:</span>{' '}
+                        {t(
+                          'Open in Chrome → tik op ⋮ menu rechtsboven → "Toevoegen aan startscherm"',
+                          'Open in Chrome → tap ⋮ menu top-right → "Add to Home screen"'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className={`text-center pt-2 border-t space-y-1 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
                     <p className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                       {t('Gemaakt door', 'Made by')} <span className="font-medium">Henk Jekel</span>
@@ -300,7 +325,7 @@ export default function Home() {
                       The AppFabrique — an initiative of Incredible Projects
                     </p>
                     <p className={`text-xs ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
-                      {t('Laatste update', 'Last update')}: 11 {t('maart', 'March')} 2026 · v1.2
+                      {t('Laatste update', 'Last update')}: 12 {t('maart', 'March')} 2026 · v1.5
                     </p>
                   </div>
                 </div>
@@ -309,7 +334,7 @@ export default function Home() {
           )}
 
           <div className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v1.3
+            v1.5
           </div>
         </main>
       </LanguageContext.Provider>
