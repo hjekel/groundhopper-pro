@@ -3197,8 +3197,21 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                   </div>
                 ))}
               </div>
-              <div className={`text-[9px] mt-2 italic ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
-                {tr(lang, 'Geïnspireerd door The 92 Club 🇬🇧', 'Inspired by The 92 Club 🇬🇧')}
+              <div className={`mt-2 p-2 rounded-lg ${theme === 'dark' ? 'bg-slate-800/50 border border-slate-700/30' : 'bg-blue-50/50 border border-blue-100'}`}>
+                <div className={`text-[10px] font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {tr(lang,
+                    '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Geïnspireerd door The 92 Club — opgericht in 1978 om alle 92 stadions van de Engelse Football League te bezoeken.',
+                    '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inspired by The 92 Club — founded in 1978 to visit all 92 English Football League grounds.'
+                  )}
+                </div>
+                <div className="flex gap-3 mt-1.5">
+                  <a href="https://www.the92.net/" target="_blank" rel="noopener noreferrer" className={`text-[9px] font-medium hover:underline ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                    the92.net ↗
+                  </a>
+                  <a href="https://www.footballgroundmap.com/" target="_blank" rel="noopener noreferrer" className={`text-[9px] font-medium hover:underline ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                    Football Ground Map ↗
+                  </a>
+                </div>
               </div>
             </div>
           </div>

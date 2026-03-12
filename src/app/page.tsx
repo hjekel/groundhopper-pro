@@ -148,18 +148,9 @@ export default function Home() {
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
           <header className={`absolute top-0 left-0 right-0 z-[1000] px-3 py-1.5 ${theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'}`}>
-            <div className="flex items-center gap-1 max-w-7xl mx-auto">
+            <div className="flex items-center gap-1">
               <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-1.5 hover:opacity-80 transition flex-shrink-0">
-                <svg width="32" height="32" viewBox="0 0 100 100" className="flex-shrink-0">
-                  <circle cx="50" cy="50" r="48" fill="white" stroke="#333" strokeWidth="3"/>
-                  <polygon points="50,10 62,30 38,30" fill="#333"/>
-                  <polygon points="85,40 70,50 78,28" fill="#333"/>
-                  <polygon points="15,40 30,50 22,28" fill="#333"/>
-                  <polygon points="75,78 58,65 72,50" fill="#333"/>
-                  <polygon points="25,78 42,65 28,50" fill="#333"/>
-                  <path d="M38,30 L62,30 L72,50 L58,65 L42,65 L28,50 Z" fill="none" stroke="#333" strokeWidth="2"/>
-                  <circle cx="50" cy="50" r="12" fill="none" stroke="#333" strokeWidth="1.5" opacity="0.3"/>
-                </svg>
+                <img src="/Voetbal_bal.png" alt="Groundhopper Pro" className="w-8 h-8 rounded-lg flex-shrink-0" />
                 <h1 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
               </button>
               <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
