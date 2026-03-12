@@ -313,7 +313,27 @@ function FlyToStadium({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => {
     if (lat && lng) {
-      map.flyTo([lat, lng], 14, { duration: 1.5 });
+      // Zoom to 16 for close-up view, open nearest popup after landing
+      map.flyTo([lat, lng], 16, { duration: 1.5 });
+      const timer = setTimeout(() => {
+        // Find the closest marker and open its popup
+        let closestMarker: L.Layer | null = null;
+        let closestDist = Infinity;
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker) {
+            const pos = layer.getLatLng();
+            const dist = Math.abs(pos.lat - lat) + Math.abs(pos.lng - lng);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestMarker = layer;
+            }
+          }
+        });
+        if (closestMarker && closestDist < 0.01) {
+          (closestMarker as L.Marker).openPopup();
+        }
+      }, 1700);
+      return () => clearTimeout(timer);
     }
   }, [lat, lng, map]);
   return null;
