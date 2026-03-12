@@ -6,10 +6,24 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Groundhopper Pro',
-  description: 'The Ultimate European Stadium Tracker - Track your stadium visits across Europe',
-  keywords: ['football', 'stadiums', 'groundhopping', 'soccer', 'europe', 'tracker'],
+  description: 'Track je stadionbezoeken door heel Europa — 150+ stadions, 21 competities, 12 landen. Uitdagingen, achievements en meer.',
+  keywords: ['football', 'stadiums', 'groundhopping', 'soccer', 'europe', 'tracker', 'stadion', 'voetbal'],
   icons: {
     icon: '/favicon.ico',
+  },
+  metadataBase: new URL('https://groundhopper-pro.vercel.app'),
+  openGraph: {
+    title: 'Groundhopper Pro 🏟️',
+    description: 'Track je stadionbezoeken door heel Europa — 150+ stadions, 21 competities, 12 landen.',
+    url: 'https://groundhopper-pro.vercel.app',
+    siteName: 'Groundhopper Pro',
+    locale: 'nl_NL',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Groundhopper Pro 🏟️',
+    description: 'Track je stadionbezoeken door heel Europa — 150+ stadions, 21 competities, 12 landen.',
   },
 }
 
