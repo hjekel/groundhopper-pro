@@ -556,6 +556,8 @@ interface Visit {
   match_score?: string;
   match_competition?: string;
   rating?: number;
+  atmosphere_rating?: number;
+  facilities_rating?: number;
 }
 
 interface WishlistItem {
@@ -656,6 +658,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
   const [editMatchScore, setEditMatchScore] = useState('');
   const [editMatchComp, setEditMatchComp] = useState('');
   const [editRating, setEditRating] = useState(0);
+  const [editAtmosphereRating, setEditAtmosphereRating] = useState(0);
+  const [editFacilitiesRating, setEditFacilitiesRating] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -669,7 +673,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
-      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating').eq('is_wishlist', false),
+      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating, atmosphere_rating, facilities_rating').eq('is_wishlist', false),
       supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
       supabase.from('bram_custom_stadiums').select('*'),
       supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').order('created_at', { ascending: true })
@@ -683,6 +687,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
       match_score: v.match_score,
       match_competition: v.match_competition,
       rating: v.rating,
+      atmosphere_rating: v.atmosphere_rating,
+      facilities_rating: v.facilities_rating,
     })));
     if (wishlistRes.data) setWishlist(wishlistRes.data);
     if (customRes.data) setCustomStadiums(customRes.data);
@@ -708,7 +714,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
       if (matchCompetition) insertData.match_competition = matchCompetition;
 
       const { data } = await supabase.from('stadium_visits').insert(insertData)
-        .select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating').single();
+        .select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating, atmosphere_rating, facilities_rating').single();
       if (data) setVisits([...visits, {
         stadium_id: data.stadium_id,
         visit_date: data.first_visit_date,
@@ -718,6 +724,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
         match_score: data.match_score,
         match_competition: data.match_competition,
         rating: data.rating,
+        atmosphere_rating: data.atmosphere_rating,
+        facilities_rating: data.facilities_rating,
       }]);
     }
     // Remove from wishlist if marking as visited
@@ -1498,8 +1506,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
     );
   };
 
-  // Update visit date, notes, match info, and rating
-  const updateVisit = async (stadiumId: string, date: string | null, notes: string, matchData?: { home?: string; away?: string; score?: string; comp?: string; rating?: number }) => {
+  // Update visit date, notes, match info, and ratings
+  const updateVisit = async (stadiumId: string, date: string | null, notes: string, matchData?: { home?: string; away?: string; score?: string; comp?: string; rating?: number; atmosphere_rating?: number; facilities_rating?: number }) => {
     const updatePayload: Record<string, unknown> = {
       first_visit_date: date || null,
       last_visit_date: date || null,
@@ -1511,6 +1519,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
       updatePayload.match_score = matchData.score || null;
       updatePayload.match_competition = matchData.comp || null;
       if (matchData.rating !== undefined) updatePayload.rating = matchData.rating || null;
+      if (matchData.atmosphere_rating !== undefined) updatePayload.atmosphere_rating = matchData.atmosphere_rating || null;
+      if (matchData.facilities_rating !== undefined) updatePayload.facilities_rating = matchData.facilities_rating || null;
     }
     const { error } = await supabase
       .from('stadium_visits')
@@ -1528,6 +1538,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
             match_score: matchData.score || undefined,
             match_competition: matchData.comp || undefined,
             rating: matchData.rating || undefined,
+            atmosphere_rating: matchData.atmosphere_rating || undefined,
+            facilities_rating: matchData.facilities_rating || undefined,
           } : {})
         } : v
       ));
@@ -2682,6 +2694,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                                   setEditMatchScore(entry.match_score || '');
                                   setEditMatchComp(entry.match_competition || '');
                                   setEditRating(entry.rating || 0);
+                                  setEditAtmosphereRating(entry.atmosphere_rating || 0);
+                                  setEditFacilitiesRating(entry.facilities_rating || 0);
                                 }
                               }}
                               className={`p-1.5 rounded transition ${
@@ -2794,18 +2808,33 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                               </div>
                             </div>
 
-                            {/* Star rating */}
-                            <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-600' : 'border-slate-200'}`}>
-                              <label className={`text-xs font-medium mb-1.5 block ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {/* Star ratings — 3 categories */}
+                            <div className={`mt-3 pt-3 border-t space-y-2.5 ${theme === 'dark' ? 'border-slate-600' : 'border-slate-200'}`}>
+                              <div className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                                 ⭐ {tr(lang, 'Beoordeling', 'Rating')}
-                              </label>
-                              <StarRating rating={editRating} setRating={setEditRating} theme={theme} />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs w-16 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} title={tr(lang, '1=Stil · 5=Heksenketel', '1=Quiet · 5=Electric')}>⚽ {tr(lang, 'Sfeer', 'Vibe')}</span>
+                                <StarRating rating={editAtmosphereRating} setRating={setEditAtmosphereRating} size="sm" theme={theme} />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs w-16 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} title={tr(lang, '1=Bouwval · 5=Wereldklasse', '1=Rundown · 5=World-class')}>🏟️ {tr(lang, 'Stadion', 'Stadium')}</span>
+                                <StarRating rating={editFacilitiesRating} setRating={setEditFacilitiesRating} size="sm" theme={theme} />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs w-16 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} title={tr(lang, '1=Meh · 5=Onvergetelijk', '1=Meh · 5=Unforgettable')}>📍 {tr(lang, 'Beleving', 'Experience')}</span>
+                                <StarRating rating={editRating} setRating={setEditRating} size="sm" theme={theme} />
+                              </div>
+                              <div className={`text-[9px] mt-1 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
+                                {tr(lang, '1★ = slecht · 2★ = matig · 3★ = prima · 4★ = top · 5★ = wereldklasse', '1★ = poor · 2★ = fair · 3★ = good · 4★ = great · 5★ = world-class')}
+                              </div>
                             </div>
 
                             <div className="flex gap-2 mt-3">
                               <button
                                 onClick={() => updateVisit(entry.stadium_id, editVisitDate || null, editVisitNotes, {
-                                  home: editMatchHome, away: editMatchAway, score: editMatchScore, comp: editMatchComp, rating: editRating
+                                  home: editMatchHome, away: editMatchAway, score: editMatchScore, comp: editMatchComp,
+                                  rating: editRating, atmosphere_rating: editAtmosphereRating, facilities_rating: editFacilitiesRating
                                 })}
                                 className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium flex items-center justify-center gap-1.5"
                               >
@@ -2841,11 +2870,23 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                           </div>
                         )}
                         {/* Rating display (when not editing) */}
-                        {!isEditing && entry.rating && entry.rating > 0 && (
-                          <div className="mt-0.5 ml-11 flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map(s => (
-                              <span key={s} className={`text-[10px] ${s <= entry.rating! ? 'text-amber-400' : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>★</span>
-                            ))}
+                        {!isEditing && (entry.rating || entry.atmosphere_rating || entry.facilities_rating) && (
+                          <div className="mt-0.5 ml-11 flex items-center gap-2 flex-wrap">
+                            {entry.atmosphere_rating && entry.atmosphere_rating > 0 && (
+                              <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                ⚽{'★'.repeat(entry.atmosphere_rating)}{'☆'.repeat(5 - entry.atmosphere_rating)}
+                              </span>
+                            )}
+                            {entry.facilities_rating && entry.facilities_rating > 0 && (
+                              <span className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                🏟️{'★'.repeat(entry.facilities_rating)}{'☆'.repeat(5 - entry.facilities_rating)}
+                              </span>
+                            )}
+                            {entry.rating && entry.rating > 0 && (
+                              <span className={`text-[10px] ${theme === 'dark' ? 'text-amber-400' : 'text-amber-500'}`}>
+                                📍{'★'.repeat(entry.rating)}{'☆'.repeat(5 - entry.rating)}
+                              </span>
+                            )}
                           </div>
                         )}
                         {/* Notes display (when not editing) */}
