@@ -102,10 +102,10 @@ export default async function Image() {
             }}
           >
             {[
-              { icon: '🗺️', label: '150+ stadions' },
-              { icon: '🌍', label: '12 landen' },
-              { icon: '🏆', label: '21 competities' },
-              { icon: '🎯', label: '7 challenges' },
+              { icon: '🗺️', label: 'Interactieve kaart' },
+              { icon: '🏆', label: 'Achievements' },
+              { icon: '🎯', label: 'Uitdagingen' },
+              { icon: '📊', label: 'Stats & Records' },
             ].map((item) => (
               <div
                 key={item.label}
