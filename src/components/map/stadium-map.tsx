@@ -1151,6 +1151,37 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
     }, 0);
   }, [visits]);
 
+  // Stadium records & extremes
+  const stadiumRecords = useMemo(() => {
+    if (allStadiums.length === 0) return null;
+    const ROTTERDAM = { lat: 51.9225, lng: 4.4792 };
+    const withCap = allStadiums.filter(s => (s.capacity ?? 0) > 0);
+    const withYear = allStadiums.filter(s => s.built_year && s.built_year > 1800);
+
+    const biggest = withCap.length > 0 ? withCap.reduce((a, b) => (a.capacity ?? 0) > (b.capacity ?? 0) ? a : b) : null;
+    const smallest = withCap.length > 0 ? withCap.reduce((a, b) => (a.capacity ?? 0) < (b.capacity ?? 0) ? a : b) : null;
+    const oldest = withYear.length > 0 ? withYear.reduce((a, b) => (a.built_year ?? 9999) < (b.built_year ?? 9999) ? a : b) : null;
+    const newest = withYear.length > 0 ? withYear.reduce((a, b) => (a.built_year ?? 0) > (b.built_year ?? 0) ? a : b) : null;
+    const northernmost = allStadiums.reduce((a, b) => a.latitude > b.latitude ? a : b);
+    const southernmost = allStadiums.reduce((a, b) => a.latitude < b.latitude ? a : b);
+    const easternmost = allStadiums.reduce((a, b) => a.longitude > b.longitude ? a : b);
+    const westernmost = allStadiums.reduce((a, b) => a.longitude < b.longitude ? a : b);
+
+    // Bram's personal records
+    const visitedStadiums = visits.map(v => allStadiums.find(s => s.id === v.stadium_id)).filter(Boolean) as typeof allStadiums;
+    const furthestVisit = visitedStadiums.length > 0
+      ? visitedStadiums.reduce((a, b) =>
+          haversineDistance(ROTTERDAM.lat, ROTTERDAM.lng, a.latitude, a.longitude) >
+          haversineDistance(ROTTERDAM.lat, ROTTERDAM.lng, b.latitude, b.longitude) ? a : b)
+      : null;
+    const furthestDist = furthestVisit ? Math.round(haversineDistance(ROTTERDAM.lat, ROTTERDAM.lng, furthestVisit.latitude, furthestVisit.longitude)) : 0;
+
+    const name = (s: typeof allStadiums[0] | null) => s ? (s.club?.name || s.name) : '?';
+    const stadium = (s: typeof allStadiums[0] | null) => s?.name || '?';
+
+    return { biggest, smallest, oldest, newest, northernmost, southernmost, easternmost, westernmost, furthestVisit, furthestDist, name, stadium };
+  }, [allStadiums, visits]);
+
   // Matches logged count
   const matchesLogged = useMemo(() => visits.filter(v => v.match_score).length, [visits]);
 
@@ -2763,6 +2794,93 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                 >
                   +{ACHIEVEMENTS.length - earnedCount} 🔒
                 </button>
+              </div>
+            )}
+
+            {/* Records & Extremen */}
+            {stadiumRecords && (
+              <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+                <div className={`text-[10px] uppercase tracking-wider font-bold mb-2 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
+                  {tr(lang, '📊 Records & Extremen', '📊 Records & Extremes')}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                  {stadiumRecords.biggest && (
+                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.biggest!.latitude, lng: stadiumRecords.biggest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                      <div className="text-base">🏟️</div>
+                      <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Grootste', 'Biggest')}</div>
+                      <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.biggest)}</div>
+                      <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{(stadiumRecords.biggest.capacity ?? 0).toLocaleString()}</div>
+                    </button>
+                  )}
+                  {stadiumRecords.smallest && (
+                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.smallest!.latitude, lng: stadiumRecords.smallest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                      <div className="text-base">🏠</div>
+                      <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Kleinste', 'Smallest')}</div>
+                      <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.smallest)}</div>
+                      <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{(stadiumRecords.smallest.capacity ?? 0).toLocaleString()}</div>
+                    </button>
+                  )}
+                  {stadiumRecords.oldest && (
+                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.oldest!.latitude, lng: stadiumRecords.oldest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                      <div className="text-base">📅</div>
+                      <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Oudste', 'Oldest')}</div>
+                      <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.oldest)}</div>
+                      <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.oldest.built_year}</div>
+                    </button>
+                  )}
+                  {stadiumRecords.newest && (
+                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.newest!.latitude, lng: stadiumRecords.newest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                      <div className="text-base">🆕</div>
+                      <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Nieuwste', 'Newest')}</div>
+                      <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.newest)}</div>
+                      <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.newest.built_year}</div>
+                    </button>
+                  )}
+                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.northernmost.latitude, lng: stadiumRecords.northernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <div className="text-base">⬆️</div>
+                    <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Noordelijkst', 'Northernmost')}</div>
+                    <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.northernmost)}</div>
+                    <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.northernmost.city}</div>
+                  </button>
+                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.southernmost.latitude, lng: stadiumRecords.southernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <div className="text-base">⬇️</div>
+                    <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Zuidelijkst', 'Southernmost')}</div>
+                    <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.southernmost)}</div>
+                    <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.southernmost.city}</div>
+                  </button>
+                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.easternmost.latitude, lng: stadiumRecords.easternmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <div className="text-base">➡️</div>
+                    <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Oostelijkst', 'Easternmost')}</div>
+                    <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.easternmost)}</div>
+                    <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.easternmost.city}</div>
+                  </button>
+                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.westernmost.latitude, lng: stadiumRecords.westernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <div className="text-base">⬅️</div>
+                    <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Westelijkst', 'Westernmost')}</div>
+                    <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.westernmost)}</div>
+                    <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.westernmost.city}</div>
+                  </button>
+                </div>
+                {/* Bram's personal record */}
+                {stadiumRecords.furthestVisit && (
+                  <button
+                    onClick={() => setSelectedStadium({ lat: stadiumRecords.furthestVisit!.latitude, lng: stadiumRecords.furthestVisit!.longitude })}
+                    className={`w-full mt-2 p-2 rounded-lg text-left flex items-center gap-3 transition ${theme === 'dark' ? 'bg-green-900/20 hover:bg-green-900/30 border border-green-800/30' : 'bg-green-50 hover:bg-green-100 border border-green-200'}`}
+                  >
+                    <span className="text-lg">🧳</span>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-[11px] font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-700'}`}>
+                        {tr(lang, "Bram's verste reis", "Bram's furthest trip")}
+                      </div>
+                      <div className={`text-[11px] truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {stadiumRecords.name(stadiumRecords.furthestVisit)} — {stadiumRecords.furthestVisit.city}
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold tabular-nums ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                      {stadiumRecords.furthestDist} km
+                    </span>
+                  </button>
+                )}
               </div>
             )}
           </div>
