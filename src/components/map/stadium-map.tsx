@@ -583,6 +583,11 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
   const [apiSearchResults, setApiSearchResults] = useState<{ club: string; stadium: string; city: string; country: string; color: string; capacity?: string; fromApi?: boolean }[]>([]);
   const [apiSearching, setApiSearching] = useState(false);
   const apiSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // City search in add modal
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [citySearchResults, setCitySearchResults] = useState<{ club: string; stadium: string; city: string; country: string; color: string; capacity?: string }[]>([]);
+  const [citySearching, setCitySearching] = useState(false);
+  const citySearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filterLeague, setFilterLeague] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'visited' | 'not_visited' | 'wishlist'>('all');
@@ -834,6 +839,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
     setExistingMatch(null);
     setShowClubSuggestions(false);
     setClubSuggestionQuery('');
+    setCitySearchQuery('');
+    setCitySearchResults([]);
   };
 
   const goToExistingStadium = () => {
@@ -897,6 +904,57 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
     }
     return () => { if (apiSearchTimer.current) clearTimeout(apiSearchTimer.current); };
   }, [clubSuggestionQuery, showClubSuggestions, searchApiClubs]);
+
+  // City search: find clubs by city name via TheSportsDB
+  const searchClubsByCity = useCallback(async (city: string) => {
+    if (city.length < 2) { setCitySearchResults([]); return; }
+    setCitySearching(true);
+    try {
+      // Search TheSportsDB with the city name (many teams are named after their city)
+      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(city)}`);
+      const data = await res.json();
+      const results: typeof citySearchResults = [];
+      if (data.teams) {
+        data.teams
+          .filter((t: any) => t.strSport === 'Soccer')
+          .forEach((t: any) => {
+            const loc = t.strStadiumLocation || t.strLocation || '';
+            const teamCity = loc.split(',')[0]?.trim() || '';
+            results.push({
+              club: t.strTeam,
+              stadium: t.strStadium || '',
+              city: teamCity,
+              country: t.strCountry || '',
+              color: t.strColour1 ? `#${t.strColour1.replace('#', '')}` : '#6b7280',
+              capacity: t.intStadiumCapacity || '',
+            });
+          });
+      }
+      // Also search local suggestions by city
+      const q = city.toLowerCase();
+      CLUB_SUGGESTIONS.forEach(s => {
+        if (s.city.toLowerCase().includes(q) && !results.find(r => r.club.toLowerCase() === s.club.toLowerCase())) {
+          results.push({ club: s.club, stadium: s.stadium, city: s.city, country: s.country, color: s.color });
+        }
+      });
+      setCitySearchResults(results.slice(0, 12));
+    } catch {
+      setCitySearchResults([]);
+    } finally {
+      setCitySearching(false);
+    }
+  }, []);
+
+  // Debounced city search
+  useEffect(() => {
+    if (citySearchTimer.current) clearTimeout(citySearchTimer.current);
+    if (citySearchQuery.length >= 2) {
+      citySearchTimer.current = setTimeout(() => searchClubsByCity(citySearchQuery), 500);
+    } else {
+      setCitySearchResults([]);
+    }
+    return () => { if (citySearchTimer.current) clearTimeout(citySearchTimer.current); };
+  }, [citySearchQuery, searchClubsByCity]);
 
   const filteredClubSuggestions = useMemo(() => {
     if (!clubSuggestionQuery || clubSuggestionQuery.length < 2) return [];
@@ -1905,11 +1963,82 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                 {tr(lang, '🏟️ Nieuw stadion toevoegen', '🏟️ Add new stadium')}
               </h2>
               <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                {tr(lang, 'Vul de gegevens in en klik op "Zoek locatie"', 'Fill in the details and click "Search location"')}
+                {tr(lang, 'Zoek op stad of vul handmatig in', 'Search by city or fill in manually')}
               </p>
             </div>
-            
+
             <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* City search — quick find */}
+              <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-blue-900/20 border border-blue-800/30' : 'bg-blue-50 border border-blue-200'}`}>
+                <label className={`block text-xs font-bold mb-1.5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>
+                  🔍 {tr(lang, 'Zoek op stad of clubnaam', 'Search by city or club name')}
+                </label>
+                <input
+                  type="text"
+                  value={citySearchQuery}
+                  onChange={(e) => setCitySearchQuery(e.target.value)}
+                  placeholder={tr(lang, 'Bijv. "Sevilla", "Feyenoord", "München"...', 'E.g. "Seville", "Feyenoord", "Munich"...')}
+                  className={`w-full px-3 py-2 rounded-lg text-sm ${
+                    theme === 'dark'
+                      ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-500'
+                      : 'bg-white text-slate-900 border-blue-300 placeholder-slate-400'
+                  } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                {citySearching && (
+                  <div className={`mt-2 text-xs flex items-center gap-1.5 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
+                    <Loader2 className="w-3 h-3 animate-spin" /> {tr(lang, 'Zoeken...', 'Searching...')}
+                  </div>
+                )}
+                {citySearchResults.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                    {citySearchResults.map((result, i) => (
+                      <button
+                        key={`${result.club}-${i}`}
+                        onClick={() => {
+                          setNewStadium(prev => ({
+                            ...prev,
+                            club_name: result.club,
+                            name: result.stadium,
+                            city: result.city,
+                            country: result.country,
+                            primary_color: result.color,
+                            ...(result.capacity ? { capacity: result.capacity } : {}),
+                          }));
+                          setCitySearchQuery('');
+                          setCitySearchResults([]);
+                          setFoundLocation(null);
+                          setExistingMatch(null);
+                        }}
+                        className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition ${
+                          theme === 'dark'
+                            ? 'hover:bg-slate-700/50'
+                            : 'hover:bg-blue-100'
+                        }`}
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: result.color }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                            {result.club}
+                          </div>
+                          <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {result.stadium}{result.city ? ` · ${result.city}` : ''}{result.country ? `, ${result.country}` : ''}
+                            {result.capacity ? ` · ${Number(result.capacity).toLocaleString()}` : ''}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {citySearchQuery.length >= 2 && !citySearching && citySearchResults.length === 0 && (
+                  <div className={`mt-2 text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {tr(lang, 'Geen resultaten. Vul hieronder handmatig in.', 'No results. Fill in manually below.')}
+                  </div>
+                )}
+              </div>
+
               {/* Error message */}
               {searchError && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
@@ -2719,32 +2848,25 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
       <div className={`absolute bottom-0 left-0 right-0 z-[1001] transition-all duration-300 ${
         theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm border-t border-slate-700' : 'bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-lg'
       }`}>
-        {/* Collapsed bar — always visible, clickable */}
-        <button
-          onClick={() => setBottomExpanded(!bottomExpanded)}
-          className="w-full flex items-center justify-between px-4 py-2"
-        >
-          <div className="flex items-center gap-3">
-            <span className={`text-xs uppercase tracking-wider font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+        {/* Collapsed bar — always visible */}
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`text-xs uppercase tracking-wider font-bold whitespace-nowrap ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
               {tr(lang, "Bram's Groundhops", "Bram's Groundhops")}
             </span>
             <span className={`text-sm font-black tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               {visits.length}/{allStadiums.length}
             </span>
-            <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-xs whitespace-nowrap ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
               · 🌍 {countriesVisited} · 🏆 {leagueStats.filter(l => l.visited > 0).length} · 🛣️ {totalKilometers.toLocaleString()} km
+              {earnedCount > 0 && ` · ${earnedCount} 🏅`}
             </span>
-            {earnedCount > 0 && (
-              <span className={`text-xs ${theme === 'dark' ? 'text-amber-400' : 'text-amber-500'}`}>
-                · {earnedCount} 🏅
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* GPS button inline */}
-            <div
-              onClick={(e) => { e.stopPropagation(); findNearestUnvisited(); }}
-              className={`rounded-full p-1.5 transition cursor-pointer ${
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* GPS button */}
+            <button
+              onClick={() => findNearestUnvisited()}
+              className={`rounded-full p-1.5 transition ${
                 showNearestPanel
                   ? 'bg-blue-600 text-white'
                   : theme === 'dark'
@@ -2754,10 +2876,25 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
               title={tr(lang, 'Dichtstbijzijnde onbezocht', 'Nearest unvisited')}
             >
               {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-            </div>
-            <ChevronDown className={`w-4 h-4 transition-transform ${bottomExpanded ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+            </button>
+            {/* Expand button — prominent */}
+            <button
+              onClick={() => setBottomExpanded(!bottomExpanded)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition ${
+                bottomExpanded
+                  ? theme === 'dark'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-600 text-white'
+                  : theme === 'dark'
+                    ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+            >
+              📊 {tr(lang, bottomExpanded ? 'Sluiten' : 'Records & meer', bottomExpanded ? 'Close' : 'Records & more')}
+              <ChevronDown className={`w-3 h-3 transition-transform ${bottomExpanded ? 'rotate-180' : ''}`} />
+            </button>
           </div>
-        </button>
+        </div>
 
         {/* Expanded panel */}
         {bottomExpanded && (
