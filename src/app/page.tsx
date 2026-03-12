@@ -166,7 +166,7 @@ export default function Home() {
                 + {t('Stadion toevoegen', 'Add stadium')}
               </button>
               <div className="flex-1 min-w-1" />
-              <button onClick={() => setShowSpartaTribute(true)} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition text-sm ${theme === 'dark' ? 'bg-red-900/50 hover:bg-red-800/50 text-red-400 border border-red-800' : 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300'}`} title="Sparta Rotterdam Tribute">
+              <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm" title="Sparta Rotterdam Tribute">
                 <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-6 h-6 object-contain" />
                 <span className="hidden sm:inline font-medium">Sparta</span>
               </button>
@@ -273,8 +273,8 @@ export default function Home() {
                     <h2 className="text-2xl font-bold mt-2">{t('Welkom bij Groundhopper Pro!', 'Welcome to Groundhopper Pro!')}</h2>
                     <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       {t(
-                        "Bram's persoonlijk voetbaldagboek — track bezochte stadions, wedstrijden en reis-statistieken op de kaart.",
-                        "Bram's personal football diary — track visited stadiums, matches and travel stats on the map."
+                        "Jouw persoonlijke voetbaldagboek en reisverslag. Met alle door jou bezochte of nog geplande stadions, wedstrijden en reis-statistieken op een interactieve kaart.",
+                        "Your personal football diary and travel log. With all the stadiums you've visited or planned, matches and travel stats on an interactive map."
                       )}
                     </p>
                   </div>
@@ -283,7 +283,7 @@ export default function Home() {
                     {[
                       { icon: '📍', nl: 'Kaart — Klik op een stadion voor details', en: 'Map — Click a stadium for details' },
                       { icon: '✅', nl: 'Bezocht — Markeer stadions + vul wedstrijd in', en: 'Visited — Mark stadiums + log match info' },
-                      { icon: '⭐', nl: 'Rating — Geef stadions 1-5 sterren', en: 'Rating — Rate stadiums 1-5 stars' },
+                      { icon: '⭐', nl: 'Rating — Beoordeel sfeer, stadion en beleving', en: 'Rating — Rate atmosphere, stadium and experience' },
                       { icon: '📊', nl: 'Stats — Voortgang per competitie', en: 'Stats — Progress per league' },
                       { icon: '📅', nl: 'Tijdlijn — Alle bezoeken op datum', en: 'Timeline — All visits by date' },
                       { icon: '🏆', nl: 'Badges — Verdien achievements', en: 'Badges — Earn achievements' },

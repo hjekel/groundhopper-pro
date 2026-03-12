@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Trophy, Star, Users, Home, Calendar, MapPin, Shield, Heart, Lightbulb, Award } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { X, Trophy, Star, Users, Home, Calendar, MapPin, Shield, Heart, Lightbulb, Award, Brain } from 'lucide-react';
 
 interface SpartaTributeProps {
   onClose: () => void;
@@ -136,6 +136,259 @@ const youthProducts = [
   { name: 'Aron Winter', dest: { nl: 'Ajax, Lazio, Inter Milan, Oranje', en: 'Ajax, Lazio, Inter Milan, Netherlands' }, years: 'Jeugd' },
 ];
 
+// Quiz vragen — gebaseerd op alle Sparta data hierboven + algemene voetbalkennis
+interface QuizQuestion {
+  question: { nl: string; en: string };
+  options: { nl: string; en: string }[];
+  correct: number; // index of correct answer
+  explanation: { nl: string; en: string };
+}
+
+const quizQuestions: QuizQuestion[] = [
+  {
+    question: { nl: 'In welk jaar is Sparta Rotterdam opgericht?', en: 'In what year was Sparta Rotterdam founded?' },
+    options: [
+      { nl: '1878', en: '1878' },
+      { nl: '1888', en: '1888' },
+      { nl: '1898', en: '1898' },
+      { nl: '1908', en: '1908' },
+    ],
+    correct: 1,
+    explanation: { nl: 'Sparta werd opgericht op 1 april 1888 door acht studenten.', en: 'Sparta was founded on April 1, 1888 by eight students.' },
+  },
+  {
+    question: { nl: 'Hoeveel landskampioenschappen heeft Sparta gewonnen?', en: 'How many national championships has Sparta won?' },
+    options: [
+      { nl: '3', en: '3' },
+      { nl: '4', en: '4' },
+      { nl: '6', en: '6' },
+      { nl: '8', en: '8' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Sparta won 6 landskampioenschappen: 1909, 1911, 1912, 1913, 1915 en 1959.', en: 'Sparta won 6 national championships: 1909, 1911, 1912, 1913, 1915 and 1959.' },
+  },
+  {
+    question: { nl: 'Hoe heet het stadion van Sparta?', en: 'What is the name of Sparta\'s stadium?' },
+    options: [
+      { nl: 'De Burcht', en: 'De Burcht' },
+      { nl: 'Het Paleis', en: 'Het Paleis' },
+      { nl: 'Het Kasteel', en: 'Het Kasteel' },
+      { nl: 'De Vesting', en: 'De Vesting' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Het Kasteel (The Castle) in Spangen is sinds 1916 het thuisstadion.', en: 'Het Kasteel (The Castle) in Spangen has been the home stadium since 1916.' },
+  },
+  {
+    question: { nl: 'Welke wereldster zat als 8-jarige in de Sparta-jeugd?', en: 'Which world star was in the Sparta youth at age 8?' },
+    options: [
+      { nl: 'Virgil van Dijk', en: 'Virgil van Dijk' },
+      { nl: 'Memphis Depay', en: 'Memphis Depay' },
+      { nl: 'Frenkie de Jong', en: 'Frenkie de Jong' },
+      { nl: 'Cody Gakpo', en: 'Cody Gakpo' },
+    ],
+    correct: 1,
+    explanation: { nl: 'Memphis Depay werd als 8-jarig ventje bij Moordrecht ontdekt door Sparta-scouts.', en: 'Memphis Depay was discovered at age 8 at Moordrecht by Sparta scouts.' },
+  },
+  {
+    question: { nl: 'Hoeveel wedstrijden speelde Tonny van Ede voor Sparta (clubrecord)?', en: 'How many matches did Tonny van Ede play for Sparta (club record)?' },
+    options: [
+      { nl: '363', en: '363' },
+      { nl: '455', en: '455' },
+      { nl: '512', en: '512' },
+      { nl: '401', en: '401' },
+    ],
+    correct: 1,
+    explanation: { nl: '"De Schicht" speelde 455 competitiewedstrijden — het clubrecord dat nog altijd staat!', en: '"The Flash" played 455 competitive matches — the club record that still stands!' },
+  },
+  {
+    question: { nl: 'Wat is de bijnaam van Sparta Rotterdam?', en: 'What is Sparta Rotterdam\'s nickname?' },
+    options: [
+      { nl: 'De Stadionbouwers', en: 'The Stadium Builders' },
+      { nl: 'De Rotterdammers', en: 'The Rotterdammers' },
+      { nl: 'De Kasteelheren', en: 'The Castle Lords' },
+      { nl: 'De Rode Ridders', en: 'The Red Knights' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Sparta staat bekend als "De Kasteelheren", vernoemd naar hun stadion Het Kasteel.', en: 'Sparta is known as "The Castle Lords", named after their stadium The Castle.' },
+  },
+  {
+    question: { nl: 'Hoeveel goals scoorde Sparta in het kampioensjaar 1959?', en: 'How many goals did Sparta score in the championship year 1959?' },
+    options: [
+      { nl: '65', en: '65' },
+      { nl: '72', en: '72' },
+      { nl: '83', en: '83' },
+      { nl: '91', en: '91' },
+    ],
+    correct: 2,
+    explanation: { nl: 'In 1959 scoorde Sparta 83 goals in 34 wedstrijden — bijna 2,5 per wedstrijd!', en: 'In 1959, Sparta scored 83 goals in 34 matches — nearly 2.5 per game!' },
+  },
+  {
+    question: { nl: 'Welke Sparta-speler won het EK 1988 met Oranje?', en: 'Which Sparta player won Euro 1988 with the Netherlands?' },
+    options: [
+      { nl: 'Dick Advocaat', en: 'Dick Advocaat' },
+      { nl: 'Bok de Korver', en: 'Bok de Korver' },
+      { nl: 'Adri van Tiggelen', en: 'Adri van Tiggelen' },
+      { nl: 'Rinus Terlouw', en: 'Rinus Terlouw' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Adri van Tiggelen debuteerde bij Sparta in 1978 en won later het EK 1988 met Oranje.', en: 'Adri van Tiggelen debuted at Sparta in 1978 and later won Euro 1988 with the Netherlands.' },
+  },
+  {
+    question: { nl: 'Wat was Sparta de eerste Nederlandse club die deed?', en: 'What was Sparta the first Dutch club to do?' },
+    options: [
+      { nl: 'Deelnemen aan de Europacup', en: 'Participate in the European Cup' },
+      { nl: 'Een eigen stadion bouwen', en: 'Build their own stadium' },
+      { nl: 'Internationaal toernee spelen', en: 'Play an international tour' },
+      { nl: 'Een buitenlandse trainer aannemen', en: 'Hire a foreign manager' },
+    ],
+    correct: 0,
+    explanation: { nl: 'Sparta was in 1959 de eerste Nederlandse club in de Europacup voor landskampioenen!', en: 'Sparta was the first Dutch club in the European Cup for national champions in 1959!' },
+  },
+  {
+    question: { nl: 'Hoeveel sterren heeft de Sparta Jeugdopleiding?', en: 'How many stars does the Sparta Youth Academy have?' },
+    options: [
+      { nl: '2 sterren', en: '2 stars' },
+      { nl: '3 sterren', en: '3 stars' },
+      { nl: '4 sterren', en: '4 stars' },
+      { nl: '5 sterren', en: '5 stars' },
+    ],
+    correct: 2,
+    explanation: { nl: 'De Sparta Jeugdopleiding is een 4-sterren gecertificeerde opleiding — meerdere keren verkozen tot beste van Nederland.', en: 'The Sparta Youth Academy is a 4-star certified academy — voted best in the Netherlands multiple times.' },
+  },
+  {
+    question: { nl: 'Welke verdediger speelde 363 wedstrijden voor Sparta (1902-1923)?', en: 'Which defender played 363 matches for Sparta (1902-1923)?' },
+    options: [
+      { nl: 'Rinus Terlouw', en: 'Rinus Terlouw' },
+      { nl: 'John de Wolf', en: 'John de Wolf' },
+      { nl: 'Bok de Korver', en: 'Bok de Korver' },
+      { nl: 'Bruno Martins Indi', en: 'Bruno Martins Indi' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Bok de Korver droeg 21 seizoenen het rood-wit. De familietribune draagt zijn naam.', en: 'Bok de Korver wore the red-white for 21 seasons. The family stand bears his name.' },
+  },
+  {
+    question: { nl: 'Wat is de capaciteit van Het Kasteel?', en: 'What is the capacity of Het Kasteel?' },
+    options: [
+      { nl: '8.500', en: '8,500' },
+      { nl: '11.026', en: '11,026' },
+      { nl: '15.000', en: '15,000' },
+      { nl: '18.500', en: '18,500' },
+    ],
+    correct: 1,
+    explanation: { nl: 'Na de renovatie in 1999 biedt Het Kasteel plaats aan 11.026 toeschouwers.', en: 'After the 1999 renovation, Het Kasteel holds 11,026 spectators.' },
+  },
+  {
+    question: { nl: 'Wie was de trainer tijdens het kampioenschap van 1959?', en: 'Who was the manager during the 1959 championship?' },
+    options: [
+      { nl: 'Dick Advocaat', en: 'Dick Advocaat' },
+      { nl: 'Henk Fraser', en: 'Henk Fraser' },
+      { nl: 'Denis Neville', en: 'Denis Neville' },
+      { nl: 'John de Wolf', en: 'John de Wolf' },
+    ],
+    correct: 2,
+    explanation: { nl: 'De Engelse gentleman-trainer Denis Neville leidde Sparta naar het kampioenschap van 1959.', en: 'English gentleman-manager Denis Neville led Sparta to the 1959 championship.' },
+  },
+  {
+    question: { nl: 'Welke Sparta-jeugdspeler ging naar Chelsea en Aston Villa?', en: 'Which Sparta youth player went to Chelsea and Aston Villa?' },
+    options: [
+      { nl: 'Jorrel Hato', en: 'Jorrel Hato' },
+      { nl: 'Denzel Dumfries', en: 'Denzel Dumfries' },
+      { nl: 'Ian Maatsen', en: 'Ian Maatsen' },
+      { nl: 'Kevin Strootman', en: 'Kevin Strootman' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Ian Maatsen kwam uit de Sparta-jeugd en ging naar Chelsea, daarna naar Aston Villa.', en: 'Ian Maatsen came from the Sparta youth and went to Chelsea, then to Aston Villa.' },
+  },
+  {
+    question: { nl: 'Hoeveel KNVB Bekers heeft Sparta gewonnen?', en: 'How many KNVB Cups has Sparta won?' },
+    options: [
+      { nl: '1', en: '1' },
+      { nl: '2', en: '2' },
+      { nl: '3', en: '3' },
+      { nl: '5', en: '5' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Sparta won 3 KNVB Bekers: 1958, 1962 en 1966.', en: 'Sparta won 3 KNVB Cups: 1958, 1962 and 1966.' },
+  },
+  {
+    question: { nl: 'In welke wijk van Rotterdam staat Het Kasteel?', en: 'In which Rotterdam neighborhood is Het Kasteel located?' },
+    options: [
+      { nl: 'Feijenoord', en: 'Feijenoord' },
+      { nl: 'Kralingen', en: 'Kralingen' },
+      { nl: 'Spangen', en: 'Spangen' },
+      { nl: 'Delfshaven', en: 'Delfshaven' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Het Kasteel staat in de wijk Spangen, aan de Spartastraat 12.', en: 'Het Kasteel is located in the Spangen district, at Spartastraat 12.' },
+  },
+  {
+    question: { nl: 'Welke keeper heeft het all-time Eredivisie record voor meeste wedstrijden?', en: 'Which goalkeeper holds the all-time Eredivisie record for most matches?' },
+    options: [
+      { nl: 'Ed de Goey', en: 'Ed de Goey' },
+      { nl: 'Joel Drommel', en: 'Joel Drommel' },
+      { nl: 'Pim Doesburg', en: 'Pim Doesburg' },
+      { nl: 'Nick Olij', en: 'Nick Olij' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Pim Doesburg speelde 687 Eredivisie-wedstrijden — een all-time record! Hij begon bij Sparta.', en: 'Pim Doesburg played 687 Eredivisie matches — an all-time record! He started at Sparta.' },
+  },
+  {
+    question: { nl: 'Hoe werd Dick Advocaat bij Sparta genoemd?', en: 'What was Dick Advocaat\'s nickname at Sparta?' },
+    options: [
+      { nl: 'De Generaal', en: 'The General' },
+      { nl: 'De Kleine Generaal', en: 'The Little General' },
+      { nl: 'De Strateeg', en: 'The Strategist' },
+      { nl: 'De Meester', en: 'The Master' },
+    ],
+    correct: 1,
+    explanation: { nl: '"De Kleine Generaal" speelde 61 wedstrijden voor Sparta en werd later bondscoach van 3 landen.', en: '"The Little General" played 61 matches for Sparta and later became national team coach of 3 countries.' },
+  },
+  {
+    question: { nl: 'Welke verdediger ging van Sparta naar Ajax en won de Champions League in 1995?', en: 'Which defender went from Sparta to Ajax and won the Champions League in 1995?' },
+    options: [
+      { nl: 'Danny Blind', en: 'Danny Blind' },
+      { nl: 'Winston Bogarde', en: 'Winston Bogarde' },
+      { nl: 'Henk Fraser', en: 'Henk Fraser' },
+      { nl: 'Patrick van Aanholt', en: 'Patrick van Aanholt' },
+    ],
+    correct: 1,
+    explanation: { nl: 'Winston Bogarde speelde bij Sparta (1991-1994) en won daarna de CL met Ajax, speelde bij Milan en Barcelona.', en: 'Winston Bogarde played for Sparta (1991-1994) and then won the CL with Ajax, played for Milan and Barcelona.' },
+  },
+  {
+    question: { nl: 'Hoeveel goals scoorde Danny Koevermans in 110 wedstrijden voor Sparta?', en: 'How many goals did Danny Koevermans score in 110 matches for Sparta?' },
+    options: [
+      { nl: '42', en: '42' },
+      { nl: '55', en: '55' },
+      { nl: '71', en: '71' },
+      { nl: '89', en: '89' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Danny Koevermans scoorde 71 goals in 110 wedstrijden — een fenomenaal gemiddelde!', en: 'Danny Koevermans scored 71 goals in 110 matches — a phenomenal average!' },
+  },
+  {
+    question: { nl: 'Wat introduceerde Sparta als eerste in het Nederlandse voetbal?', en: 'What did Sparta introduce first in Dutch football?' },
+    options: [
+      { nl: 'Kunstgras', en: 'Artificial turf' },
+      { nl: 'VAR', en: 'VAR' },
+      { nl: 'Koppen, doellat met net, gekleurde shirts', en: 'Heading, crossbar with nets, colored shirts' },
+      { nl: 'Wisselspelers', en: 'Substitutes' },
+    ],
+    correct: 2,
+    explanation: { nl: 'Sparta was een ware pionier: zij introduceerden het koppen, doelen met lat en netten, en felgekleurde shirts in Nederland.', en: 'Sparta was a true pioneer: they introduced heading, goals with crossbar and nets, and brightly colored shirts in the Netherlands.' },
+  },
+  {
+    question: { nl: 'Wie was de jongste speler ooit op een EK en komt uit de Sparta-jeugd?', en: 'Who was the youngest ever Euro Championship player and came from Sparta\'s youth?' },
+    options: [
+      { nl: 'Memphis Depay', en: 'Memphis Depay' },
+      { nl: 'Jetro Willems', en: 'Jetro Willems' },
+      { nl: 'Denzel Dumfries', en: 'Denzel Dumfries' },
+      { nl: 'Ian Maatsen', en: 'Ian Maatsen' },
+    ],
+    correct: 1,
+    explanation: { nl: 'Jetro Willems was met 18 jaar de jongste EK-speler ooit toen hij in 2012 speelde voor Oranje.', en: 'Jetro Willems at 18 was the youngest ever Euro Championship player when he played for the Netherlands in 2012.' },
+  },
+];
+
 const didYouKnow = [
   {
     nl: 'Sparta heeft als eerste club in Nederland het koppen geintroduceerd, een doel met lat en netten, en felgekleurde shirts. Pioniers van het Nederlandse voetbal.',
@@ -202,7 +455,52 @@ const milestones = [
 ];
 
 export default function SpartaTribute({ onClose, theme, lang }: SpartaTributeProps) {
-  const [activeTab, setActiveTab] = useState<'facts' | 'legends' | 'stadium' | 'squad' | 'didyouknow'>('facts');
+  const [activeTab, setActiveTab] = useState<'facts' | 'legends' | 'stadium' | 'squad' | 'didyouknow' | 'quiz'>('facts');
+
+  // Quiz state
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [quizQuestionIndex, setQuizQuestionIndex] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizAnswered, setQuizAnswered] = useState<number | null>(null);
+  const [quizFinished, setQuizFinished] = useState(false);
+  const [quizQuestionSet, setQuizQuestionSet] = useState<QuizQuestion[]>([]);
+
+  const startQuiz = useCallback(() => {
+    // Pick 10 random questions from the pool
+    const shuffled = [...quizQuestions].sort(() => Math.random() - 0.5);
+    setQuizQuestionSet(shuffled.slice(0, 10));
+    setQuizStarted(true);
+    setQuizQuestionIndex(0);
+    setQuizScore(0);
+    setQuizAnswered(null);
+    setQuizFinished(false);
+  }, []);
+
+  const answerQuiz = useCallback((optionIndex: number) => {
+    if (quizAnswered !== null) return;
+    setQuizAnswered(optionIndex);
+    if (optionIndex === quizQuestionSet[quizQuestionIndex].correct) {
+      setQuizScore(prev => prev + 1);
+    }
+  }, [quizAnswered, quizQuestionSet, quizQuestionIndex]);
+
+  const nextQuestion = useCallback(() => {
+    if (quizQuestionIndex + 1 >= quizQuestionSet.length) {
+      setQuizFinished(true);
+    } else {
+      setQuizQuestionIndex(prev => prev + 1);
+      setQuizAnswered(null);
+    }
+  }, [quizQuestionIndex, quizQuestionSet.length]);
+
+  const quizResult = useMemo(() => {
+    if (!quizFinished) return null;
+    const pct = quizScore / quizQuestionSet.length;
+    if (pct >= 0.9) return { emoji: '🏆', nl: 'Echte Kasteelheer!', en: 'True Castle Lord!', desc: { nl: 'Jij kent Sparta door en door. Petje af!', en: 'You know Sparta inside out. Respect!' } };
+    if (pct >= 0.7) return { emoji: '⭐', nl: 'Trouwe Spartaan', en: 'Loyal Spartan', desc: { nl: 'Een echte supporter met kennis van zaken.', en: 'A true supporter with great knowledge.' } };
+    if (pct >= 0.5) return { emoji: '🎓', nl: 'Leerling Spartaan', en: 'Apprentice Spartan', desc: { nl: 'Goed op weg! Lees de "Wist je dat" tab voor meer feiten.', en: 'Getting there! Check the "Did you know" tab for more facts.' } };
+    return { emoji: '👶', nl: 'Rookie Spartaan', en: 'Rookie Spartan', desc: { nl: 'Niet getreurd — speel nog een keer en leer Sparta kennen!', en: 'No worries — play again and get to know Sparta!' } };
+  }, [quizFinished, quizScore, quizQuestionSet.length]);
 
   const isDark = theme === 'dark';
   const bg = isDark ? 'bg-slate-900' : 'bg-white';
@@ -218,6 +516,7 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
     { id: 'stadium', label: { nl: 'Kasteel', en: 'Castle' }, icon: Home },
     { id: 'squad', label: { nl: 'Selectie', en: 'Squad' }, icon: Users },
     { id: 'didyouknow', label: { nl: 'Wist je dat', en: 'Did you know' }, icon: Lightbulb },
+    { id: 'quiz', label: { nl: 'Quiz', en: 'Quiz' }, icon: Brain },
   ];
 
   return (
@@ -541,6 +840,189 @@ export default function SpartaTribute({ onClose, theme, lang }: SpartaTributePro
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* QUIZ TAB */}
+          {activeTab === 'quiz' && (
+            <div className="space-y-4">
+              {!quizStarted && !quizFinished && (
+                <div className="text-center py-6">
+                  <div className="text-6xl mb-4">🧠</div>
+                  <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>
+                    {tr(lang, 'Sparta Pubquiz', 'Sparta Pub Quiz')}
+                  </h3>
+                  <p className={`text-sm mb-6 ${textSecondary}`}>
+                    {tr(lang,
+                      '10 willekeurige vragen over Sparta Rotterdam. Hoeveel weet jij? Test je kennis!',
+                      '10 random questions about Sparta Rotterdam. How much do you know? Test your knowledge!'
+                    )}
+                  </p>
+                  <div className={`grid grid-cols-2 gap-3 mb-6 text-left max-w-xs mx-auto`}>
+                    <div className={`p-3 rounded-lg ${cardBg}`}>
+                      <div className="text-lg font-bold text-red-500">🏆 9-10</div>
+                      <div className={`text-xs ${textMuted}`}>{tr(lang, 'Kasteelheer', 'Castle Lord')}</div>
+                    </div>
+                    <div className={`p-3 rounded-lg ${cardBg}`}>
+                      <div className="text-lg font-bold text-yellow-500">⭐ 7-8</div>
+                      <div className={`text-xs ${textMuted}`}>{tr(lang, 'Trouwe Spartaan', 'Loyal Spartan')}</div>
+                    </div>
+                    <div className={`p-3 rounded-lg ${cardBg}`}>
+                      <div className="text-lg font-bold text-blue-500">🎓 5-6</div>
+                      <div className={`text-xs ${textMuted}`}>{tr(lang, 'Leerling', 'Apprentice')}</div>
+                    </div>
+                    <div className={`p-3 rounded-lg ${cardBg}`}>
+                      <div className="text-lg font-bold text-slate-400">👶 0-4</div>
+                      <div className={`text-xs ${textMuted}`}>{tr(lang, 'Rookie', 'Rookie')}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={startQuiz}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-lg"
+                  >
+                    {tr(lang, '🎯 Start de Quiz!', '🎯 Start the Quiz!')}
+                  </button>
+                </div>
+              )}
+
+              {quizStarted && !quizFinished && quizQuestionSet.length > 0 && (
+                <div>
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className={`text-xs font-bold ${textMuted}`}>
+                      {quizQuestionIndex + 1}/{quizQuestionSet.length}
+                    </span>
+                    <div className={`flex-1 h-2 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                      <div
+                        className="h-2 rounded-full bg-red-500 transition-all duration-300"
+                        style={{ width: `${((quizQuestionIndex + 1) / quizQuestionSet.length) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-bold ${textMuted}`}>
+                      ✅ {quizScore}
+                    </span>
+                  </div>
+
+                  {/* Question */}
+                  <div className={`p-4 rounded-xl ${cardBg} border-l-4 border-red-500 mb-4`}>
+                    <h4 className={`font-bold text-lg ${textPrimary}`}>
+                      {tr(lang, quizQuestionSet[quizQuestionIndex].question.nl, quizQuestionSet[quizQuestionIndex].question.en)}
+                    </h4>
+                  </div>
+
+                  {/* Options */}
+                  <div className="space-y-2">
+                    {quizQuestionSet[quizQuestionIndex].options.map((option, i) => {
+                      const isCorrect = i === quizQuestionSet[quizQuestionIndex].correct;
+                      const isSelected = quizAnswered === i;
+                      const isAnswered = quizAnswered !== null;
+
+                      let btnClass = `w-full text-left p-3 rounded-xl transition font-medium text-sm `;
+                      if (!isAnswered) {
+                        btnClass += isDark
+                          ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                          : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200';
+                      } else if (isCorrect) {
+                        btnClass += 'bg-green-500/20 border-2 border-green-500 text-green-400';
+                        if (!isDark) btnClass = `w-full text-left p-3 rounded-xl transition font-medium text-sm bg-green-100 border-2 border-green-500 text-green-800`;
+                      } else if (isSelected && !isCorrect) {
+                        btnClass += 'bg-red-500/20 border-2 border-red-500 text-red-400';
+                        if (!isDark) btnClass = `w-full text-left p-3 rounded-xl transition font-medium text-sm bg-red-100 border-2 border-red-500 text-red-800`;
+                      } else {
+                        btnClass += isDark
+                          ? 'bg-slate-700/50 text-slate-500'
+                          : 'bg-slate-50 text-slate-400 border border-slate-100';
+                      }
+
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => answerQuiz(i)}
+                          disabled={isAnswered}
+                          className={btnClass}
+                        >
+                          <span className="mr-2 font-bold">{String.fromCharCode(65 + i)}.</span>
+                          {tr(lang, option.nl, option.en)}
+                          {isAnswered && isCorrect && ' ✅'}
+                          {isAnswered && isSelected && !isCorrect && ' ❌'}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Explanation + Next button */}
+                  {quizAnswered !== null && (
+                    <div className="mt-4 space-y-3">
+                      <div className={`p-3 rounded-lg ${quizAnswered === quizQuestionSet[quizQuestionIndex].correct
+                        ? (isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-800')
+                        : (isDark ? 'bg-red-900/30 text-red-300' : 'bg-red-50 text-red-800')
+                      }`}>
+                        <p className="text-sm">
+                          {quizAnswered === quizQuestionSet[quizQuestionIndex].correct
+                            ? (tr(lang, '✅ Goed! ', '✅ Correct! '))
+                            : (tr(lang, '❌ Helaas! ', '❌ Wrong! '))
+                          }
+                          {tr(lang, quizQuestionSet[quizQuestionIndex].explanation.nl, quizQuestionSet[quizQuestionIndex].explanation.en)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={nextQuestion}
+                        className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition"
+                      >
+                        {quizQuestionIndex + 1 >= quizQuestionSet.length
+                          ? tr(lang, '🏁 Bekijk resultaat', '🏁 See result')
+                          : tr(lang, '➡️ Volgende vraag', '➡️ Next question')
+                        }
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {quizFinished && quizResult && (
+                <div className="text-center py-6">
+                  <div className="text-7xl mb-4">{quizResult.emoji}</div>
+                  <h3 className={`text-2xl font-bold mb-1 ${textPrimary}`}>
+                    {tr(lang, quizResult.nl, quizResult.en)}
+                  </h3>
+                  <p className={`text-lg font-bold mb-2 text-red-500`}>
+                    {quizScore} / {quizQuestionSet.length}
+                  </p>
+                  <p className={`text-sm mb-6 ${textSecondary}`}>
+                    {tr(lang, quizResult.desc.nl, quizResult.desc.en)}
+                  </p>
+
+                  {/* Score breakdown */}
+                  <div className={`flex justify-center gap-1 mb-6`}>
+                    {quizQuestionSet.map((_, i) => (
+                      <div key={i} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        i < quizScore
+                          ? 'bg-green-500 text-white'
+                          : (isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500')
+                      }`}>
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={startQuiz}
+                      className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition"
+                    >
+                      {tr(lang, '🔄 Opnieuw spelen', '🔄 Play again')}
+                    </button>
+                    <button
+                      onClick={() => { setQuizStarted(false); setQuizFinished(false); }}
+                      className={`px-5 py-2.5 rounded-xl font-bold transition ${
+                        isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      }`}
+                    >
+                      {tr(lang, '📋 Terug', '📋 Back')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
