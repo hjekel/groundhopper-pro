@@ -84,6 +84,7 @@ export default function Home() {
   const [showGroundhopInfo, setShowGroundhopInfo] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [addStadiumTrigger, setAddStadiumTrigger] = useState(0)
+  const [timelineTrigger, setTimelineTrigger] = useState(0)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
@@ -156,6 +157,9 @@ export default function Home() {
               <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
                 + {t('Stadion toevoegen', 'Add stadium')}
               </button>
+              <button onClick={() => setTimelineTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}>
+                📖 {t('Dagboek', 'Diary')}
+              </button>
               <div className="flex-1 min-w-1" />
               <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm" title="Sparta Rotterdam Tribute">
                 <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-6 h-6 object-contain" />
@@ -172,7 +176,7 @@ export default function Home() {
               </button>
             </div>
           </header>
-          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} />
+          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
 
           {/* Groundhopping Info Modal */}
