@@ -169,7 +169,7 @@ const CLUB_STORIES: Record<string, { icon: string; label: { nl: string; en: stri
   },
 };
 
-const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false) => {
+const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false, label?: string | null) => {
   const color = primaryColor || '#ef4444';
 
   // Status badge (small corner overlay)
@@ -214,7 +214,7 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
         ${badge}
       </div>`
     : `<div style="position:relative;width:${s}px;height:${s}px;">
-        <div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid ${borderCol === 'white' ? 'rgba(255,255,255,0.8)' : borderCol};display:flex;align-items:center;justify-content:center;"></div>
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid ${borderCol === 'white' ? 'rgba(255,255,255,0.8)' : borderCol};display:flex;align-items:center;justify-content:center;">${label ? `<span style="font-size:10px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);letter-spacing:-0.5px;">${label}</span>` : ''}</div>
         ${badge}
       </div>`;
 
@@ -3185,7 +3185,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', stadium.club?.crest_url, isSparta, isVisited, isOnWishlist, isCustom)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', stadium.club?.crest_url, isSparta, isVisited, isOnWishlist, isCustom, !stadium.club?.crest_url ? (stadium.club?.short_name?.substring(0, 3) || null) : null)}
             >
               {/* Hover tooltip with club name + logo */}
               <Tooltip direction="top" opacity={0.95} className="club-tooltip">
