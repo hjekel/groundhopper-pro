@@ -3101,12 +3101,14 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
         {selectedStadium && <FlyToStadium lat={selectedStadium.lat} lng={selectedStadium.lng} />}
         
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url={theme === 'dark' 
+          key={theme}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+          url={theme === 'dark'
             ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
             : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
           }
           noWrap={true}
+          className={theme === 'dark' ? 'dark-map-tiles' : ''}
         />
         <ZoomControl position="bottomright" />
 
