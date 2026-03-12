@@ -11,23 +11,49 @@ export default function Icon() {
         style={{
           width: '32px',
           height: '32px',
-          borderRadius: '8px',
-          background: 'linear-gradient(135deg, #059669, #10b981)',
+          borderRadius: '6px',
+          background: 'linear-gradient(135deg, #D90000, #B50000)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <span
+        {/* Football pitch from above — the universal groundhopper symbol */}
+        <div
           style={{
-            fontSize: '16px',
-            fontWeight: 900,
-            color: 'white',
-            letterSpacing: '-1px',
+            width: '24px',
+            height: '16px',
+            border: '2px solid rgba(255,255,255,0.9)',
+            borderRadius: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
           }}
         >
-          GP
-        </span>
+          {/* Center line */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '0',
+              width: '1.5px',
+              height: '100%',
+              background: 'rgba(255,255,255,0.9)',
+              display: 'flex',
+            }}
+          />
+          {/* Center circle */}
+          <div
+            style={{
+              width: '7px',
+              height: '7px',
+              border: '1.5px solid rgba(255,255,255,0.9)',
+              borderRadius: '50%',
+              display: 'flex',
+            }}
+          />
+        </div>
       </div>
     ),
     { ...size }

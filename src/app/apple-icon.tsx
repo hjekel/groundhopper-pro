@@ -12,25 +12,48 @@ export default function AppleIcon() {
           width: '180px',
           height: '180px',
           borderRadius: '40px',
-          background: 'linear-gradient(135deg, #059669, #10b981)',
+          background: 'linear-gradient(135deg, #D90000, #B50000)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '4px',
         }}
       >
-        <span style={{ fontSize: '60px', display: 'flex' }}>⚽</span>
-        <span
+        {/* Football pitch from above */}
+        <div
           style={{
-            fontSize: '36px',
-            fontWeight: 900,
-            color: 'white',
-            letterSpacing: '-2px',
+            width: '130px',
+            height: '86px',
+            border: '4px solid rgba(255,255,255,0.9)',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
           }}
         >
-          GP
-        </span>
+          {/* Center line */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '0',
+              width: '3px',
+              height: '100%',
+              background: 'rgba(255,255,255,0.9)',
+              display: 'flex',
+            }}
+          />
+          {/* Center circle */}
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              border: '3px solid rgba(255,255,255,0.9)',
+              borderRadius: '50%',
+              display: 'flex',
+            }}
+          />
+        </div>
       </div>
     ),
     { ...size }
