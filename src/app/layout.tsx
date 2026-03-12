@@ -22,6 +22,10 @@ export const metadata: Metadata = {
     title: 'Groundhopper Pro 🏟️',
     description: 'Track je stadionbezoeken door heel Europa — kaart, achievements, uitdagingen en meer.',
   },
+  icons: {
+    icon: '/Voetbal_bal.png',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({
