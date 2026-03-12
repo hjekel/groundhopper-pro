@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: 'Groundhopper Pro',
   description: 'Track je stadionbezoeken door heel Europa — kaart, achievements, uitdagingen en meer.',
   keywords: ['football', 'stadiums', 'groundhopping', 'soccer', 'europe', 'tracker', 'stadion', 'voetbal'],
+  icons: {
+    icon: '/Voetbal_bal.png',
+    apple: '/apple-touch-icon.png',
+  },
   metadataBase: new URL('https://groundhopper-pro.vercel.app'),
   openGraph: {
     title: 'Groundhopper Pro 🏟️',
