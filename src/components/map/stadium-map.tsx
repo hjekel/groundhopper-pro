@@ -258,6 +258,9 @@ const CHALLENGES = [
   { id: 'nl_prof', icon: '🦁', title_nl: 'Nederlands Prof', title_en: 'Dutch Professional', desc_nl: 'Eredivisie + Eerste Divisie', desc_en: 'Eredivisie + Eerste Divisie', type: 'multi_league' as const, leagues: ['Eredivisie', 'Eerste Divisie'] },
   { id: 'bundesliga_tour', icon: '🇩🇪', title_nl: 'Bundesliga Tour', title_en: 'Bundesliga Tour', desc_nl: 'Alle Bundesliga stadions', desc_en: 'All Bundesliga stadiums', type: 'league' as const, league: 'Bundesliga' },
   { id: 'premier_league_tour', icon: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', title_nl: 'Premier League Tour', title_en: 'Premier League Tour', desc_nl: 'Alle Premier League stadions', desc_en: 'All Premier League stadiums', type: 'league' as const, league: 'Premier League' },
+  { id: 'serie_a_tour', icon: '🇮🇹', title_nl: 'Serie A Tour', title_en: 'Serie A Tour', desc_nl: 'Alle Serie A stadions', desc_en: 'All Serie A stadiums', type: 'league' as const, league: 'Serie A' },
+  { id: 'la_liga_tour', icon: '🇪🇸', title_nl: 'La Liga Tour', title_en: 'La Liga Tour', desc_nl: 'Alle La Liga stadions', desc_en: 'All La Liga stadiums', type: 'league' as const, league: 'La Liga' },
+  { id: 'ligue_1_tour', icon: '🇫🇷', title_nl: 'Ligue 1 Tour', title_en: 'Ligue 1 Tour', desc_nl: 'Alle Ligue 1 stadions', desc_en: 'All Ligue 1 stadiums', type: 'league' as const, league: 'Ligue 1' },
   { id: 'big_ten', icon: '🏟️', title_nl: "Europa's Grootste", title_en: "Europe's Biggest", desc_nl: 'Top 10 grootste stadions bezocht', desc_en: 'Visit the 10 biggest stadiums', type: 'biggest' as const, count: 10 },
   { id: 'century', icon: '💯', title_nl: '100 Club', title_en: '100 Club', desc_nl: '100 stadions bezoeken', desc_en: 'Visit 100 stadiums', type: 'visit_count' as const, target: 100 },
   { id: 'ten_countries', icon: '🌍', title_nl: '10 Landen Tour', title_en: '10 Countries Tour', desc_nl: 'Stadions in 10 landen', desc_en: 'Stadiums in 10 countries', type: 'country_count' as const, target: 10 },
@@ -271,7 +274,7 @@ const COMPETITIONS = [
   'Eredivisie', 'Eerste Divisie', 'KNVB Beker', 'Johan Cruijff Schaal',
   'Bundesliga', '2. Bundesliga', 'DFB-Pokal',
   'Premier League', 'FA Cup', 'League Cup',
-  'La Liga', 'Serie A', 'Ligue 1',
+  'La Liga', 'Copa del Rey', 'Serie A', 'Coppa Italia', 'Ligue 1', 'Coupe de France',
   'Champions League', 'Europa League', 'Conference League',
   'EK', 'WK', 'Oefenwedstrijd',
 ];
