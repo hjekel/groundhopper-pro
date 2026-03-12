@@ -252,6 +252,17 @@ const ACHIEVEMENTS = [
   { id: 'roadtripper', icon: '🚗', title_nl: 'Roadtripper', title_en: 'Roadtripper', desc_nl: '1.000+ km gereisd', desc_en: '1,000+ km traveled', check: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, _rc: number, km: number) => km >= 1000, progress: (_v: number, _t: number, _c: number, _lc: number, _sp: boolean, _dd: number, _cs: number, _wl: number, _nl: number, _ml: number, _tg: number, _rc: number, km: number) => `${km}/1000` },
 ];
 
+// Challenge definitions — inspired by The 92 Club
+const CHALLENGES = [
+  { id: 'eredivisie_club', icon: '🇳🇱', title_nl: 'De 18 Club', title_en: 'The 18 Club', desc_nl: 'Alle Eredivisie stadions', desc_en: 'All Eredivisie stadiums', type: 'league' as const, league: 'Eredivisie' },
+  { id: 'nl_prof', icon: '🦁', title_nl: 'Nederlands Prof', title_en: 'Dutch Professional', desc_nl: 'Eredivisie + Eerste Divisie', desc_en: 'Eredivisie + Eerste Divisie', type: 'multi_league' as const, leagues: ['Eredivisie', 'Eerste Divisie'] },
+  { id: 'bundesliga_tour', icon: '🇩🇪', title_nl: 'Bundesliga Tour', title_en: 'Bundesliga Tour', desc_nl: 'Alle Bundesliga stadions', desc_en: 'All Bundesliga stadiums', type: 'league' as const, league: 'Bundesliga' },
+  { id: 'premier_league_tour', icon: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', title_nl: 'Premier League Tour', title_en: 'Premier League Tour', desc_nl: 'Alle Premier League stadions', desc_en: 'All Premier League stadiums', type: 'league' as const, league: 'Premier League' },
+  { id: 'big_ten', icon: '🏟️', title_nl: "Europa's Grootste", title_en: "Europe's Biggest", desc_nl: 'Top 10 grootste stadions bezocht', desc_en: 'Visit the 10 biggest stadiums', type: 'biggest' as const, count: 10 },
+  { id: 'century', icon: '💯', title_nl: '100 Club', title_en: '100 Club', desc_nl: '100 stadions bezoeken', desc_en: 'Visit 100 stadiums', type: 'visit_count' as const, target: 100 },
+  { id: 'ten_countries', icon: '🌍', title_nl: '10 Landen Tour', title_en: '10 Countries Tour', desc_nl: 'Stadions in 10 landen', desc_en: 'Stadiums in 10 countries', type: 'country_count' as const, target: 10 },
+];
+
 const COMPETITIONS = [
   'Eredivisie', 'Eerste Divisie', 'KNVB Beker', 'Johan Cruijff Schaal',
   'Bundesliga', '2. Bundesliga', 'DFB-Pokal',
@@ -1198,6 +1209,48 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
   }, [visits, allStadiums, countriesVisited, leagueStats, customStadiums, wishlist, lang]);
 
   const earnedCount = achievements.filter(a => a.earned).length;
+
+  // Challenge progress — inspired by The 92 Club
+  const challengeProgress = useMemo(() => {
+    const visitedIds = new Set(visits.map(v => v.stadium_id));
+
+    return CHALLENGES.map(ch => {
+      let visited = 0;
+      let total = 0;
+
+      if (ch.type === 'league') {
+        const ls = leagueStats.find(l => l.league === ch.league);
+        visited = ls?.visited || 0;
+        total = ls?.total || 0;
+      } else if (ch.type === 'multi_league') {
+        ch.leagues.forEach(league => {
+          const ls = leagueStats.find(l => l.league === league);
+          visited += ls?.visited || 0;
+          total += ls?.total || 0;
+        });
+      } else if (ch.type === 'biggest') {
+        const sorted = [...allStadiums].filter(s => s.capacity).sort((a, b) => (b.capacity || 0) - (a.capacity || 0)).slice(0, ch.count);
+        total = sorted.length;
+        visited = sorted.filter(s => visitedIds.has(s.id)).length;
+      } else if (ch.type === 'visit_count') {
+        visited = visits.length;
+        total = ch.target;
+      } else if (ch.type === 'country_count') {
+        visited = countriesVisited;
+        total = ch.target;
+      }
+
+      return {
+        ...ch,
+        visited,
+        total,
+        percentage: total > 0 ? Math.round((visited / total) * 100) : 0,
+        completed: total > 0 && visited >= total,
+      };
+    });
+  }, [visits, allStadiums, leagueStats, countriesVisited]);
+
+  const completedChallenges = challengeProgress.filter(c => c.completed).length;
 
   // Total travel kilometers (from Rotterdam: 51.9225, 4.4792)
   const totalKilometers = useMemo(() => {
@@ -3081,6 +3134,73 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
                 )}
               </div>
             )}
+
+            {/* Uitdagingen / Challenges — inspired by The 92 Club */}
+            <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className={`text-[10px] uppercase tracking-wider font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                  🎯 {tr(lang, 'Uitdagingen', 'Challenges')}
+                </span>
+                <span className={`text-[9px] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {completedChallenges}/{CHALLENGES.length} ✓
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {challengeProgress.map(ch => (
+                  <div
+                    key={ch.id}
+                    className={`p-2 rounded-lg border transition ${
+                      ch.completed
+                        ? theme === 'dark'
+                          ? 'bg-green-900/20 border-green-700/30'
+                          : 'bg-green-50 border-green-200'
+                        : theme === 'dark'
+                          ? 'bg-slate-800/50 border-slate-700/30'
+                          : 'bg-slate-50 border-slate-200/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">{ch.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-[11px] font-bold truncate ${
+                          ch.completed
+                            ? theme === 'dark' ? 'text-green-400' : 'text-green-700'
+                            : theme === 'dark' ? 'text-white' : 'text-slate-900'
+                        }`}>
+                          {lang === 'nl' ? ch.title_nl : ch.title_en}
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-bold tabular-nums flex-shrink-0 ${
+                        ch.completed
+                          ? 'text-green-500'
+                          : ch.percentage > 0
+                            ? theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                            : theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
+                      }`}>
+                        {ch.completed ? '✓' : `${ch.visited}/${ch.total}`}
+                      </span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className={`mt-1 h-1 rounded-full overflow-hidden ${
+                      theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'
+                    }`}>
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          ch.completed ? 'bg-green-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.max(ch.percentage, ch.percentage > 0 ? 3 : 0)}%` }}
+                      />
+                    </div>
+                    <div className={`text-[9px] mt-0.5 truncate ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {lang === 'nl' ? ch.desc_nl : ch.desc_en}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className={`text-[9px] mt-2 italic ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
+                {tr(lang, 'Geïnspireerd door The 92 Club 🇬🇧', 'Inspired by The 92 Club 🇬🇧')}
+              </div>
+            </div>
           </div>
         )}
       </div>
