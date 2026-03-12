@@ -582,11 +582,12 @@ interface StadiumMapProps {
   theme: 'dark' | 'light';
   lang: 'nl' | 'en';
   addStadiumTrigger?: number;
+  timelineTrigger?: number;
 }
 
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
-export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }: StadiumMapProps) {
+export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -681,6 +682,11 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger }:
   useEffect(() => {
     if (addStadiumTrigger && addStadiumTrigger > 0) setShowAddModal(true);
   }, [addStadiumTrigger]);
+
+  // Open timeline from header button
+  useEffect(() => {
+    if (timelineTrigger && timelineTrigger > 0) setShowTimeline(true);
+  }, [timelineTrigger]);
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
