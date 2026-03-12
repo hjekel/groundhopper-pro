@@ -93,7 +93,7 @@ export default async function Image() {
             Track je stadionbezoeken door heel Europa
           </div>
 
-          {/* Stats pills */}
+          {/* Feature pills */}
           <div
             style={{
               display: 'flex',
