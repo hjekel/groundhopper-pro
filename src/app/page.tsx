@@ -87,7 +87,7 @@ export default function Home() {
   const [timelineTrigger, setTimelineTrigger] = useState(0)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
 
-  const APP_VERSION = 'v1.6'
+  const APP_VERSION = 'v1.7'
   const APP_DATE = '13 maart 2026'
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -369,49 +369,49 @@ export default function Home() {
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
                     <span className="text-xl flex-shrink-0">🏚️</span>
                     <div>
-                      <p className="font-semibold text-sm">{t('Lost Grounds', 'Lost Grounds')}</p>
+                      <p className="font-semibold text-sm">{t('57 Vergane Glorie stadions', '57 Lost Ground stadiums')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('Historische stadions zoals Highbury zijn nu zichtbaar met grijze markers', 'Historic stadiums like Highbury now visible with grey markers')}
+                        {t('Verdwenen stadions uit NL, België, Duitsland en Spanje — van Bökelberg tot Nou Mestalla', 'Lost stadiums from NL, Belgium, Germany and Spain — from Bökelberg to Nou Mestalla')}
                       </p>
                     </div>
                   </div>
 
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <span className="text-xl flex-shrink-0">🇮🇹</span>
+                    <span className="text-xl flex-shrink-0">🇧🇪</span>
                     <div>
-                      <p className="font-semibold text-sm">{t('Serie A, La Liga & Ligue 1', 'Serie A, La Liga & Ligue 1')}</p>
+                      <p className="font-semibold text-sm">{t('België geopend!', 'Belgium opened!')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('Alle stadions uit Italië, Spanje en Frankrijk toegevoegd', 'All stadiums from Italy, Spain and France added')}
+                        {t('31 Belgische lost grounds: Freethiel, Veltwijckpark, Mijnstadion en meer', '31 Belgian lost grounds: Freethiel, Veltwijckpark, Mijnstadion and more')}
                       </p>
                     </div>
                   </div>
 
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <span className="text-xl flex-shrink-0">🎯</span>
+                    <span className="text-xl flex-shrink-0">⚽</span>
                     <div>
-                      <p className="font-semibold text-sm">{t('Coördinaten gecorrigeerd', 'Coordinates corrected')}</p>
+                      <p className="font-semibold text-sm">{t('HFC Haarlem & De Haarlemse Herdgang', 'HFC Haarlem & De Haarlemse Herdgang')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('38 stadions stonden op de verkeerde plek — nu allemaal precies goed', '38 stadiums were in the wrong place — all fixed now')}
+                        {t('Het Haarlemstadion (Gullit, Hughes) + ons eigen COVID-voetbalveld bij Hageveld', 'The Haarlemstadion (Gullit, Hughes) + our own COVID football field at Hageveld')}
                       </p>
                     </div>
                   </div>
 
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <span className="text-xl flex-shrink-0">✨</span>
+                    <span className="text-xl flex-shrink-0">🏟️</span>
                     <div>
-                      <p className="font-semibold text-sm">{t('Auto-enrich', 'Auto-enrich')}</p>
+                      <p className="font-semibold text-sm">{t('260 stadions op de kaart!', '260 stadiums on the map!')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('Nieuw stadion toevoegen? Logo en locatie worden automatisch verbeterd', 'Adding a new stadium? Logo and location are automatically improved')}
+                        {t('Van het kleinste clubje (VV Gersloot, 22 leden) tot het grootste skelet (Nou Mestalla, 75.000)', 'From the smallest club (VV Gersloot, 22 members) to the biggest skeleton (Nou Mestalla, 75,000)')}
                       </p>
                     </div>
                   </div>
 
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <span className="text-xl flex-shrink-0">🌍</span>
+                    <span className="text-xl flex-shrink-0">📸</span>
                     <div>
-                      <p className="font-semibold text-sm">{t('Buitenlandse stadions toevoegen', 'Add foreign stadiums')}</p>
+                      <p className="font-semibold text-sm">{t('Foto\'s & logo\'s', 'Photos & logos')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('Geocoding werkt nu ook voor België, Duitsland en alle andere landen', 'Geocoding now works for Belgium, Germany and all other countries')}
+                        {t('Historische foto\'s voor Bökelberg, Freethiel, Estadio Insular, Nou Mestalla en meer', 'Historic photos for Bökelberg, Freethiel, Estadio Insular, Nou Mestalla and more')}
                       </p>
                     </div>
                   </div>
