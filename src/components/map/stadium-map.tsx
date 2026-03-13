@@ -602,11 +602,12 @@ interface StadiumMapProps {
   addStadiumTrigger?: number;
   timelineTrigger?: number;
   onShowWhatsNew?: () => void;
+  flyToTarget?: { lat: number; lng: number } | null;
 }
 
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
-export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger, onShowWhatsNew }: StadiumMapProps) {
+export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger, onShowWhatsNew, flyToTarget }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -709,6 +710,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   useEffect(() => {
     if (timelineTrigger && timelineTrigger > 0) setShowTimeline(true);
   }, [timelineTrigger]);
+
+  // Fly to target from external trigger (e.g. What's New)
+  useEffect(() => {
+    if (flyToTarget) {
+      setSelectedStadium(flyToTarget);
+    }
+  }, [flyToTarget]);
 
   const loadData = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
