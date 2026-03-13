@@ -601,11 +601,12 @@ interface StadiumMapProps {
   lang: 'nl' | 'en';
   addStadiumTrigger?: number;
   timelineTrigger?: number;
+  onShowWhatsNew?: () => void;
 }
 
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
-export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger }: StadiumMapProps) {
+export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger, onShowWhatsNew }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -3153,6 +3154,20 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* What's New button */}
+            {onShowWhatsNew && (
+              <button
+                onClick={onShowWhatsNew}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold transition ${
+                  theme === 'dark'
+                    ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                    : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                }`}
+                title={tr(lang, "Bekijk wat er nieuw is", "See what's new")}
+              >
+                🚀 {tr(lang, "What's New", "What's New")}
+              </button>
+            )}
             {/* GPS button */}
             <button
               onClick={() => findNearestUnvisited()}
