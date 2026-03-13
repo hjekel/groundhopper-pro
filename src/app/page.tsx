@@ -103,13 +103,12 @@ export default function Home() {
         const { data, error } = await supabase
           .from('stadiums')
           .select(`
-            id, name, latitude, longitude, capacity, city, address, built_year, image_url, notable_events, former_names,
+            id, name, latitude, longitude, capacity, city, address, built_year, image_url, notable_events, former_names, is_active,
             club:clubs (
               id, name, short_name, primary_color, secondary_color, crest_url, country_id,
               current_league:leagues ( division, name )
             )
           `)
-          .eq('is_active', true)
         if (error) throw error
         setStadiums((data as any) || [])
       } catch (err) {

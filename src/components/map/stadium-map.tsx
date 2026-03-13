@@ -169,7 +169,7 @@ const CLUB_STORIES: Record<string, { icon: string; label: { nl: string; en: stri
   },
 };
 
-const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false, label?: string | null) => {
+const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta: boolean = false, isVisited: boolean = false, isWishlist: boolean = false, isCustom: boolean = false, label?: string | null, isLostGround: boolean = false) => {
   const color = primaryColor || '#ef4444';
 
   // Status badge (small corner overlay)
@@ -179,9 +179,11 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
     ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><polygon points="6,1 7.5,4.5 11,4.5 8,7 9.5,11 6,8.5 2.5,11 4,7 1,4.5 4.5,4.5" fill="white"/></svg></div>`
     : isCustom
     ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><path d="M6 2V10M2 6H10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>`
+    : isLostGround
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#78716c;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><span style="font-size:8px;line-height:1;">🏚️</span></div>`
     : '';
 
-  const borderCol = isVisited ? '#22c55e' : isWishlist ? '#eab308' : isCustom ? '#8b5cf6' : 'white';
+  const borderCol = isVisited ? '#22c55e' : isWishlist ? '#eab308' : isCustom ? '#8b5cf6' : isLostGround ? '#78716c' : 'white';
 
   // --- Sparta: larger logo badge with golden ring + glow ---
   if (isSparta) {
@@ -204,17 +206,18 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
 
   // --- All other markers: circular logo badge (crest = the marker) ---
   const s = 34;
-  const className = isCustom ? 'custom-stadium-marker custom-added' : 'custom-stadium-marker';
+  const className = isCustom ? 'custom-stadium-marker custom-added' : isLostGround ? 'custom-stadium-marker lost-ground' : 'custom-stadium-marker';
+  const opacity = isLostGround ? 'opacity:0.7;' : '';
 
   const html = crestUrl
-    ? `<div style="position:relative;width:${s}px;height:${s}px;">
-        <div style="width:${s}px;height:${s}px;border-radius:50%;background:white;border:2.5px solid ${borderCol};display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    ? `<div style="position:relative;width:${s}px;height:${s}px;${opacity}">
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:white;border:2.5px solid ${borderCol};display:flex;align-items:center;justify-content:center;overflow:hidden;${isLostGround ? 'filter:grayscale(50%);' : ''}">
           <img src="${crestUrl}" style="width:22px;height:22px;object-fit:contain;" onerror="this.parentElement.style.background='${color}'" />
         </div>
         ${badge}
       </div>`
-    : `<div style="position:relative;width:${s}px;height:${s}px;">
-        <div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid ${borderCol === 'white' ? 'rgba(255,255,255,0.8)' : borderCol};display:flex;align-items:center;justify-content:center;">${label ? `<span style="font-size:10px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);letter-spacing:-0.5px;">${label}</span>` : ''}</div>
+    : `<div style="position:relative;width:${s}px;height:${s}px;${opacity}">
+        <div style="width:${s}px;height:${s}px;border-radius:50%;background:${isLostGround ? '#78716c' : color};border:2.5px solid ${borderCol === 'white' ? 'rgba(255,255,255,0.8)' : borderCol};display:flex;align-items:center;justify-content:center;">${label ? `<span style="font-size:10px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);letter-spacing:-0.5px;">${label}</span>` : ''}</div>
         ${badge}
       </div>`;
 
@@ -541,6 +544,7 @@ interface Stadium {
   image_url?: string;
   notable_events?: string;
   former_names?: string[];
+  is_active?: boolean;
   club?: {
     id: string;
     name: string;
@@ -3416,6 +3420,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
           const isVisited = visits.some(v => v.stadium_id === stadium.id);
           const isOnWishlist = wishlist.some(w => w.stadium_id === stadium.id);
           const isCustom = stadium.id.startsWith('custom-');
+          const isLostGround = stadium.is_active === false;
           const visitData = visits.find(v => v.stadium_id === stadium.id);
           const customData = isCustom ? customStadiums.find(c => `custom-${c.id}` === stadium.id) : null;
 
@@ -3423,7 +3428,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
             <Marker
               key={stadium.id}
               position={[stadium.latitude, stadium.longitude]}
-              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', stadium.club?.crest_url, isSparta, isVisited, isOnWishlist, isCustom, !stadium.club?.crest_url ? (stadium.club?.short_name?.substring(0, 3) || null) : null)}
+              icon={createClubIcon(stadium.club?.primary_color || '#ef4444', stadium.club?.crest_url, isSparta, isVisited, isOnWishlist, isCustom, !stadium.club?.crest_url ? (stadium.club?.short_name?.substring(0, 3) || null) : null, isLostGround)}
             >
               {/* Hover tooltip with club name + logo */}
               <Tooltip direction="top" opacity={0.95} className="club-tooltip">
@@ -3439,11 +3444,11 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
               {/* Panini-style popup card */}
               <Popup autoClose={true} closeOnEscapeKey={true}>
                 <div className={`w-[310px] ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                  {/* Panini header - golden bar with crest */}
-                  <div className="bg-gradient-to-r from-amber-700 via-amber-500 to-amber-700 px-4 py-2.5 flex items-center gap-3 rounded-t-lg">
+                  {/* Panini header - golden bar (or grey for lost grounds) with crest */}
+                  <div className={`px-4 py-2.5 flex items-center gap-3 rounded-t-lg ${isLostGround ? 'bg-gradient-to-r from-stone-700 via-stone-500 to-stone-700' : 'bg-gradient-to-r from-amber-700 via-amber-500 to-amber-700'}`}>
                     <div className="w-11 h-11 bg-white rounded-lg p-1 flex-shrink-0 shadow-sm">
                       {stadium.club?.crest_url ? (
-                        <img src={stadium.club.crest_url} alt="" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <img src={stadium.club.crest_url} alt="" className={`w-full h-full object-contain ${isLostGround ? 'grayscale-[30%]' : ''}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
                         <div className="w-full h-full rounded flex items-center justify-center text-xs font-bold" style={{ backgroundColor: stadium.club?.primary_color || '#6b7280', color: 'white' }}>
                           {stadium.club?.short_name?.substring(0, 2) || '?'}
@@ -3453,7 +3458,12 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-white text-base truncate drop-shadow-sm">{stadium.club?.name || 'Unknown'}</h3>
                       <div className="flex items-center gap-2">
-                        {stadium.club?.current_league && (
+                        {isLostGround && (
+                          <span className="text-xs px-1.5 py-0.5 bg-stone-800/50 text-stone-200 rounded font-medium">
+                            🏚️ Lost Ground
+                          </span>
+                        )}
+                        {stadium.club?.current_league && !isLostGround && (
                           <span className="text-amber-100 text-xs">{stadium.club.current_league.name}</span>
                         )}
                         {isCustom && (
