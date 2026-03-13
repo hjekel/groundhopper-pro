@@ -828,24 +828,20 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       return;
     }
 
-    // Try to find the location
+    // Try to find the location (include country in queries for better accuracy)
+    const countryHint = newStadium.country ? `, ${newStadium.country}` : '';
     const searchQueries = [
-      `${newStadium.name} stadium ${newStadium.city}`,
-      `${newStadium.name} ${newStadium.city}`,
-      `${newStadium.club_name} stadium ${newStadium.city}`,
-      `stadium ${newStadium.city}`
+      `${newStadium.name} stadium ${newStadium.city}${countryHint}`,
+      `${newStadium.name} ${newStadium.city}${countryHint}`,
+      `${newStadium.club_name} stadium ${newStadium.city}${countryHint}`,
+      `stadium ${newStadium.city}${countryHint}`,
+      `${newStadium.city}${countryHint}`
     ];
 
     let location = null;
     for (const query of searchQueries) {
       location = await geocodeLocation(query);
       if (location) break;
-    }
-
-    // If stadium-specific search failed, try city-only as fallback
-    if (!location && newStadium.city) {
-      const cityQuery = `${newStadium.city}, ${newStadium.country || 'Netherlands'}`;
-      location = await geocodeLocation(cityQuery);
     }
 
     setIsSearching(false);
