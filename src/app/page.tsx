@@ -85,6 +85,10 @@ export default function Home() {
   const [showHelp, setShowHelp] = useState(false)
   const [addStadiumTrigger, setAddStadiumTrigger] = useState(0)
   const [timelineTrigger, setTimelineTrigger] = useState(0)
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
+
+  const APP_VERSION = 'v1.6'
+  const APP_DATE = '13 maart 2026'
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
@@ -94,6 +98,15 @@ export default function Home() {
       setShowHelp(true)
       localStorage.setItem('groundhopper-welcomed', 'true')
     }
+  }, [])
+
+  // Show "What's New" when version changes
+  useEffect(() => {
+    const lastSeenVersion = localStorage.getItem('groundhopper-version')
+    if (lastSeenVersion && lastSeenVersion !== APP_VERSION) {
+      setShowWhatsNew(true)
+    }
+    localStorage.setItem('groundhopper-version', APP_VERSION)
   }, [])
   const t = (nl: string, en: string) => (lang === 'nl' ? nl : en)
 
@@ -324,7 +337,7 @@ export default function Home() {
                       The AppFabrique — an initiative of Incredible Projects
                     </p>
                     <p className={`text-xs ${theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>
-                      {t('Laatste update', 'Last update')}: 12 {t('maart', 'March')} 2026 · v1.5
+                      {t('Laatste update', 'Last update')}: {APP_DATE.replace('maart', t('maart', 'March'))} · {APP_VERSION}
                     </p>
                   </div>
                 </div>
@@ -333,8 +346,89 @@ export default function Home() {
           )}
 
           <div className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            v1.5
+            {APP_VERSION}
           </div>
+
+          {/* What's New popup */}
+          {showWhatsNew && (
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowWhatsNew(false)}>
+              <div className={`relative max-w-md w-full rounded-2xl shadow-2xl overflow-hidden ${theme === 'dark' ? 'bg-slate-800 text-white' : 'bg-white text-slate-900'}`} onClick={e => e.stopPropagation()}>
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 px-6 py-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">🚀</span>
+                      <div>
+                        <h2 className="text-xl font-bold">{t("What's New!", "What's New!")}</h2>
+                        <p className="text-sm text-white/80">{APP_VERSION} · {APP_DATE}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setShowWhatsNew(false)} className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-lg transition">
+                      &times;
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <span className="text-xl flex-shrink-0">🏚️</span>
+                    <div>
+                      <p className="font-semibold text-sm">{t('Lost Grounds', 'Lost Grounds')}</p>
+                      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {t('Historische stadions zoals Highbury zijn nu zichtbaar met grijze markers', 'Historic stadiums like Highbury now visible with grey markers')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <span className="text-xl flex-shrink-0">🇮🇹</span>
+                    <div>
+                      <p className="font-semibold text-sm">{t('Serie A, La Liga & Ligue 1', 'Serie A, La Liga & Ligue 1')}</p>
+                      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {t('Alle stadions uit Italië, Spanje en Frankrijk toegevoegd', 'All stadiums from Italy, Spain and France added')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <span className="text-xl flex-shrink-0">🎯</span>
+                    <div>
+                      <p className="font-semibold text-sm">{t('Coördinaten gecorrigeerd', 'Coordinates corrected')}</p>
+                      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {t('38 stadions stonden op de verkeerde plek — nu allemaal precies goed', '38 stadiums were in the wrong place — all fixed now')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <span className="text-xl flex-shrink-0">✨</span>
+                    <div>
+                      <p className="font-semibold text-sm">{t('Auto-enrich', 'Auto-enrich')}</p>
+                      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {t('Nieuw stadion toevoegen? Logo en locatie worden automatisch verbeterd', 'Adding a new stadium? Logo and location are automatically improved')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <span className="text-xl flex-shrink-0">🌍</span>
+                    <div>
+                      <p className="font-semibold text-sm">{t('Buitenlandse stadions toevoegen', 'Add foreign stadiums')}</p>
+                      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {t('Geocoding werkt nu ook voor België, Duitsland en alle andere landen', 'Geocoding now works for Belgium, Germany and all other countries')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 pb-5 pt-2">
+                  <button onClick={() => setShowWhatsNew(false)} className="w-full py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition shadow-lg">
+                    {t('Top, bekeken!', 'Got it!')} ⚽
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </LanguageContext.Provider>
     </ThemeContext.Provider>
