@@ -539,6 +539,8 @@ interface Stadium {
   address?: string;
   built_year?: number;
   image_url?: string;
+  notable_events?: string;
+  former_names?: string[];
   club?: {
     id: string;
     name: string;
@@ -3398,6 +3400,26 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     theme={theme}
                     lang={lang}
                   />
+
+                  {/* Trivia / Notable events + Former names */}
+                  {(stadium.notable_events || (stadium.former_names && stadium.former_names.length > 0)) && (
+                    <div className={`px-4 py-2.5 text-xs space-y-1.5 border-b ${theme === 'dark' ? 'border-slate-700/50' : 'border-amber-200/50'}`}>
+                      {stadium.former_names && stadium.former_names.length > 0 && (
+                        <div className={`flex gap-1.5 leading-tight ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <span className="flex-shrink-0">📛</span>
+                          <span>{tr(lang, 'Vorige namen', 'Former names')}: {stadium.former_names.join(' → ')}</span>
+                        </div>
+                      )}
+                      {stadium.notable_events && (
+                        <div className={`leading-tight ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className={`font-bold text-[10px] uppercase tracking-wider ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                            📖 {tr(lang, 'Verhaal', 'Story')}
+                          </span>
+                          <p className="mt-1">{stadium.notable_events}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* User's own visit photos */}
                   {isVisited && (() => {
