@@ -893,32 +893,72 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       // Fly to new stadium
       setSelectedStadium({ lat: data.latitude, lng: data.longitude });
 
-      // Auto-enrich: fetch club logo from TheSportsDB in background
-      if (data.club_name) {
-        (async () => {
-          try {
-            // Try full name first, then simplified
-            const searchNames = [data.club_name, data.club_name.replace(/^(FC|SC|SV|VV|VfL|TSG|1\.\s*FC)\s+/i, '').trim()];
-            let badgeUrl: string | null = null;
+      // Auto-enrich: fetch club logo + verify/refine coordinates in background
+      (async () => {
+        try {
+          const updates: Record<string, any> = {};
+          const stateUpdates: Partial<CustomStadium> = {};
 
+          // 1. Try to fetch club logo from TheSportsDB
+          if (data.club_name) {
+            const searchNames = [data.club_name, data.club_name.replace(/^(FC|SC|SV|VV|VfL|TSG|1\.\s*FC)\s+/i, '').trim()];
             for (const searchName of searchNames) {
               const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(searchName)}`);
               const json = await res.json();
-              if (json.teams && json.teams.length > 0 && json.teams[0].strBadge) {
-                badgeUrl = json.teams[0].strBadge;
+              if (json.teams && json.teams.length > 0) {
+                const team = json.teams[0];
+                // Get badge
+                if (team.strBadge) {
+                  updates.crest_url = team.strBadge;
+                  stateUpdates.crest_url = team.strBadge;
+                }
+                // Get stadium coordinates from TheSportsDB if available
+                if (team.strStadiumLocation) {
+                  const [tLat, tLng] = team.strStadiumLocation.split(',').map((s: string) => parseFloat(s.trim()));
+                  if (!isNaN(tLat) && !isNaN(tLng) && Math.abs(tLat) > 0.1 && Math.abs(tLng) > 0.001) {
+                    // Only update if TheSportsDB coords differ significantly (>200m) from current
+                    const dLat = (tLat - data.latitude) * 111000;
+                    const dLng = (tLng - data.longitude) * 111000 * Math.cos(data.latitude * Math.PI / 180);
+                    const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+                    if (dist > 200) {
+                      updates.latitude = tLat;
+                      updates.longitude = tLng;
+                      stateUpdates.latitude = tLat;
+                      stateUpdates.longitude = tLng;
+                    }
+                  }
+                }
                 break;
               }
             }
-
-            if (badgeUrl) {
-              await supabase.from('bram_custom_stadiums').update({ crest_url: badgeUrl }).eq('id', data.id);
-              setCustomStadiums(prev => prev.map(s => s.id === data.id ? { ...s, crest_url: badgeUrl! } : s));
-            }
-          } catch (e) {
-            console.log('Auto-enrich logo failed (non-critical):', e);
           }
-        })();
-      }
+
+          // 2. If no TheSportsDB coords, try refining with Nominatim stadium-specific search
+          if (!updates.latitude && data.name) {
+            const stadiumGeo = await geocodeLocation(`${data.name} stadium ${data.city}`);
+            if (stadiumGeo) {
+              const dLat = (stadiumGeo.lat - data.latitude) * 111000;
+              const dLng = (stadiumGeo.lng - data.longitude) * 111000 * Math.cos(data.latitude * Math.PI / 180);
+              const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+              // Only update if the refined coords are >200m different (more precise hit)
+              if (dist > 200 && dist < 5000) {
+                updates.latitude = stadiumGeo.lat;
+                updates.longitude = stadiumGeo.lng;
+                stateUpdates.latitude = stadiumGeo.lat;
+                stateUpdates.longitude = stadiumGeo.lng;
+              }
+            }
+          }
+
+          // 3. Apply updates if any
+          if (Object.keys(updates).length > 0) {
+            await supabase.from('bram_custom_stadiums').update(updates).eq('id', data.id);
+            setCustomStadiums(prev => prev.map(s => s.id === data.id ? { ...s, ...stateUpdates } : s));
+          }
+        } catch (e) {
+          console.log('Auto-enrich failed (non-critical):', e);
+        }
+      })();
     }
   };
 
