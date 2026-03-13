@@ -188,7 +188,7 @@ export default function Home() {
               </button>
             </div>
           </header>
-          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} />
+          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} onShowWhatsNew={() => setShowWhatsNew(true)} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
 
           {/* Groundhopping Info Modal */}
@@ -344,10 +344,6 @@ export default function Home() {
               </div>
             </div>
           )}
-
-          <button onClick={() => setShowWhatsNew(true)} className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono cursor-pointer hover:scale-105 transition ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400 hover:text-white' : 'bg-white/80 text-slate-500 hover:text-slate-900'}`} title={t("What's New — klik om te bekijken", "What's New — click to view")}>
-            🚀 {APP_VERSION}
-          </button>
 
           {/* What's New popup */}
           {showWhatsNew && (
