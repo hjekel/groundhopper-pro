@@ -345,9 +345,9 @@ export default function Home() {
             </div>
           )}
 
-          <div className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400' : 'bg-white/80 text-slate-500'}`}>
-            {APP_VERSION}
-          </div>
+          <button onClick={() => setShowWhatsNew(true)} className={`absolute bottom-10 right-2 z-[999] px-2 py-1 rounded text-xs font-mono cursor-pointer hover:scale-105 transition ${theme === 'dark' ? 'bg-slate-800/80 text-slate-400 hover:text-white' : 'bg-white/80 text-slate-500 hover:text-slate-900'}`} title={t("What's New — klik om te bekijken", "What's New — click to view")}>
+            🚀 {APP_VERSION}
+          </button>
 
           {/* What's New popup */}
           {showWhatsNew && (
