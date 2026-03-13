@@ -562,8 +562,11 @@ interface CustomStadium {
   latitude: number;
   longitude: number;
   capacity?: number;
+  built_year?: number;
   primary_color?: string;
   notes?: string;
+  is_historic?: boolean;
+  demolished_year?: number;
   created_at: string;
 }
 
@@ -619,7 +622,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     country: '',
     capacity: '',
     primary_color: '#ef4444',
-    notes: ''
+    notes: '',
+    built_year: '',
+    is_historic: false,
+    demolished_year: ''
   });
   const [showClubSuggestions, setShowClubSuggestions] = useState(false);
   const [clubSuggestionQuery, setClubSuggestionQuery] = useState('');
@@ -866,7 +872,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       longitude: foundLocation.lng,
       capacity: newStadium.capacity ? parseInt(newStadium.capacity) : null,
       primary_color: newStadium.primary_color,
-      notes: newStadium.notes || null
+      notes: newStadium.notes || null,
+      built_year: newStadium.built_year ? parseInt(newStadium.built_year) : null,
+      is_historic: newStadium.is_historic,
+      demolished_year: newStadium.demolished_year ? parseInt(newStadium.demolished_year) : null
     }).select().single();
 
     if (error) {
@@ -892,7 +901,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       country: '',
       capacity: '',
       primary_color: '#ef4444',
-      notes: ''
+      notes: '',
+      built_year: '',
+      is_historic: false,
+      demolished_year: ''
     });
     setSearchError('');
     setFoundLocation(null);
@@ -1056,11 +1068,19 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       longitude: cs.longitude,
       capacity: cs.capacity,
       city: cs.city,
+      built_year: cs.built_year,
+      notable_events: cs.notes ? (cs.is_historic
+        ? `🏚️ ${tr(lang, 'Historisch stadion', 'Historic stadium')}${cs.demolished_year ? ` — ${tr(lang, 'gesloopt/gesloten', 'demolished/closed')} ${cs.demolished_year}` : ''}. ${cs.notes}`
+        : cs.notes
+      ) : (cs.is_historic
+        ? `🏚️ ${tr(lang, 'Historisch stadion', 'Historic stadium')}${cs.demolished_year ? ` — ${tr(lang, 'gesloopt/gesloten', 'demolished/closed')} ${cs.demolished_year}` : ''}`
+        : undefined
+      ),
       club: {
         id: `custom-club-${cs.id}`,
         name: cs.club_name || cs.name,
         short_name: (cs.club_name || cs.name).substring(0, 3).toUpperCase(),
-        primary_color: cs.primary_color || '#8b5cf6',
+        primary_color: cs.is_historic ? '#78716c' : (cs.primary_color || '#8b5cf6'),
         secondary_color: undefined,
         current_league: null
       }
@@ -2341,6 +2361,66 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 </div>
               </div>
 
+              {/* Historic stadium toggle */}
+              <div className={`p-3 rounded-lg ${newStadium.is_historic
+                ? (theme === 'dark' ? 'bg-amber-900/20 border border-amber-800/30' : 'bg-amber-50 border border-amber-200')
+                : (theme === 'dark' ? 'bg-slate-700/30 border border-slate-700/50' : 'bg-slate-50 border border-slate-200')
+              }`}>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newStadium.is_historic}
+                    onChange={(e) => setNewStadium(prev => ({ ...prev, is_historic: e.target.checked }))}
+                    className="w-4 h-4 rounded accent-amber-500"
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                      🏚️ {tr(lang, 'Historisch stadion', 'Historic stadium')}
+                    </span>
+                    <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {tr(lang, 'Niet meer in gebruik / gesloopt', 'No longer in use / demolished')}
+                    </p>
+                  </div>
+                </label>
+
+                {newStadium.is_historic && (
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        {tr(lang, 'Bouwjaar', 'Built year')}
+                      </label>
+                      <input
+                        type="number"
+                        value={newStadium.built_year}
+                        onChange={(e) => setNewStadium(prev => ({ ...prev, built_year: e.target.value }))}
+                        placeholder="1934"
+                        className={`w-full px-3 py-2 rounded-lg text-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-500'
+                            : 'bg-white text-slate-900 border-amber-300 placeholder-slate-400'
+                        } border focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        {tr(lang, 'Gesloopt / gesloten', 'Demolished / closed')}
+                      </label>
+                      <input
+                        type="number"
+                        value={newStadium.demolished_year}
+                        onChange={(e) => setNewStadium(prev => ({ ...prev, demolished_year: e.target.value }))}
+                        placeholder="1996"
+                        className={`w-full px-3 py-2 rounded-lg text-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-700 text-white border-slate-600 placeholder-slate-500'
+                            : 'bg-white text-slate-900 border-amber-300 placeholder-slate-400'
+                        } border focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                   {tr(lang, 'Notities', 'Notes')}
@@ -2348,7 +2428,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 <textarea
                   value={newStadium.notes}
                   onChange={(e) => setNewStadium(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder={tr(lang, 'Optionele notities...', 'Optional notes...')}
+                  placeholder={tr(lang, 'Optionele notities of trivia...', 'Optional notes or trivia...')}
                   rows={2}
                   className={`w-full px-3 py-2.5 rounded-lg text-sm ${
                     theme === 'dark' 
