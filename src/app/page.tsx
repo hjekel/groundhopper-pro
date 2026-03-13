@@ -258,17 +258,87 @@ export default function Home() {
                     </p>
                   </div>
 
+                  {/* Raiders of the Lost Ground */}
+                  <div className={`rounded-xl p-4 border-2 ${theme === 'dark' ? 'bg-amber-900/20 border-amber-700/50' : 'bg-amber-50 border-amber-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🏚️</span>
+                      <h3 className="font-bold text-lg">{t('Raiders of the Lost Ground', 'Raiders of the Lost Ground')}</h3>
+                    </div>
+                    <p className={`text-sm leading-relaxed mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {t(
+                        'Naast het bezoeken van actieve stadions bestaat er een fascinerende subcultuur: lost ground hopping. Fans bezoeken de locaties van gesloopte, verlaten of herbestemde stadions. Van het iconische Highbury in Londen (nu luxe appartementen) tot het Bökelbergstadion in Mönchengladbach (nu een woonwijk) — overal ter wereld liggen de geesten van legendarische voetbaltempels te wachten om herontdekt te worden.',
+                        'Besides visiting active grounds, there\'s a fascinating subculture: lost ground hopping. Fans visit the sites of demolished, abandoned or repurposed stadiums. From the iconic Highbury in London (now luxury flats) to the Bökelbergstadion in Mönchengladbach (now a residential area) — ghosts of legendary football temples are waiting to be rediscovered all over the world.'
+                      )}
+                    </p>
+                    <p className={`text-sm leading-relaxed mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {t(
+                        'Het bijzondere aan lost ground hopping is de mix van nostalgie, detective-werk en urban exploring. Soms is er nog een tribune te zien, soms alleen een vage omtrek in het gras of een gedenkplaat. Het gaat om het gevoel: hier stonden ooit duizenden fans te schreeuwen.',
+                        'What makes lost ground hopping special is the mix of nostalgia, detective work and urban exploring. Sometimes a stand is still visible, sometimes just a faint outline in the grass or a memorial plaque. It\'s about the feeling: thousands of fans once stood here, roaring.'
+                      )}
+                    </p>
+                    <div className={`rounded-lg p-3 mb-3 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-white/80'}`}>
+                      <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        {t('Bekende lost grounds', 'Famous lost grounds')}
+                      </p>
+                      <div className="space-y-1.5">
+                        {[
+                          { name: 'Highbury', city: 'London', year: '1913-2006', lat: 51.5578, lng: -0.1036 },
+                          { name: 'Bökelbergstadion', city: 'Mönchengladbach', year: '1919-2006', lat: 51.2093, lng: 6.4391 },
+                          { name: 'Estadio Insular', city: 'Las Palmas', year: '1944-2003', lat: 28.1067, lng: -15.4164 },
+                          { name: 'Freethielstadion', city: 'Beveren', year: '1927-2012', lat: 51.2126, lng: 4.2578 },
+                          { name: 'De Meer', city: 'Amsterdam', year: '1934-1996', lat: 52.3544, lng: 4.9385 },
+                        ].map((ground) => (
+                          <button
+                            key={ground.name}
+                            onClick={() => { setShowGroundhopInfo(false); setFlyToTarget({ lat: ground.lat, lng: ground.lng }); }}
+                            className={`flex items-center gap-2 w-full text-left text-sm p-1.5 rounded-lg transition hover:scale-[1.01] ${theme === 'dark' ? 'hover:bg-slate-600/50 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                          >
+                            <span className="text-base">🏚️</span>
+                            <span className="font-medium flex-1">{ground.name}</span>
+                            <span className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{ground.city} · {ground.year}</span>
+                            <span className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                      {t('Lost ground links', 'Lost ground links')}
+                    </p>
+                    <div className="space-y-1.5">
+                      <a href="https://www.stadionautist.nl/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <span>📖</span>
+                        <span className="flex-1">Stadionautist — {t('vergane glorie verhalen', 'lost ground stories')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.indehekken.net/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <span>🏟️</span>
+                        <span className="flex-1">In de Hekken — {t('vergane glorie serie', 'faded glory series')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://heritagecalling.com/2022/05/19/12-lost-english-football-grounds/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <span>🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
+                        <span className="flex-1">Historic England — {t('12 verloren Engelse stadions', '12 lost English grounds')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.groundtastic.co.uk/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <span>📰</span>
+                        <span className="flex-1">Groundtastic — {t('het voetbalstadion magazine', 'the football ground magazine')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.terraceedition.com/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <span>🇳🇱</span>
+                        <span className="flex-1">Terrace Edition — {t('verdwenen stadions in Nederland', 'disappeared grounds in Holland')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                    </div>
+                  </div>
+
                   <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
                     <h3 className="font-bold text-lg mb-2">{t('Handige links', 'Useful links')}</h3>
                     <div className="space-y-2">
                       <a href="https://www.the92.net/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
                         <span>🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
                         <span>The 92 Club — {t('alle Engelse stadions bezoeken', 'visit all English grounds')}</span>
-                        <span className="text-xs opacity-50">↗</span>
-                      </a>
-                      <a href="https://www.stadionautist.nl/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                        <span>📖</span>
-                        <span>Stadionautist — {t('verhalen over vergane glorie', 'stories about lost grounds')}</span>
                         <span className="text-xs opacity-50">↗</span>
                       </a>
                       <a href="https://www.fastscore.com/stadiums" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
