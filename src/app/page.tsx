@@ -86,6 +86,7 @@ export default function Home() {
   const [addStadiumTrigger, setAddStadiumTrigger] = useState(0)
   const [timelineTrigger, setTimelineTrigger] = useState(0)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
+  const [flyToTarget, setFlyToTarget] = useState<{ lat: number; lng: number } | null>(null)
 
   const APP_VERSION = 'v1.7'
   const APP_DATE = '13 maart 2026'
@@ -188,7 +189,7 @@ export default function Home() {
               </button>
             </div>
           </header>
-          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} onShowWhatsNew={() => setShowWhatsNew(true)} />
+          <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} onShowWhatsNew={() => setShowWhatsNew(true)} flyToTarget={flyToTarget} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
 
           {/* Groundhopping Info Modal */}
@@ -255,6 +256,37 @@ export default function Home() {
                         'Just start! Go to a match at a ground you\'ve never been to before. Search #groundhopping on social media or join communities on Facebook and Reddit. And use this app to track your progress! 🏟️'
                       )}
                     </p>
+                  </div>
+
+                  <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                    <h3 className="font-bold text-lg mb-2">{t('Handige links', 'Useful links')}</h3>
+                    <div className="space-y-2">
+                      <a href="https://www.the92.net/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <span>🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
+                        <span>The 92 Club — {t('alle Engelse stadions bezoeken', 'visit all English grounds')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.stadionautist.nl/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <span>📖</span>
+                        <span>Stadionautist — {t('verhalen over vergane glorie', 'stories about lost grounds')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.fastscore.com/stadiums" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <span>⚡</span>
+                        <span>FastScore — {t('stadions per land en competitie', 'stadiums by country and league')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.groundhopping.se/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <span>🌍</span>
+                        <span>Groundhopping.se — {t('Scandinavische groundhopping community', 'Scandinavian groundhopping community')}</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                      <a href="https://www.reddit.com/r/groundhopping/" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-sm hover:underline ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <span>💬</span>
+                        <span>r/groundhopping — Reddit community</span>
+                        <span className="text-xs opacity-50">↗</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -366,55 +398,60 @@ export default function Home() {
                 </div>
 
                 <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
-                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <button onClick={() => { setShowWhatsNew(false); setFlyToTarget({ lat: 51.2093, lng: 6.4391 }); }} className={`flex items-start gap-3 p-3 rounded-xl w-full text-left transition hover:scale-[1.02] ${theme === 'dark' ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <span className="text-xl flex-shrink-0">🏚️</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{t('57 Vergane Glorie stadions', '57 Lost Ground stadiums')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t('Verdwenen stadions uit NL, België, Duitsland en Spanje — van Bökelberg tot Nou Mestalla', 'Lost stadiums from NL, Belgium, Germany and Spain — from Bökelberg to Nou Mestalla')}
                       </p>
                     </div>
-                  </div>
+                    <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                  </button>
 
-                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <button onClick={() => { setShowWhatsNew(false); setFlyToTarget({ lat: 51.2126, lng: 4.2578 }); }} className={`flex items-start gap-3 p-3 rounded-xl w-full text-left transition hover:scale-[1.02] ${theme === 'dark' ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <span className="text-xl flex-shrink-0">🇧🇪</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{t('België geopend!', 'Belgium opened!')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t('31 Belgische lost grounds: Freethiel, Veltwijckpark, Mijnstadion en meer', '31 Belgian lost grounds: Freethiel, Veltwijckpark, Mijnstadion and more')}
                       </p>
                     </div>
-                  </div>
+                    <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                  </button>
 
-                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <button onClick={() => { setShowWhatsNew(false); setFlyToTarget({ lat: 52.3885, lng: 4.6388 }); }} className={`flex items-start gap-3 p-3 rounded-xl w-full text-left transition hover:scale-[1.02] ${theme === 'dark' ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <span className="text-xl flex-shrink-0">⚽</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{t('HFC Haarlem & De Haarlemse Herdgang', 'HFC Haarlem & De Haarlemse Herdgang')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t('Het Haarlemstadion (Gullit, Hughes) + ons eigen COVID-voetbalveld bij Hageveld', 'The Haarlemstadion (Gullit, Hughes) + our own COVID football field at Hageveld')}
                       </p>
                     </div>
-                  </div>
+                    <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                  </button>
 
-                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <button onClick={() => { setShowWhatsNew(false); setFlyToTarget({ lat: 53.0049, lng: 5.9615 }); }} className={`flex items-start gap-3 p-3 rounded-xl w-full text-left transition hover:scale-[1.02] ${theme === 'dark' ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <span className="text-xl flex-shrink-0">🏟️</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{t('260 stadions op de kaart!', '260 stadiums on the map!')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t('Van het kleinste clubje (VV Gersloot, 22 leden) tot het grootste skelet (Nou Mestalla, 75.000)', 'From the smallest club (VV Gersloot, 22 members) to the biggest skeleton (Nou Mestalla, 75,000)')}
                       </p>
                     </div>
-                  </div>
+                    <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                  </button>
 
-                  <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                  <button onClick={() => { setShowWhatsNew(false); setFlyToTarget({ lat: 51.2093, lng: 6.4391 }); }} className={`flex items-start gap-3 p-3 rounded-xl w-full text-left transition hover:scale-[1.02] ${theme === 'dark' ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <span className="text-xl flex-shrink-0">📸</span>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{t('Foto\'s & logo\'s', 'Photos & logos')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t('Historische foto\'s voor Bökelberg, Freethiel, Estadio Insular, Nou Mestalla en meer', 'Historic photos for Bökelberg, Freethiel, Estadio Insular, Nou Mestalla and more')}
                       </p>
                     </div>
-                  </div>
+                    <span className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                  </button>
                 </div>
 
                 <div className="px-6 pb-5 pt-2">
