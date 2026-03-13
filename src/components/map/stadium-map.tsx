@@ -571,6 +571,8 @@ interface CustomStadium {
   notes?: string;
   is_historic?: boolean;
   demolished_year?: number;
+  crest_url?: string;
+  image_url?: string;
   created_at: string;
 }
 
@@ -890,6 +892,33 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       resetAddForm();
       // Fly to new stadium
       setSelectedStadium({ lat: data.latitude, lng: data.longitude });
+
+      // Auto-enrich: fetch club logo from TheSportsDB in background
+      if (data.club_name) {
+        (async () => {
+          try {
+            // Try full name first, then simplified
+            const searchNames = [data.club_name, data.club_name.replace(/^(FC|SC|SV|VV|VfL|TSG|1\.\s*FC)\s+/i, '').trim()];
+            let badgeUrl: string | null = null;
+
+            for (const searchName of searchNames) {
+              const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(searchName)}`);
+              const json = await res.json();
+              if (json.teams && json.teams.length > 0 && json.teams[0].strBadge) {
+                badgeUrl = json.teams[0].strBadge;
+                break;
+              }
+            }
+
+            if (badgeUrl) {
+              await supabase.from('bram_custom_stadiums').update({ crest_url: badgeUrl }).eq('id', data.id);
+              setCustomStadiums(prev => prev.map(s => s.id === data.id ? { ...s, crest_url: badgeUrl! } : s));
+            }
+          } catch (e) {
+            console.log('Auto-enrich logo failed (non-critical):', e);
+          }
+        })();
+      }
     }
   };
 
@@ -1076,12 +1105,14 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         ? `🏚️ ${tr(lang, 'Historisch stadion', 'Historic stadium')}${cs.demolished_year ? ` — ${tr(lang, 'gesloopt/gesloten', 'demolished/closed')} ${cs.demolished_year}` : ''}`
         : undefined
       ),
+      image_url: cs.image_url,
       club: {
         id: `custom-club-${cs.id}`,
         name: cs.club_name || cs.name,
         short_name: (cs.club_name || cs.name).substring(0, 3).toUpperCase(),
         primary_color: cs.is_historic ? '#78716c' : (cs.primary_color || '#8b5cf6'),
         secondary_color: undefined,
+        crest_url: cs.crest_url,
         current_league: null
       }
     }));
