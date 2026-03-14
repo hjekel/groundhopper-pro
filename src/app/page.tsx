@@ -91,13 +91,13 @@ export default function Home() {
   const [flyToTarget, setFlyToTarget] = useState<{ lat: number; lng: number } | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('groundhopper-viewmode') as ViewMode) || 'explorer'
+      return (localStorage.getItem('groundhopper-viewmode') as ViewMode) || 'my-groundhops'
     }
-    return 'explorer'
+    return 'my-groundhops'
   })
   const profileId = 'bram'
 
-  const APP_VERSION = 'v2.0'
+  const APP_VERSION = 'v2.1'
   const APP_DATE = '14 maart 2026'
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -175,38 +175,45 @@ export default function Home() {
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       <LanguageContext.Provider value={{ lang, setLang, t }}>
         <main className={`h-screen w-full relative ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-100'}`}>
-          <header className={`absolute top-0 left-0 right-0 z-[1000] px-3 py-1.5 ${theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'}`}>
+          <header className={`absolute top-0 left-0 right-0 z-[1000] px-2 sm:px-3 py-1.5 ${theme === 'dark' ? 'bg-slate-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'}`}>
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-1.5 hover:opacity-80 transition flex-shrink-0">
-                <img src="/Voetbal_bal.png" alt="Groundhopper Pro" className="w-8 h-8 rounded-lg flex-shrink-0" />
-                <h1 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
+              <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-1 hover:opacity-80 transition flex-shrink-0">
+                <img src="/Voetbal_bal.png" alt="Groundhopper Pro" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex-shrink-0" />
+                <h1 className={`hidden sm:block text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
               </button>
-              {/* View mode toggle */}
-              <button onClick={toggleViewMode} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${viewMode === 'my-groundhops' ? (theme === 'dark' ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white') : (theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-200 hover:bg-slate-300 text-slate-700')}`}>
-                {viewMode === 'explorer' ? '🌍' : '📖'} {viewMode === 'explorer' ? 'Explorer' : t('Mijn Groundhops', 'My Groundhops')}
+              {/* View mode toggle - shows current mode, click to switch */}
+              <button onClick={toggleViewMode} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 transition ${viewMode === 'my-groundhops' ? (theme === 'dark' ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white') : (theme === 'dark' ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}`}>
+                {viewMode === 'my-groundhops' ? '📖' : '🌍'}
+                <span className="hidden xs:inline">{viewMode === 'my-groundhops' ? t("Bram's Groundhops", "Bram's Groundhops") : t('Alle Stadions', 'All Stadiums')}</span>
+                <span className="xs:hidden">{viewMode === 'my-groundhops' ? 'Bram' : t('Alles', 'All')}</span>
               </button>
               {viewMode === 'my-groundhops' && (
                 <>
-                  <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
-                    + {t('Stadion toevoegen', 'Add stadium')}
+                  <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
+                    <span>+</span> <span className="hidden sm:inline">{t('Stadion toevoegen', 'Add stadium')}</span><span className="sm:hidden">{t('Stadion', 'Stadium')}</span>
                   </button>
-                  <button onClick={() => setTimelineTrigger(n => n + 1)} className={`flex-shrink-0 px-3 py-1 rounded-lg font-medium text-sm flex items-center gap-1.5 transition ${theme === 'dark' ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}>
-                    📖 {t('Dagboek', 'Diary')}
+                  <button onClick={() => setTimelineTrigger(n => n + 1)} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 transition ${theme === 'dark' ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}>
+                    📖 <span className="hidden sm:inline">{t('Dagboek', 'Diary')}</span>
                   </button>
                 </>
               )}
-              <div className="flex-1 min-w-1" />
-              <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm" title="Sparta Rotterdam Tribute">
-                <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-6 h-6 object-contain" />
-                <span className="hidden sm:inline font-medium">Sparta</span>
+              {viewMode === 'explorer' && (
+                <span className={`hidden sm:block text-xs px-2 py-0.5 rounded ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {t('Alle stadions in het systeem', 'All stadiums in the system')}
+                </span>
+              )}
+              <div className="flex-1 min-w-0" />
+              <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm flex-shrink-0" title="Sparta Rotterdam Tribute">
+                <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
+                <span className="hidden sm:inline font-medium text-xs">Sparta</span>
               </button>
-              <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
-                <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-6 h-4 object-cover rounded-sm" />
+              <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`p-1 sm:p-1.5 rounded-lg transition flex-shrink-0 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
+                <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-5 h-3.5 sm:w-6 sm:h-4 object-cover rounded-sm" />
               </button>
-              <button onClick={toggleTheme} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
+              <button onClick={toggleTheme} className={`p-1 sm:p-1.5 rounded-lg transition flex-shrink-0 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t(theme === 'dark' ? 'Licht aanzetten' : 'Licht uitzetten', theme === 'dark' ? 'Turn lights on' : 'Turn lights off')}>
                 <FloodlightIcon isOn={theme === 'dark'} />
               </button>
-              <button onClick={() => setShowHelp(true)} className={`p-1.5 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 border border-slate-200'}`} title={t('Help & info', 'Help & info')}>
+              <button onClick={() => setShowHelp(true)} className={`p-1 sm:p-1.5 rounded-lg transition flex-shrink-0 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 border border-slate-200'}`} title={t('Help & info', 'Help & info')}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               </button>
             </div>
@@ -491,13 +498,13 @@ export default function Home() {
 
                 <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
                   <div className={`flex items-start gap-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-                    <span className="text-xl flex-shrink-0">🌍📖</span>
+                    <span className="text-xl flex-shrink-0">📖🌍</span>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{t('Twee kijkmodi!', 'Two view modes!')}</p>
+                      <p className="font-semibold text-sm">{t('Jouw dagboek + encyclopedie!', 'Your diary + encyclopedia!')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t(
-                          'Explorer: ontdek alle stadions. Mijn Groundhops: jouw eigen dagboek met lege kaart die je zelf vult — net als met pen en papier.',
-                          'Explorer: discover all stadiums. My Groundhops: your own diary with an empty map you fill yourself — just like pen and paper.'
+                          "Bram's Groundhops: jouw eigen dagboek — een lege kaart die je zelf vult, net als met pen en papier. Alle Stadions: de volledige encyclopedie met alles wat in het systeem zit.",
+                          "Bram's Groundhops: your own diary — a blank map you fill yourself, just like pen and paper. All Stadiums: the full encyclopedia with everything in the system."
                         )}
                       </p>
                     </div>
@@ -509,8 +516,8 @@ export default function Home() {
                       <p className="font-semibold text-sm">{t('Stadions verbergen', 'Hide stadiums')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t(
-                          'In Mijn Groundhops kan je stadions verbergen die niet bij jouw regels passen. Elke groundhopper heeft z\'n eigen regels!',
-                          'In My Groundhops you can hide stadiums that don\'t match your rules. Every groundhopper has their own rules!'
+                          "In Bram's Groundhops kan je stadions verbergen die niet bij jouw regels passen. Elke groundhopper heeft z'n eigen regels!",
+                          "In Bram's Groundhops you can hide stadiums that don't match your rules. Every groundhopper has their own rules!"
                         )}
                       </p>
                     </div>
@@ -522,8 +529,8 @@ export default function Home() {
                       <p className="font-semibold text-sm">{t('Zoek altijd alles', 'Search everything')}</p>
                       <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                         {t(
-                          'Ook in dagboek-mode doorzoek je ALLE stadions. Klik op een zoekresultaat om het te ontdekken en toe te voegen.',
-                          'Even in diary mode you search ALL stadiums. Click a result to discover it and add it.'
+                          "Ook in Bram's Groundhops doorzoek je ALLE stadions. Klik op een zoekresultaat om het te ontdekken en toe te voegen.",
+                          "Even in Bram's Groundhops you search ALL stadiums. Click a result to discover it and add it."
                         )}
                       </p>
                     </div>
