@@ -333,6 +333,57 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* De Heilige Graal */}
+                  <div className={`rounded-xl p-4 border-2 ${theme === 'dark' ? 'bg-purple-900/20 border-purple-700/50' : 'bg-purple-50 border-purple-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🏆</span>
+                      <h3 className="font-bold text-lg">{t('De Heilige Graal', 'The Holy Grail')}</h3>
+                    </div>
+                    <p className={`text-sm leading-relaxed mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      {t(
+                        'De Heilige Graal van het groundhoppen is niet één specifieke wedstrijd, maar de ultieme ervaring — een zeldzaam bezoek op een plek waar passie, geschiedenis en sfeer samenkomen. Het gaat om het bijwonen van een wedstrijd in een unieke, historische of intens geladen sfeer, vaak op locaties die moeilijk bereikbaar zijn of binnenkort verdwijnen.',
+                        'The Holy Grail of groundhopping isn\'t one specific match, but the ultimate experience — a rare visit where passion, history and atmosphere converge. It\'s about attending a match in a unique, historic or intensely charged atmosphere, often at locations that are hard to reach or about to disappear.'
+                      )}
+                    </p>
+                    <div className={`rounded-lg p-3 mb-3 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-white/80'}`}>
+                      <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${theme === 'dark' ? 'text-purple-400' : 'text-purple-700'}`}>
+                        {t('Heilige Graal ervaringen', 'Holy Grail experiences')}
+                      </p>
+                      <div className="space-y-2">
+                        <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className="font-semibold">🇦🇷 La Superclásico</span>
+                          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {t('Boca Juniors vs River Plate — La Bombonera of El Monumental. De ultieme voetbalervaring qua passie, sfeer en vuur.', 'Boca Juniors vs River Plate — La Bombonera or El Monumental. The ultimate football experience in terms of passion, atmosphere and fire.')}
+                          </p>
+                        </div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className="font-semibold">🏚️ Lost Grounds</span>
+                          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {t('Gesloopte, verlaten of historische stadions bezoeken — vergane glorie herontdekken voordat het voorgoed verdwijnt.', 'Visiting demolished, abandoned or historic stadiums — rediscovering faded glory before it vanishes forever.')}
+                          </p>
+                        </div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className="font-semibold">🔥 {t('Unieke derby\'s', 'Unique derbies')}</span>
+                          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {t('Minder bekende maar verhitte derby\'s zoals Banfield-Lanús (El Derbi del Sur) — de cultzoeker\'s droom.', 'Lesser-known but heated derbies like Banfield-Lanús (El Derbi del Sur) — the cult seeker\'s dream.')}
+                          </p>
+                        </div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className="font-semibold">✅ {t('Complete reeksen', 'Complete series')}</span>
+                          <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {t('Alle 92 Engelse profclubs bezoeken, of alle stadions in een regio — de systematische graal.', 'Visiting all 92 English professional clubs, or every ground in a region — the systematic grail.')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className={`text-xs italic ${theme === 'dark' ? 'text-purple-400/70' : 'text-purple-600/70'}`}>
+                      {t(
+                        '"Kortom, de Heilige Graal is het bijwonen van een wedstrijd in een unieke sfeer, op locaties die moeilijk toegankelijk zijn of binnenkort verdwijnen."',
+                        '"In short, the Holy Grail is attending a match in a unique atmosphere, at locations that are hard to access or about to disappear."'
+                      )}
+                    </p>
+                  </div>
+
                   <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
                     <h3 className="font-bold text-lg mb-2">{t('Handige links', 'Useful links')}</h3>
                     <div className="space-y-2">
