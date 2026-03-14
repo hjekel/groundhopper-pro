@@ -179,34 +179,48 @@ export default function Home() {
             <div className="flex items-center gap-1">
               <button onClick={() => setShowGroundhopInfo(true)} className="flex items-center gap-1 hover:opacity-80 transition flex-shrink-0">
                 <img src="/Voetbal_bal.png" alt="Groundhopper Pro" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex-shrink-0" />
-                <h1 className={`hidden sm:block text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
+                <h1 className={`hidden md:block text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Groundhopper Pro</h1>
               </button>
-              {/* View mode toggle - shows current mode, click to switch */}
-              <button onClick={toggleViewMode} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 transition ${viewMode === 'my-groundhops' ? (theme === 'dark' ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white') : (theme === 'dark' ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')}`}>
-                {viewMode === 'my-groundhops' ? '📖' : '🌍'}
-                <span className="hidden xs:inline">{viewMode === 'my-groundhops' ? t("Bram's Groundhops", "Bram's Groundhops") : t('Alle Stadions', 'All Stadiums')}</span>
-                <span className="xs:hidden">{viewMode === 'my-groundhops' ? 'Bram' : t('Alles', 'All')}</span>
-              </button>
+              {/* View mode tabs - active tab is solid, inactive is outline. Click inactive to switch. */}
+              <div className="flex items-center flex-shrink-0 rounded-lg overflow-hidden border ${theme === 'dark' ? 'border-slate-600' : 'border-slate-300'}">
+                <button
+                  onClick={() => { if (viewMode !== 'my-groundhops') toggleViewMode() }}
+                  className={`px-2 sm:px-3 py-1 font-medium text-xs sm:text-sm flex items-center gap-1 transition ${
+                    viewMode === 'my-groundhops'
+                      ? (theme === 'dark' ? 'bg-emerald-700 text-white' : 'bg-emerald-600 text-white')
+                      : (theme === 'dark' ? 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-700' : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100')
+                  }`}
+                >
+                  📖 <span className="hidden sm:inline">Bram</span>
+                </button>
+                <button
+                  onClick={() => { if (viewMode !== 'explorer') toggleViewMode() }}
+                  className={`px-2 sm:px-3 py-1 font-medium text-xs sm:text-sm flex items-center gap-1 transition ${
+                    viewMode === 'explorer'
+                      ? (theme === 'dark' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white')
+                      : (theme === 'dark' ? 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-700' : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100')
+                  }`}
+                >
+                  🌍 <span className="hidden sm:inline">{t('Alles', 'All')}</span>
+                </button>
+              </div>
               {viewMode === 'my-groundhops' && (
                 <>
                   <button onClick={() => setAddStadiumTrigger(n => n + 1)} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 transition ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
-                    <span>+</span> <span className="hidden sm:inline">{t('Stadion toevoegen', 'Add stadium')}</span><span className="sm:hidden">{t('Stadion', 'Stadium')}</span>
+                    <span>+</span> <span className="hidden sm:inline">{t('Stadion', 'Stadium')}</span>
                   </button>
                   <button onClick={() => setTimelineTrigger(n => n + 1)} className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1 transition ${theme === 'dark' ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}>
                     📖 <span className="hidden sm:inline">{t('Dagboek', 'Diary')}</span>
                   </button>
                 </>
               )}
-              {viewMode === 'explorer' && (
-                <span className={`hidden sm:block text-xs px-2 py-0.5 rounded ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {t('Alle stadions in het systeem', 'All stadiums in the system')}
-                </span>
-              )}
               <div className="flex-1 min-w-0" />
-              <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm flex-shrink-0" title="Sparta Rotterdam Tribute">
-                <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
-                <span className="hidden sm:inline font-medium text-xs">Sparta</span>
-              </button>
+              {viewMode === 'my-groundhops' && (
+                <button onClick={() => setShowSpartaTribute(true)} className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-lg transition text-sm bg-[#D90000] hover:bg-[#B50000] text-white font-bold shadow-sm flex-shrink-0" title="Sparta Rotterdam Tribute">
+                  <img src="https://r2.thesportsdb.com/images/media/team/badge/upluv31586362224.png" alt="Sparta" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
+                  <span className="hidden sm:inline font-medium text-xs">Sparta</span>
+                </button>
+              )}
               <button onClick={() => setLang(lang === 'nl' ? 'en' : 'nl')} className={`p-1 sm:p-1.5 rounded-lg transition flex-shrink-0 ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-100 border border-slate-200'}`} title={t('Switch to English', 'Wissel naar Nederlands')}>
                 <img src={lang === 'nl' ? 'https://flagcdn.com/w40/nl.png' : 'https://flagcdn.com/w40/gb.png'} alt={lang === 'nl' ? 'NL' : 'EN'} className="w-5 h-3.5 sm:w-6 sm:h-4 object-cover rounded-sm" />
               </button>
