@@ -595,6 +595,8 @@ interface WishlistItem {
   notes?: string;
 }
 
+type ViewMode = 'explorer' | 'my-groundhops';
+
 interface StadiumMapProps {
   stadiums: Stadium[];
   theme: 'dark' | 'light';
@@ -603,15 +605,18 @@ interface StadiumMapProps {
   timelineTrigger?: number;
   onShowWhatsNew?: () => void;
   flyToTarget?: { lat: number; lng: number } | null;
+  viewMode?: ViewMode;
+  profileId?: string;
 }
 
 const tr = (lang: string, nl: string, en: string) => lang === 'nl' ? nl : en;
 
-export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger, onShowWhatsNew, flyToTarget }: StadiumMapProps) {
+export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, timelineTrigger, onShowWhatsNew, flyToTarget, viewMode = 'explorer', profileId = 'bram' }: StadiumMapProps) {
   const [mounted, setMounted] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customStadiums, setCustomStadiums] = useState<CustomStadium[]>([]);
+  const [hiddenStadiumIds, setHiddenStadiumIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStadium, setSelectedStadium] = useState<{ lat: number; lng: number } | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
@@ -719,11 +724,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   }, [flyToTarget]);
 
   const loadData = async () => {
-    const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
-      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating, atmosphere_rating, facilities_rating').eq('is_wishlist', false),
-      supabase.from('bram_wishlist').select('stadium_id, priority, notes'),
-      supabase.from('bram_custom_stadiums').select('*'),
-      supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').order('created_at', { ascending: true })
+    const pid = profileId;
+    const [visitsRes, wishlistRes, customRes, photosRes, hiddenRes] = await Promise.all([
+      supabase.from('stadium_visits').select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating, atmosphere_rating, facilities_rating').eq('is_wishlist', false).eq('profile_id', pid),
+      supabase.from('bram_wishlist').select('stadium_id, priority, notes').eq('profile_id', pid),
+      supabase.from('bram_custom_stadiums').select('*').eq('profile_id', pid),
+      supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').eq('profile_id', pid).order('created_at', { ascending: true }),
+      supabase.from('hidden_stadiums').select('stadium_id').eq('profile_id', pid),
     ]);
     if (visitsRes.data) setVisits(visitsRes.data.map(v => ({
       stadium_id: v.stadium_id,
@@ -740,12 +747,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     if (wishlistRes.data) setWishlist(wishlistRes.data);
     if (customRes.data) setCustomStadiums(customRes.data);
     if (photosRes.data) setVisitPhotos(photosRes.data);
+    if (hiddenRes.data) setHiddenStadiumIds(new Set(hiddenRes.data.map(h => h.stadium_id)));
   };
 
   const toggleVisit = async (stadiumId: string, date?: string) => {
     const existing = visits.find(v => v.stadium_id === stadiumId);
     if (existing) {
-      await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId);
+      await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
       setVisits(visits.filter(v => v.stadium_id !== stadiumId));
     } else {
       const insertData: Record<string, unknown> = {
@@ -754,6 +762,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         last_visit_date: date || null,
         visit_count: 1,
         is_wishlist: false,
+        profile_id: profileId,
       };
       if (matchHomeTeam) insertData.match_home_team = matchHomeTeam;
       if (matchAwayTeam) insertData.match_away_team = matchAwayTeam;
@@ -777,7 +786,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     }
     // Remove from wishlist if marking as visited
     if (!existing && wishlist.find(w => w.stadium_id === stadiumId)) {
-      await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
+      await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
       setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
     }
     setShowDatePicker(null);
@@ -792,20 +801,38 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     
     const existing = wishlist.find(w => w.stadium_id === stadiumId);
     if (existing) {
-      const { error } = await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId);
+      const { error } = await supabase.from('bram_wishlist').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
       if (!error) {
         setWishlist(wishlist.filter(w => w.stadium_id !== stadiumId));
       }
     } else {
-      const { data, error } = await supabase.from('bram_wishlist').insert({ 
+      const { data, error } = await supabase.from('bram_wishlist').insert({
         stadium_id: stadiumId,
-        priority: 1
+        priority: 1,
+        profile_id: profileId,
       }).select().single();
       if (!error && data) {
         setWishlist([...wishlist, data]);
       } else {
         console.error('Wishlist error:', error);
       }
+    }
+  };
+
+  // Hide/unhide stadium
+  const toggleHideStadium = async (stadiumId: string) => {
+    if (hiddenStadiumIds.has(stadiumId)) {
+      // Unhide
+      await supabase.from('hidden_stadiums').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
+      setHiddenStadiumIds(prev => {
+        const next = new Set(prev);
+        next.delete(stadiumId);
+        return next;
+      });
+    } else {
+      // Hide
+      await supabase.from('hidden_stadiums').insert({ stadium_id: stadiumId, profile_id: profileId });
+      setHiddenStadiumIds(prev => new Set([...prev, stadiumId]));
     }
   };
 
@@ -886,7 +913,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       notes: newStadium.notes || null,
       built_year: newStadium.built_year ? parseInt(newStadium.built_year) : null,
       is_historic: newStadium.is_historic,
-      demolished_year: newStadium.demolished_year ? parseInt(newStadium.demolished_year) : null
+      demolished_year: newStadium.demolished_year ? parseInt(newStadium.demolished_year) : null,
+      profile_id: profileId,
     }).select().single();
 
     if (error) {
@@ -1165,8 +1193,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         current_league: null
       }
     }));
-    return [...stadiums, ...customAsStadiums];
-  }, [stadiums, customStadiums]);
+    const combined = [...stadiums, ...customAsStadiums];
+    // Filter out hidden stadiums (applies in both modes)
+    return combined.filter(s => !hiddenStadiumIds.has(s.id));
+  }, [stadiums, customStadiums, hiddenStadiumIds]);
 
   const availableLeagues = useMemo(() => {
     const leagues = new Map<string, string>();
@@ -1203,10 +1233,23 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   const filteredStadiums = useMemo(() => {
     let result = allStadiums;
 
-    // Text search
+    // In my-groundhops mode: only show visited, wishlist, or custom stadiums on the map
+    // BUT when searching, search across ALL stadiums so users can discover new ones
+    if (viewMode === 'my-groundhops' && !searchQuery.trim()) {
+      const visitedIds = new Set(visits.map(v => v.stadium_id));
+      const wishlistIds = new Set(wishlist.map(w => w.stadium_id));
+      result = result.filter(s =>
+        visitedIds.has(s.id) ||
+        wishlistIds.has(s.id) ||
+        s.id.startsWith('custom-')
+      );
+    }
+
+    // Text search - in my-groundhops mode, search ALL stadiums (including non-visited)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(s =>
+      const searchBase = viewMode === 'my-groundhops' ? allStadiums : result;
+      result = searchBase.filter(s =>
         s.name.toLowerCase().includes(q) ||
         s.club?.name.toLowerCase().includes(q) ||
         s.city?.toLowerCase().includes(q)
@@ -1244,7 +1287,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     }
 
     return result;
-  }, [allStadiums, searchQuery, filterLeague, filterCountry, filterStatus, visits, wishlist]);
+  }, [allStadiums, searchQuery, filterLeague, filterCountry, filterStatus, visits, wishlist, viewMode]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) return [];
@@ -1474,6 +1517,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       const { data, error } = await supabase.from('bram_visit_photos').insert({
         stadium_id: stadiumId,
         photo_url: urlData.publicUrl,
+        profile_id: profileId,
       }).select('id, stadium_id, photo_url').single();
       if (!error && data) setVisitPhotos([...visitPhotos, data]);
     } catch (err) {
@@ -1640,10 +1684,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   // Export backup as JSON
   const exportBackup = async () => {
     const [visitsRes, wishlistRes, customRes, photosRes] = await Promise.all([
-      supabase.from('stadium_visits').select('*').eq('is_wishlist', false),
-      supabase.from('bram_wishlist').select('*'),
-      supabase.from('bram_custom_stadiums').select('*'),
-      supabase.from('bram_visit_photos').select('*'),
+      supabase.from('stadium_visits').select('*').eq('is_wishlist', false).eq('profile_id', profileId),
+      supabase.from('bram_wishlist').select('*').eq('profile_id', profileId),
+      supabase.from('bram_custom_stadiums').select('*').eq('profile_id', profileId),
+      supabase.from('bram_visit_photos').select('*').eq('profile_id', profileId),
     ]);
     const backup = {
       exported_at: new Date().toISOString(),
@@ -1727,7 +1771,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
 
   // Delete a single visit
   const removeVisit = async (stadiumId: string) => {
-    await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId);
+    await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
     setVisits(visits.filter(v => v.stadium_id !== stadiumId));
   };
 
@@ -3866,6 +3910,19 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                       >
                         <X className="w-4 h-4" />
                         {tr(lang, 'Verwijderen', 'Delete')}
+                      </button>
+                    )}
+
+                    {/* Hide stadium button - only for non-custom stadiums in my-groundhops mode */}
+                    {viewMode === 'my-groundhops' && !isCustom && (
+                      <button
+                        onClick={() => toggleHideStadium(stadium.id)}
+                        className={`w-full py-1.5 rounded-lg text-xs flex items-center justify-center gap-1.5 transition ${
+                          theme === 'dark' ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-700' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span className="text-sm">👁️‍🗨️</span>
+                        {tr(lang, 'Verbergen voor mij', 'Hide from my view')}
                       </button>
                     )}
                   </div>
