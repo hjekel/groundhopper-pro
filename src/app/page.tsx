@@ -125,38 +125,25 @@ export default function Home() {
     localStorage.setItem('groundhopper-version', APP_VERSION)
   }, [])
 
-  // Auto-update check: periodically fetch the page to detect new deployments
+  // Auto-update check: only when user returns to the tab (no polling)
   useEffect(() => {
     const checkForUpdate = async () => {
       try {
-        const res = await fetch('/', { cache: 'no-store', headers: { 'Accept': 'text/html' } })
-        const html = await res.text()
-        // Check if the deployed HTML contains a different version string
-        const match = html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/)
-        if (match && match[1] !== APP_VERSION) {
-          setUpdateAvailable(true)
-        }
-        // Also check via build ID in Next.js script tags
         const currentScripts = document.querySelectorAll('script[src*="/_next/"]')
         const currentBuildId = Array.from(currentScripts).map(s => s.getAttribute('src') || '').join(',')
-        if (currentBuildId) {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(html, 'text/html')
-          const newScripts = doc.querySelectorAll('script[src*="/_next/"]')
-          const newBuildId = Array.from(newScripts).map(s => s.getAttribute('src') || '').join(',')
-          if (newBuildId && newBuildId !== currentBuildId) {
-            setUpdateAvailable(true)
-          }
-        }
-      } catch {
-        // Silently fail — user is offline or server unavailable
-      }
+        if (!currentBuildId) return
+        const res = await fetch('/', { cache: 'no-store', headers: { 'Accept': 'text/html' } })
+        const html = await res.text()
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, 'text/html')
+        const newScripts = doc.querySelectorAll('script[src*="/_next/"]')
+        const newBuildId = Array.from(newScripts).map(s => s.getAttribute('src') || '').join(',')
+        if (newBuildId && newBuildId !== currentBuildId) setUpdateAvailable(true)
+      } catch { /* offline */ }
     }
-    // Check every 5 minutes
-    const interval = setInterval(checkForUpdate, 5 * 60 * 1000)
-    // Also check after 30 seconds (catch quick deploys)
-    const initial = setTimeout(checkForUpdate, 30 * 1000)
-    return () => { clearInterval(interval); clearTimeout(initial) }
+    const onFocus = () => { if (document.visibilityState === 'visible') checkForUpdate() }
+    document.addEventListener('visibilitychange', onFocus)
+    return () => document.removeEventListener('visibilitychange', onFocus)
   }, [])
 
   const t = (nl: string, en: string) => (lang === 'nl' ? nl : en)
