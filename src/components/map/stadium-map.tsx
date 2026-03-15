@@ -488,7 +488,8 @@ function ClubPopupDetails({ clubName, theme, lang }: { clubName: string; theme: 
           const t = d.teams[0];
           const info = {
             jersey: t.strTeamJersey || undefined,
-            description: lang === 'nl' ? (t.strDescriptionNL || t.strDescriptionEN) : (t.strDescriptionEN || ''),
+            description: t.strDescriptionNL || t.strDescriptionEN || '',
+            descriptionEN: t.strDescriptionEN || '',
             formedYear: t.intFormedYear || undefined,
             stadiumThumb: t.strStadiumThumb || undefined,
           };
@@ -500,7 +501,7 @@ function ClubPopupDetails({ clubName, theme, lang }: { clubName: string; theme: 
         setLoading(false);
       })
       .catch(() => { clubDetailsCache.set(clubName, null); setLoading(false); });
-  }, [clubName, lang]);
+  }, [clubName]);
 
   if (loading) return (
     <div className="py-2 flex justify-center">
@@ -509,7 +510,8 @@ function ClubPopupDetails({ clubName, theme, lang }: { clubName: string; theme: 
   );
   if (!data) return null;
 
-  const bullets = extractHistoryBullets(data.description, data.formedYear, lang);
+  const descForLang = lang === 'nl' ? data.description : ((data as any).descriptionEN || data.description);
+  const bullets = extractHistoryBullets(descForLang, data.formedYear, lang);
 
   return (
     <div>
@@ -3308,7 +3310,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                   {stadiumRecords.biggest && (
-                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.biggest!.latitude, lng: stadiumRecords.biggest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.biggest!.latitude, lng: stadiumRecords.biggest!.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                       <div className="text-base">🏟️</div>
                       <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Grootste', 'Biggest')}</div>
                       <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.biggest)}</div>
@@ -3316,7 +3318,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     </button>
                   )}
                   {stadiumRecords.smallest && (
-                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.smallest!.latitude, lng: stadiumRecords.smallest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.smallest!.latitude, lng: stadiumRecords.smallest!.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                       <div className="text-base">🏠</div>
                       <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Kleinste', 'Smallest')}</div>
                       <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.smallest)}</div>
@@ -3324,7 +3326,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     </button>
                   )}
                   {stadiumRecords.oldest && (
-                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.oldest!.latitude, lng: stadiumRecords.oldest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.oldest!.latitude, lng: stadiumRecords.oldest!.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                       <div className="text-base">📅</div>
                       <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Oudste', 'Oldest')}</div>
                       <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.oldest)}</div>
@@ -3332,32 +3334,32 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     </button>
                   )}
                   {stadiumRecords.newest && (
-                    <button onClick={() => setSelectedStadium({ lat: stadiumRecords.newest!.latitude, lng: stadiumRecords.newest!.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                    <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.newest!.latitude, lng: stadiumRecords.newest!.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                       <div className="text-base">🆕</div>
                       <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Nieuwste', 'Newest')}</div>
                       <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.newest)}</div>
                       <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.newest.built_year}</div>
                     </button>
                   )}
-                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.northernmost.latitude, lng: stadiumRecords.northernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                  <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.northernmost.latitude, lng: stadiumRecords.northernmost.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <div className="text-base">⬆️</div>
                     <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Noordelijkst', 'Northernmost')}</div>
                     <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.northernmost)}</div>
                     <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.northernmost.city}</div>
                   </button>
-                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.southernmost.latitude, lng: stadiumRecords.southernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                  <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.southernmost.latitude, lng: stadiumRecords.southernmost.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <div className="text-base">⬇️</div>
                     <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Zuidelijkst', 'Southernmost')}</div>
                     <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.southernmost)}</div>
                     <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.southernmost.city}</div>
                   </button>
-                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.easternmost.latitude, lng: stadiumRecords.easternmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                  <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.easternmost.latitude, lng: stadiumRecords.easternmost.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <div className="text-base">➡️</div>
                     <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Oostelijkst', 'Easternmost')}</div>
                     <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.easternmost)}</div>
                     <div className={`${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{stadiumRecords.easternmost.city}</div>
                   </button>
-                  <button onClick={() => setSelectedStadium({ lat: stadiumRecords.westernmost.latitude, lng: stadiumRecords.westernmost.longitude })} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                  <button onClick={() => { setSelectedStadium({ lat: stadiumRecords.westernmost.latitude, lng: stadiumRecords.westernmost.longitude }); setBottomExpanded(false); }} className={`text-left p-2 rounded-lg transition ${theme === 'dark' ? 'bg-slate-800/50 hover:bg-slate-700/50' : 'bg-slate-50 hover:bg-slate-100'}`}>
                     <div className="text-base">⬅️</div>
                     <div className={`font-bold truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{tr(lang, 'Westelijkst', 'Westernmost')}</div>
                     <div className={`truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stadiumRecords.name(stadiumRecords.westernmost)}</div>
@@ -3367,7 +3369,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 {/* Bram's personal record */}
                 {stadiumRecords.furthestVisit && (
                   <button
-                    onClick={() => setSelectedStadium({ lat: stadiumRecords.furthestVisit!.latitude, lng: stadiumRecords.furthestVisit!.longitude })}
+                    onClick={() => { setSelectedStadium({ lat: stadiumRecords.furthestVisit!.latitude, lng: stadiumRecords.furthestVisit!.longitude }); setBottomExpanded(false); }}
                     className={`w-full mt-2 p-2 rounded-lg text-left flex items-center gap-3 transition ${theme === 'dark' ? 'bg-green-900/20 hover:bg-green-900/30 border border-green-800/30' : 'bg-green-50 hover:bg-green-100 border border-green-200'}`}
                   >
                     <span className="text-lg">🧳</span>
