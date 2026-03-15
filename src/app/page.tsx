@@ -97,7 +97,7 @@ export default function Home() {
   })
   const profileId = 'bram'
 
-  const APP_VERSION = 'v2.2'
+  const APP_VERSION = 'v2.3'
   const APP_DATE = '15 maart 2026'
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
@@ -129,33 +129,44 @@ export default function Home() {
 
   // Auto-update check: on page load (refresh/F5) + when user returns to tab
   useEffect(() => {
-    const getBuildId = () => {
-      const scripts = document.querySelectorAll('script[src*="/_next/"]')
-      return Array.from(scripts).map(s => s.getAttribute('src') || '').join(',')
-    }
-    // On page load: check if build changed since last visit
-    const currentBuildId = getBuildId()
-    if (currentBuildId) {
-      const prevBuildId = localStorage.getItem('groundhopper-build-id')
-      if (prevBuildId && prevBuildId !== currentBuildId) {
-        setJustUpdated(true)
-        setTimeout(() => setJustUpdated(false), 5000) // auto-hide after 5s
-      }
-      localStorage.setItem('groundhopper-build-id', currentBuildId)
-    }
-    // On tab focus: check if newer version deployed while tab was in background
-    const checkForUpdate = async () => {
+    // Fetch latest HTML from server and extract build ID from script tags
+    const fetchServerBuildId = async (): Promise<string | null> => {
       try {
-        const myBuildId = getBuildId()
-        if (!myBuildId) return
         const res = await fetch('/', { cache: 'no-store', headers: { 'Accept': 'text/html' } })
         const html = await res.text()
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, 'text/html')
-        const newScripts = doc.querySelectorAll('script[src*="/_next/"]')
-        const newBuildId = Array.from(newScripts).map(s => s.getAttribute('src') || '').join(',')
-        if (newBuildId && newBuildId !== myBuildId) setUpdateAvailable(true)
-      } catch { /* offline */ }
+        const scripts = doc.querySelectorAll('script[src*="/_next/"]')
+        const id = Array.from(scripts).map(s => s.getAttribute('src') || '').join(',')
+        return id || null
+      } catch { return null }
+    }
+    // On page load: fetch server version and compare with stored version
+    const checkOnLoad = async () => {
+      const serverBuildId = await fetchServerBuildId()
+      if (!serverBuildId) return
+      const prevBuildId = localStorage.getItem('groundhopper-build-id')
+      if (prevBuildId && prevBuildId !== serverBuildId) {
+        // Server has a newer version than what we saw last time
+        const myBuildId = Array.from(document.querySelectorAll('script[src*="/_next/"]')).map(s => s.getAttribute('src') || '').join(',')
+        if (myBuildId === serverBuildId) {
+          // We already have the new version (hard refresh or cache expired)
+          setJustUpdated(true)
+          setTimeout(() => setJustUpdated(false), 5000)
+        } else {
+          // We're running old code, server has newer → prompt to reload
+          setUpdateAvailable(true)
+        }
+      }
+      localStorage.setItem('groundhopper-build-id', serverBuildId)
+    }
+    checkOnLoad()
+    // On tab focus: check if newer version deployed while tab was in background
+    const checkForUpdate = async () => {
+      const serverBuildId = await fetchServerBuildId()
+      if (!serverBuildId) return
+      const myBuildId = Array.from(document.querySelectorAll('script[src*="/_next/"]')).map(s => s.getAttribute('src') || '').join(',')
+      if (serverBuildId !== myBuildId) setUpdateAvailable(true)
     }
     const onFocus = () => { if (document.visibilityState === 'visible') checkForUpdate() }
     document.addEventListener('visibilitychange', onFocus)
@@ -230,7 +241,7 @@ export default function Home() {
                       : (theme === 'dark' ? 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-700' : 'bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100')
                   }`}
                 >
-                  📖 <span className="hidden sm:inline">Bram</span>
+                  📖 <span className="hidden sm:inline">Bram&apos;s Grounds</span>
                 </button>
                 <button
                   onClick={() => { if (viewMode !== 'explorer') toggleViewMode() }}
