@@ -670,6 +670,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
 
   // Timeline feature
   const [showTimeline, setShowTimeline] = useState(false);
+  const [timelineView, setTimelineView] = useState<'list' | 'album' | 'stats'>('album');
+  const [albumGroupBy, setAlbumGroupBy] = useState<'season' | 'country'>('season');
 
   // Bottom stats bar
   const [bottomExpanded, setBottomExpanded] = useState(false);
@@ -2629,45 +2631,230 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       )}
 
       {/* Visit Timeline Modal */}
-      {showTimeline && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+      {showTimeline && (() => {
+        // Album grouping logic
+        const albumGroups = (() => {
+          if (timelineView !== 'album') return [];
+          const groups: { label: string; entries: typeof timelineData }[] = [];
+          const groupMap = new Map<string, typeof timelineData>();
+          timelineData.forEach(entry => {
+            let key: string;
+            if (albumGroupBy === 'season') {
+              key = getSeasonFromDate(entry.visit_date);
+            } else {
+              // Country from league or fallback
+              const league = entry.stadium?.club?.current_league?.name;
+              const countryMap: Record<string, string> = { 'Eredivisie': '🇳🇱 Nederland', 'Eerste Divisie': '🇳🇱 Nederland', 'Premier League': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Championship': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Bundesliga': '🇩🇪 Deutschland', '2. Bundesliga': '🇩🇪 Deutschland', '3. Liga': '🇩🇪 Deutschland', 'La Liga': '🇪🇸 España', 'Serie A': '🇮🇹 Italia', 'Ligue 1': '🇫🇷 France', 'Pro League': '🇧🇪 België', 'Challenger Pro League': '🇧🇪 België', 'Primeira Liga': '🇵🇹 Portugal', 'NIFL Premiership': '🇬🇧 Northern Ireland' };
+              key = (league && countryMap[league]) || '🌍 ' + tr(lang, 'Overig', 'Other');
+            }
+            if (!groupMap.has(key)) groupMap.set(key, []);
+            groupMap.get(key)!.push(entry);
+          });
+          groupMap.forEach((entries, label) => groups.push({ label, entries }));
+          if (albumGroupBy === 'season') groups.sort((a, b) => b.label.localeCompare(a.label));
+          else groups.sort((a, b) => b.entries.length - a.entries.length);
+          return groups;
+        })();
+
+        // Stats for stats view
+        const uniqueCountries = new Set(timelineData.map(e => {
+          const l = e.stadium?.club?.current_league?.name;
+          const map: Record<string, string> = { 'Eredivisie': 'NL', 'Eerste Divisie': 'NL', 'Premier League': 'EN', 'Championship': 'EN', 'Bundesliga': 'DE', '2. Bundesliga': 'DE', '3. Liga': 'DE', 'La Liga': 'ES', 'Serie A': 'IT', 'Ligue 1': 'FR', 'Pro League': 'BE', 'Challenger Pro League': 'BE', 'Primeira Liga': 'PT', 'NIFL Premiership': 'NI' };
+          return l ? (map[l] || '?') : '?';
+        }).filter(c => c !== '?'));
+        const matchesWithScore = timelineData.filter(e => e.match_score).length;
+        const avgRating = timelineData.filter(e => e.rating && e.rating > 0).length > 0
+          ? (timelineData.filter(e => e.rating && e.rating > 0).reduce((sum, e) => sum + (e.rating || 0), 0) / timelineData.filter(e => e.rating && e.rating > 0).length).toFixed(1)
+          : null;
+
+        return (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowTimeline(false)} />
-          <div className={`relative w-full max-w-md max-h-[80vh] rounded-xl shadow-2xl flex flex-col ${
+          <div className={`relative w-full max-w-lg max-h-[90vh] rounded-xl shadow-2xl flex flex-col ${
             theme === 'dark' ? 'bg-slate-800' : 'bg-white'
           }`}>
-            {/* Header */}
-            <div className={`p-4 border-b flex items-center justify-between ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
-              <div>
-                <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                  {tr(lang, 'Bezoek Tijdlijn', 'Visit Timeline')}
-                </h2>
-                <p className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {timelineData.length} {tr(lang, 'bezoeken', 'visits')}
-                </p>
+            {/* Header with view toggle */}
+            <div className={`p-3 sm:p-4 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    📖 {tr(lang, "Bram's Dagboek", "Bram's Diary")}
+                  </h2>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {visits.length} {tr(lang, 'stadions', 'stadiums')} · {timelineData.length} {tr(lang, 'bezoeken', 'visits')} · {uniqueCountries.size} {tr(lang, 'landen', 'countries')}
+                  </p>
+                </div>
+                <button onClick={() => setShowTimeline(false)}>
+                  <X className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
+                </button>
               </div>
-              <button onClick={() => setShowTimeline(false)}>
-                <X className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`} />
-              </button>
+              {/* View tabs */}
+              <div className="flex gap-1">
+                {([
+                  { id: 'album' as const, icon: '📸', nl: 'Album', en: 'Album' },
+                  { id: 'stats' as const, icon: '📊', nl: 'Stats', en: 'Stats' },
+                  { id: 'list' as const, icon: '📋', nl: 'Lijst', en: 'List' },
+                ] as const).map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setTimelineView(tab.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                      timelineView === tab.id
+                        ? theme === 'dark' ? 'bg-emerald-700 text-white' : 'bg-emerald-600 text-white'
+                        : theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {tab.icon} {tr(lang, tab.nl, tab.en)}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Timeline content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
               {timelineData.length === 0 ? (
                 <div className={`text-center py-8 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">{tr(lang, 'Nog geen bezoeken met datum', 'No visits with dates yet')}</p>
                 </div>
+              ) : timelineView === 'stats' ? (
+                /* Stats View */
+                <div className="p-4 space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { icon: '🏟️', value: visits.length, label: tr(lang, 'Stadions', 'Stadiums') },
+                      { icon: '⚽', value: matchesWithScore, label: tr(lang, 'Wedstrijden', 'Matches') },
+                      { icon: '🌍', value: uniqueCountries.size, label: tr(lang, 'Landen', 'Countries') },
+                    ].map(stat => (
+                      <div key={stat.label} className={`text-center p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                        <div className="text-xl">{stat.icon}</div>
+                        <div className={`text-2xl font-black tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{stat.value}</div>
+                        <div className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                      <div className={`text-[10px] uppercase tracking-wider font-bold ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}>{tr(lang, 'Gem. rating', 'Avg rating')}</div>
+                      <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{avgRating ? `${avgRating} ★` : '—'}</div>
+                    </div>
+                    <div className={`p-3 rounded-xl ${theme === 'dark' ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+                      <div className={`text-[10px] uppercase tracking-wider font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{tr(lang, 'Totale afstand', 'Total distance')}</div>
+                      <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{totalKilometers.toLocaleString()} km</div>
+                    </div>
+                  </div>
+                  {/* Per season breakdown */}
+                  <div className={`text-[10px] uppercase tracking-wider font-bold mt-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {tr(lang, 'Per seizoen', 'Per season')}
+                  </div>
+                  {albumGroups.length === 0 && (() => {
+                    // Build season groups for stats view
+                    const seasonMap = new Map<string, number>();
+                    timelineData.forEach(e => {
+                      const s = getSeasonFromDate(e.visit_date);
+                      seasonMap.set(s, (seasonMap.get(s) || 0) + 1);
+                    });
+                    return Array.from(seasonMap.entries()).sort((a, b) => b[0].localeCompare(a[0])).map(([season, count]) => (
+                      <div key={season} className={`flex items-center justify-between py-1.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <span className="text-sm font-medium">⚽ {season}</span>
+                        <span className={`text-sm font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{count}</span>
+                      </div>
+                    ));
+                  })()}
+                  {(() => {
+                    const seasonMap = new Map<string, number>();
+                    timelineData.forEach(e => {
+                      const s = getSeasonFromDate(e.visit_date);
+                      seasonMap.set(s, (seasonMap.get(s) || 0) + 1);
+                    });
+                    return Array.from(seasonMap.entries()).sort((a, b) => b[0].localeCompare(a[0])).map(([season, count]) => (
+                      <div key={season} className={`flex items-center justify-between py-1.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <span className="text-sm font-medium">⚽ {season}</span>
+                        <span className={`text-sm font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{count}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : timelineView === 'album' ? (
+                /* Album View - visual grid grouped by season or country */
+                <div className="p-3">
+                  {/* Group by toggle */}
+                  <div className="flex gap-1 mb-3">
+                    <button onClick={() => setAlbumGroupBy('season')} className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${albumGroupBy === 'season' ? (theme === 'dark' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white') : (theme === 'dark' ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500')}`}>
+                      📅 {tr(lang, 'Per seizoen', 'By season')}
+                    </button>
+                    <button onClick={() => setAlbumGroupBy('country')} className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${albumGroupBy === 'country' ? (theme === 'dark' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white') : (theme === 'dark' ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500')}`}>
+                      🌍 {tr(lang, 'Per land', 'By country')}
+                    </button>
+                  </div>
+                  {albumGroups.map(group => (
+                    <div key={group.label} className="mb-4">
+                      <div className={`flex items-center gap-2 mb-2`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {albumGroupBy === 'season' ? `⚽ ${group.label}` : group.label}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${theme === 'dark' ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                          {group.entries.length}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                        {group.entries.map(entry => (
+                          <button
+                            key={entry.stadium_id + entry.visit_date}
+                            onClick={() => {
+                              if (entry.stadium) {
+                                setSelectedStadium({ lat: entry.stadium.latitude, lng: entry.stadium.longitude });
+                                setShowTimeline(false);
+                              }
+                            }}
+                            className={`relative rounded-lg overflow-hidden aspect-square transition hover:scale-[1.03] hover:shadow-lg ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100'}`}
+                          >
+                            {entry.stadium?.image_url ? (
+                              <img src={entry.stadium.image_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                                {entry.stadium?.club?.crest_url ? (
+                                  <img src={entry.stadium.club.crest_url} alt="" className="w-8 h-8 object-contain opacity-60" />
+                                ) : (
+                                  <span className="text-2xl opacity-30">🏟️</span>
+                                )}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                              <div className="flex items-center gap-1">
+                                {entry.stadium?.club?.crest_url && (
+                                  <img src={entry.stadium.club.crest_url} alt="" className="w-3.5 h-3.5 object-contain flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                )}
+                                <div className="text-[9px] font-bold text-white truncate leading-tight drop-shadow-md">
+                                  {entry.stadium?.club?.short_name || entry.stadium?.club?.name || '?'}
+                                </div>
+                              </div>
+                              <div className="text-[8px] text-white/70 truncate leading-tight">
+                                {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                              </div>
+                            </div>
+                            {entry.rating && entry.rating > 0 && (
+                              <div className="absolute top-1 right-1 text-[8px] text-amber-400 drop-shadow-md">
+                                {'★'.repeat(entry.rating)}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
+                /* List View - original timeline */
+                <div className="p-4">
                 <div className="relative">
-                  {/* Vertical timeline line */}
                   <div className={`absolute left-4 top-0 bottom-0 w-0.5 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'}`} />
-
                   {timelineData.map((entry, index) => {
                     const prevEntry = index > 0 ? timelineData[index - 1] : null;
                     const showMonthHeader = !prevEntry ||
                       entry.date.getMonth() !== prevEntry.date.getMonth() ||
                       entry.date.getFullYear() !== prevEntry.date.getFullYear();
-
                     return (
                       <div key={entry.stadium_id + entry.visit_date}>
                         {showMonthHeader && (
@@ -2678,69 +2865,28 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                           </div>
                         )}
                         <button
-                          onClick={() => {
-                            if (entry.stadium) {
-                              setSelectedStadium({ lat: entry.stadium.latitude, lng: entry.stadium.longitude });
-                              setShowTimeline(false);
-                            }
-                          }}
-                          className={`w-full text-left flex items-start gap-3 py-2 pl-1 transition ${
-                            theme === 'dark' ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
-                          } rounded-lg`}
+                          onClick={() => { if (entry.stadium) { setSelectedStadium({ lat: entry.stadium.latitude, lng: entry.stadium.longitude }); setShowTimeline(false); } }}
+                          className={`w-full text-left flex items-start gap-3 py-2 pl-1 transition ${theme === 'dark' ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'} rounded-lg`}
                         >
-                          {/* Timeline dot with club crest */}
                           <div className="relative z-10 mt-0.5">
-                            <div
-                              className="w-8 h-8 rounded-full border-2 flex items-center justify-center"
-                              style={{
-                                borderColor: entry.stadium?.club?.primary_color || '#6b7280',
-                                backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff'
-                              }}
-                            >
+                            <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: entry.stadium?.club?.primary_color || '#6b7280', backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff' }}>
                               {entry.stadium?.club?.crest_url ? (
-                                <img
-                                  src={entry.stadium.club.crest_url}
-                                  alt=""
-                                  className="w-5 h-5 rounded-full object-contain"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
+                                <img src={entry.stadium.club.crest_url} alt="" className="w-5 h-5 rounded-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                               ) : (
-                                <div
-                                  className="w-4 h-4 rounded-full"
-                                  style={{ backgroundColor: entry.stadium?.club?.primary_color || '#6b7280' }}
-                                />
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: entry.stadium?.club?.primary_color || '#6b7280' }} />
                               )}
                             </div>
                           </div>
-
-                          {/* Content */}
                           <div className="flex-1 min-w-0 pb-3">
-                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                              {entry.stadium?.club?.name || 'Onbekend'}
-                            </div>
-                            <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                              {entry.stadium?.name} — {entry.stadium?.city}
-                            </div>
+                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{entry.stadium?.club?.name || 'Onbekend'}</div>
+                            <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{entry.stadium?.name} — {entry.stadium?.city}</div>
                             <div className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                              {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', {
-                                day: 'numeric', month: 'short', year: 'numeric'
-                              })}
-                              {entry.match_score && (
-                                <span className={`ml-2 font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                                  {entry.match_home_team || '?'} {entry.match_score} {entry.match_away_team || '?'}
-                                </span>
-                              )}
-                              {!entry.match_score && entry.notes && (
-                                <span className={`ml-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                                  — {entry.notes}
-                                </span>
-                              )}
+                              {entry.date.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              {entry.match_score && <span className={`ml-2 font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{entry.match_home_team || '?'} {entry.match_score} {entry.match_away_team || '?'}</span>}
                             </div>
                             {entry.rating && entry.rating > 0 && (
                               <div className="flex items-center gap-0.5 mt-0.5">
-                                {[1, 2, 3, 4, 5].map(s => (
-                                  <span key={s} className={`text-[10px] ${s <= entry.rating! ? 'text-amber-400' : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>★</span>
-                                ))}
+                                {[1, 2, 3, 4, 5].map(s => (<span key={s} className={`text-[10px] ${s <= entry.rating! ? 'text-amber-400' : theme === 'dark' ? 'text-slate-600' : 'text-slate-300'}`}>★</span>))}
                               </div>
                             )}
                           </div>
@@ -2749,11 +2895,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     );
                   })}
                 </div>
+                </div>
               )}
             </div>
           </div>
         </div>
-      )}
+      );
+      })()}
 
       {/* Achievements Modal */}
       {showAchievements && (
