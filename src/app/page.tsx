@@ -97,8 +97,9 @@ export default function Home() {
   })
   const profileId = 'bram'
 
-  const APP_VERSION = 'v2.1'
-  const APP_DATE = '14 maart 2026'
+  const APP_VERSION = 'v2.2'
+  const APP_DATE = '15 maart 2026'
+  const [updateAvailable, setUpdateAvailable] = useState(false)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
   const toggleViewMode = () => {
@@ -123,6 +124,41 @@ export default function Home() {
     }
     localStorage.setItem('groundhopper-version', APP_VERSION)
   }, [])
+
+  // Auto-update check: periodically fetch the page to detect new deployments
+  useEffect(() => {
+    const checkForUpdate = async () => {
+      try {
+        const res = await fetch('/', { cache: 'no-store', headers: { 'Accept': 'text/html' } })
+        const html = await res.text()
+        // Check if the deployed HTML contains a different version string
+        const match = html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/)
+        if (match && match[1] !== APP_VERSION) {
+          setUpdateAvailable(true)
+        }
+        // Also check via build ID in Next.js script tags
+        const currentScripts = document.querySelectorAll('script[src*="/_next/"]')
+        const currentBuildId = Array.from(currentScripts).map(s => s.getAttribute('src') || '').join(',')
+        if (currentBuildId) {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(html, 'text/html')
+          const newScripts = doc.querySelectorAll('script[src*="/_next/"]')
+          const newBuildId = Array.from(newScripts).map(s => s.getAttribute('src') || '').join(',')
+          if (newBuildId && newBuildId !== currentBuildId) {
+            setUpdateAvailable(true)
+          }
+        }
+      } catch {
+        // Silently fail — user is offline or server unavailable
+      }
+    }
+    // Check every 5 minutes
+    const interval = setInterval(checkForUpdate, 5 * 60 * 1000)
+    // Also check after 30 seconds (catch quick deploys)
+    const initial = setTimeout(checkForUpdate, 30 * 1000)
+    return () => { clearInterval(interval); clearTimeout(initial) }
+  }, [])
+
   const t = (nl: string, en: string) => (lang === 'nl' ? nl : en)
 
   useEffect(() => {
@@ -232,6 +268,18 @@ export default function Home() {
               </button>
             </div>
           </header>
+          {/* Update available banner */}
+          {updateAvailable && (
+            <div className="absolute top-[52px] left-0 right-0 z-[999] flex justify-center pointer-events-none">
+              <button
+                onClick={() => window.location.reload()}
+                className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full shadow-lg text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition animate-fade-in"
+              >
+                🚀 {t('Nieuwe versie beschikbaar!', 'New version available!')}
+                <span className="text-xs opacity-80">{t('Klik om te updaten', 'Click to update')}</span>
+              </button>
+            </div>
+          )}
           <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} onShowWhatsNew={() => setShowWhatsNew(true)} flyToTarget={flyToTarget} viewMode={viewMode} profileId={profileId} />
           {showSpartaTribute && <SpartaTribute onClose={() => setShowSpartaTribute(false)} theme={theme} lang={lang} />}
 
