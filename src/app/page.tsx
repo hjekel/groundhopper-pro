@@ -125,20 +125,36 @@ export default function Home() {
     localStorage.setItem('groundhopper-version', APP_VERSION)
   }, [])
 
-  // Auto-update check: only when user returns to the tab (no polling)
+  const [justUpdated, setJustUpdated] = useState(false)
+
+  // Auto-update check: on page load (refresh/F5) + when user returns to tab
   useEffect(() => {
+    const getBuildId = () => {
+      const scripts = document.querySelectorAll('script[src*="/_next/"]')
+      return Array.from(scripts).map(s => s.getAttribute('src') || '').join(',')
+    }
+    // On page load: check if build changed since last visit
+    const currentBuildId = getBuildId()
+    if (currentBuildId) {
+      const prevBuildId = localStorage.getItem('groundhopper-build-id')
+      if (prevBuildId && prevBuildId !== currentBuildId) {
+        setJustUpdated(true)
+        setTimeout(() => setJustUpdated(false), 5000) // auto-hide after 5s
+      }
+      localStorage.setItem('groundhopper-build-id', currentBuildId)
+    }
+    // On tab focus: check if newer version deployed while tab was in background
     const checkForUpdate = async () => {
       try {
-        const currentScripts = document.querySelectorAll('script[src*="/_next/"]')
-        const currentBuildId = Array.from(currentScripts).map(s => s.getAttribute('src') || '').join(',')
-        if (!currentBuildId) return
+        const myBuildId = getBuildId()
+        if (!myBuildId) return
         const res = await fetch('/', { cache: 'no-store', headers: { 'Accept': 'text/html' } })
         const html = await res.text()
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, 'text/html')
         const newScripts = doc.querySelectorAll('script[src*="/_next/"]')
         const newBuildId = Array.from(newScripts).map(s => s.getAttribute('src') || '').join(',')
-        if (newBuildId && newBuildId !== currentBuildId) setUpdateAvailable(true)
+        if (newBuildId && newBuildId !== myBuildId) setUpdateAvailable(true)
       } catch { /* offline */ }
     }
     const onFocus = () => { if (document.visibilityState === 'visible') checkForUpdate() }
@@ -255,7 +271,7 @@ export default function Home() {
               </button>
             </div>
           </header>
-          {/* Update available banner */}
+          {/* Update banners */}
           {updateAvailable && (
             <div className="absolute top-[52px] left-0 right-0 z-[999] flex justify-center pointer-events-none">
               <button
@@ -265,6 +281,16 @@ export default function Home() {
                 🚀 {t('Nieuwe versie beschikbaar!', 'New version available!')}
                 <span className="text-xs opacity-80">{t('Klik om te updaten', 'Click to update')}</span>
               </button>
+            </div>
+          )}
+          {justUpdated && !updateAvailable && (
+            <div className="absolute top-[52px] left-0 right-0 z-[999] flex justify-center pointer-events-none">
+              <div
+                className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full shadow-lg text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white animate-fade-in cursor-pointer"
+                onClick={() => setJustUpdated(false)}
+              >
+                ✨ {t(`Geüpdatet naar ${APP_VERSION}!`, `Updated to ${APP_VERSION}!`)}
+              </div>
             </div>
           )}
           <StadiumMap stadiums={stadiums} theme={theme} lang={lang} addStadiumTrigger={addStadiumTrigger} timelineTrigger={timelineTrigger} onShowWhatsNew={() => setShowWhatsNew(true)} flyToTarget={flyToTarget} viewMode={viewMode} profileId={profileId} />
