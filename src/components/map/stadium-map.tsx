@@ -271,6 +271,11 @@ const CHALLENGES = [
     'Spotify Camp Nou', 'Santiago Bernabéu', 'Signal Iduna Park', 'Anfield', 'Old Trafford',
     'San Siro', 'Allianz Arena', 'Stadio Olimpico', 'Celtic Park', 'De Kuip'
   ]},
+  { id: 'pro_league_tour', icon: '🇧🇪', title_nl: 'Belgische Pro League', title_en: 'Belgian Pro League', desc_nl: 'Alle Pro League stadions', desc_en: 'All Pro League stadiums', type: 'league' as const, league: 'Pro League' },
+  { id: 'lost_grounds', icon: '🏚️', title_nl: 'Lost Ground Hunter', title_en: 'Lost Ground Hunter', desc_nl: 'Alle verdwenen stadions', desc_en: 'All lost grounds visited', type: 'lost_grounds' as const },
+  { id: 'five_countries', icon: '✈️', title_nl: '5 Landen', title_en: '5 Countries', desc_nl: 'Stadions in 5 landen', desc_en: 'Stadiums in 5 countries', type: 'country_count' as const, target: 5 },
+  { id: 'twenty_five', icon: '🎉', title_nl: '25 Club', title_en: '25 Club', desc_nl: '25 stadions bezoeken', desc_en: 'Visit 25 stadiums', type: 'visit_count' as const, target: 25 },
+  { id: 'fifty', icon: '🔥', title_nl: '50 Club', title_en: '50 Club', desc_nl: '50 stadions bezoeken', desc_en: 'Visit 50 stadiums', type: 'visit_count' as const, target: 50 },
 ];
 
 const COMPETITIONS = [
@@ -1406,6 +1411,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         const targets = allStadiums.filter(s => ch.stadiumNames.includes(s.name));
         total = ch.stadiumNames.length;
         visited = targets.filter(s => visitedIds.has(s.id)).length;
+      } else if (ch.type === 'lost_grounds') {
+        const lostGrounds = allStadiums.filter(s => s.is_active === false);
+        total = lostGrounds.length;
+        visited = lostGrounds.filter(s => visitedIds.has(s.id)).length;
       }
 
       return {
