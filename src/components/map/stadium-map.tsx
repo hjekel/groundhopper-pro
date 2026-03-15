@@ -672,6 +672,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   const [showTimeline, setShowTimeline] = useState(false);
   const [timelineView, setTimelineView] = useState<'list' | 'album' | 'stats'>('album');
   const [albumGroupBy, setAlbumGroupBy] = useState<'season' | 'country'>('season');
+  const [albumFilterSeason, setAlbumFilterSeason] = useState<string | null>(null);
 
   // Bottom stats bar
   const [bottomExpanded, setBottomExpanded] = useState(false);
@@ -2743,24 +2744,10 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                       <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{totalKilometers.toLocaleString()} km</div>
                     </div>
                   </div>
-                  {/* Per season breakdown */}
+                  {/* Per season breakdown - clickable */}
                   <div className={`text-[10px] uppercase tracking-wider font-bold mt-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                     {tr(lang, 'Per seizoen', 'Per season')}
                   </div>
-                  {albumGroups.length === 0 && (() => {
-                    // Build season groups for stats view
-                    const seasonMap = new Map<string, number>();
-                    timelineData.forEach(e => {
-                      const s = getSeasonFromDate(e.visit_date);
-                      seasonMap.set(s, (seasonMap.get(s) || 0) + 1);
-                    });
-                    return Array.from(seasonMap.entries()).sort((a, b) => b[0].localeCompare(a[0])).map(([season, count]) => (
-                      <div key={season} className={`flex items-center justify-between py-1.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <span className="text-sm font-medium">⚽ {season}</span>
-                        <span className={`text-sm font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{count}</span>
-                      </div>
-                    ));
-                  })()}
                   {(() => {
                     const seasonMap = new Map<string, number>();
                     timelineData.forEach(e => {
@@ -2768,10 +2755,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                       seasonMap.set(s, (seasonMap.get(s) || 0) + 1);
                     });
                     return Array.from(seasonMap.entries()).sort((a, b) => b[0].localeCompare(a[0])).map(([season, count]) => (
-                      <div key={season} className={`flex items-center justify-between py-1.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                      <button key={season} onClick={() => { setAlbumFilterSeason(season); setAlbumGroupBy('season'); setTimelineView('album'); }} className={`flex items-center justify-between py-2 w-full rounded-lg px-2 transition ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}>
                         <span className="text-sm font-medium">⚽ {season}</span>
-                        <span className={`text-sm font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{count}</span>
-                      </div>
+                        <span className="flex items-center gap-1.5">
+                          <span className={`text-sm font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{count}</span>
+                          <span className={`text-xs ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>→</span>
+                        </span>
+                      </button>
                     ));
                   })()}
                 </div>
@@ -2787,7 +2777,17 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                       🌍 {tr(lang, 'Per land', 'By country')}
                     </button>
                   </div>
-                  {albumGroups.map(group => (
+                  {albumFilterSeason && (
+                    <div className={`flex items-center justify-between mb-3 px-2 py-1.5 rounded-lg ${theme === 'dark' ? 'bg-blue-900/30 border border-blue-700/50' : 'bg-blue-50 border border-blue-200'}`}>
+                      <span className={`text-xs font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                        ⚽ {albumFilterSeason} — {albumGroups.find(g => g.label === albumFilterSeason)?.entries.length || 0} {tr(lang, 'stadions', 'stadiums')}
+                      </span>
+                      <button onClick={() => setAlbumFilterSeason(null)} className={`text-[10px] px-2 py-0.5 rounded font-medium ${theme === 'dark' ? 'bg-blue-800 text-blue-200 hover:bg-blue-700' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}>
+                        {tr(lang, 'Toon alles', 'Show all')}
+                      </button>
+                    </div>
+                  )}
+                  {(albumFilterSeason ? albumGroups.filter(g => g.label === albumFilterSeason) : albumGroups).map(group => (
                     <div key={group.label} className="mb-4">
                       <div className={`flex items-center gap-2 mb-2`}>
                         <span className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
