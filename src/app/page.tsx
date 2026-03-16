@@ -97,8 +97,8 @@ export default function Home() {
   })
   const profileId = 'bram'
 
-  const APP_VERSION = 'v2.3'
-  const APP_DATE = '15 maart 2026'
+  const APP_VERSION = 'v2.4'
+  const APP_DATE = '16 maart 2026'
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -152,7 +152,7 @@ export default function Home() {
         if (myBuildId === serverBuildId) {
           // We already have the new version (hard refresh or cache expired)
           setJustUpdated(true)
-          setTimeout(() => setJustUpdated(false), 5000)
+          setTimeout(() => setJustUpdated(false), 8000)
         } else {
           // We're running old code, server has newer → prompt to reload
           setUpdateAvailable(true)

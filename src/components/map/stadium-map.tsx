@@ -635,6 +635,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   const [searchError, setSearchError] = useState('');
   const [foundLocation, setFoundLocation] = useState<{ lat: number; lng: number; display_name: string } | null>(null);
   const [existingMatch, setExistingMatch] = useState<Stadium | null>(null);
+  const [skipExistingCheck, setSkipExistingCheck] = useState(false);
   const [newStadium, setNewStadium] = useState({
     name: '',
     club_name: '',
@@ -847,7 +848,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   };
 
   // Search for location before adding
-  const handleSearchLocation = async () => {
+  const handleSearchLocation = async (forceSkipExisting = false) => {
     if (!newStadium.name || !newStadium.city) {
       setSearchError(tr(lang, 'Vul minimaal stadion naam en stad in', 'Please fill in at least stadium name and city'));
       return;
@@ -858,19 +859,23 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     setFoundLocation(null);
     setExistingMatch(null);
 
-    // Check if stadium already exists in database
-    const searchName = newStadium.name.toLowerCase();
-    const searchCity = newStadium.city.toLowerCase();
-    const searchClub = newStadium.club_name.toLowerCase();
-    
-    const existing = allStadiums.find(s => 
-      s.name.toLowerCase().includes(searchName) ||
-      s.name.toLowerCase().includes(searchCity) ||
-      s.club?.name.toLowerCase().includes(searchClub) ||
-      (s.city?.toLowerCase().includes(searchCity) && s.club?.name.toLowerCase().includes(searchClub))
-    );
+    // Check if stadium already exists in database (strict: city must match + name or club)
+    const searchName = newStadium.name.toLowerCase().trim();
+    const searchCity = newStadium.city.toLowerCase().trim();
+    const searchClub = newStadium.club_name.toLowerCase().trim();
 
-    if (existing) {
+    const existing = allStadiums.find(s => {
+      const sName = s.name.toLowerCase();
+      const sCity = (s.city || '').toLowerCase();
+      const sClub = (s.club?.name || '').toLowerCase();
+      // City must be similar AND (stadium name OR club name must match)
+      const cityMatch = sCity.includes(searchCity) || searchCity.includes(sCity);
+      const nameMatch = searchName.length >= 3 && (sName.includes(searchName) || searchName.includes(sName));
+      const clubMatch = searchClub.length >= 3 && (sClub.includes(searchClub) || searchClub.includes(sClub));
+      return cityMatch && (nameMatch || clubMatch);
+    });
+
+    if (existing && !skipExistingCheck && !forceSkipExisting) {
       setExistingMatch(existing);
       setIsSearching(false);
       return;
@@ -1025,6 +1030,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
     setSearchError('');
     setFoundLocation(null);
     setExistingMatch(null);
+    setSkipExistingCheck(false);
     setShowClubSuggestions(false);
     setClubSuggestionQuery('');
     setCitySearchQuery('');
@@ -2323,12 +2329,20 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                   <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
                     <strong>{existingMatch.club?.name}</strong> - {existingMatch.name}, {existingMatch.city}
                   </p>
-                  <button
-                    onClick={goToExistingStadium}
-                    className="w-full py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium"
-                  >
-                    {tr(lang, 'Ga naar dit stadion', 'Go to this stadium')}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={goToExistingStadium}
+                      className="flex-1 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium"
+                    >
+                      {tr(lang, 'Ga naar dit stadion', 'Go to this stadium')}
+                    </button>
+                    <button
+                      onClick={() => { setSkipExistingCheck(true); setExistingMatch(null); handleSearchLocation(true); }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium ${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}
+                    >
+                      {tr(lang, 'Toch toevoegen', 'Add anyway')}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2580,7 +2594,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
             <div className={`p-4 border-t space-y-2 ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
               {/* Search button - always visible */}
               <button
-                onClick={handleSearchLocation}
+                onClick={() => handleSearchLocation()}
                 disabled={isSearching || !newStadium.name || !newStadium.city}
                 className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 ${
                   foundLocation && !existingMatch
