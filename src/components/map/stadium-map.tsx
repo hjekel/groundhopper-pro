@@ -2684,10 +2684,34 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
             if (albumGroupBy === 'season') {
               key = getSeasonFromDate(entry.visit_date);
             } else {
-              // Country from league or fallback
+              // Country from league, then country_id fallback, then custom stadium country
               const league = entry.stadium?.club?.current_league?.name;
-              const countryMap: Record<string, string> = { 'Eredivisie': '🇳🇱 Nederland', 'Eerste Divisie': '🇳🇱 Nederland', 'Premier League': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Championship': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Bundesliga': '🇩🇪 Deutschland', '2. Bundesliga': '🇩🇪 Deutschland', '3. Liga': '🇩🇪 Deutschland', 'La Liga': '🇪🇸 España', 'Serie A': '🇮🇹 Italia', 'Ligue 1': '🇫🇷 France', 'Pro League': '🇧🇪 België', 'Challenger Pro League': '🇧🇪 België', 'Primeira Liga': '🇵🇹 Portugal', 'NIFL Premiership': '🇬🇧 Northern Ireland' };
-              key = (league && countryMap[league]) || '🌍 ' + tr(lang, 'Overig', 'Other');
+              const countryId = entry.stadium?.club?.country_id;
+              const leagueToCountry: Record<string, string> = { 'Eredivisie': '🇳🇱 Nederland', 'Eerste Divisie': '🇳🇱 Nederland', 'Premier League': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Championship': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Bundesliga': '🇩🇪 Deutschland', '2. Bundesliga': '🇩🇪 Deutschland', '3. Liga': '🇩🇪 Deutschland', 'La Liga': '🇪🇸 España', 'Serie A': '🇮🇹 Italia', 'Ligue 1': '🇫🇷 France', 'Pro League': '🇧🇪 België', 'Challenger Pro League': '🇧🇪 België', 'Primeira Liga': '🇵🇹 Portugal', 'NIFL Premiership': '🇬🇧 Northern Ireland', 'Scottish Premiership': '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland', 'Süper Lig': '🇹🇷 Türkiye', 'Eliteserien': '🇳🇴 Norge', 'Allsvenskan': '🇸🇪 Sverige', 'Super League': '🇨🇭 Schweiz', 'Ekstraklasa': '🇵🇱 Polska', 'SuperLiga': '🇷🇸 Srbija', 'HNL': '🇭🇷 Hrvatska', 'Super League Greece': '🇬🇷 Elláda' };
+              const idToCountry: Record<string, string> = {
+                '9cb27307-1599-4b0d-bc08-a93a33005bdd': '🇳🇱 Nederland',
+                '571a5ee1-3f2c-42e4-8617-0780f160f0dd': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England',
+                '59307654-7b22-4031-91d0-3f832810f57b': '🇩🇪 Deutschland',
+                '6d4e5786-3d82-4da1-a5f4-ec5d2cff89b8': '🇪🇸 España',
+                'f86d737c-5698-4f85-bc44-b811ef2c28c3': '🇮🇹 Italia',
+                'f9ae8b9e-dfd1-4cba-ae82-75254db687bf': '🇫🇷 France',
+                '1b12742b-bd8a-48c5-9219-23342cb7bc61': '🇧🇪 België',
+                '8e01ff46-8be4-44b2-b4b9-8f8c977a65dd': '🇵🇹 Portugal',
+                'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee': '🇬🇧 Northern Ireland',
+                '9e1b08c1-c768-45f4-b16f-4aec15f4455c': '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland',
+                '535b1c5b-ac00-4c5b-b729-4d8c1c04979c': '🇹🇷 Türkiye',
+                '5c64e16c-a002-474e-ba84-43ad6e236736': '🇦🇹 Österreich',
+                '98817e8a-26bd-47d2-9ad9-38baac62d961': '🇳🇴 Norge',
+                '580eacab-4949-4ffc-9cd7-24e4e14037f9': '🇸🇪 Sverige',
+                '620fcdc1-154d-45ea-8cd6-280421e334cc': '🇨🇭 Schweiz',
+                'bc8614b0-1de7-407a-97e6-ed598562e414': '🇵🇱 Polska',
+                'fa39ae92-ce70-4a8e-9d65-e72027668960': '🇷🇸 Srbija',
+                'f5b9eb7c-6257-457c-a141-bc25245a7369': '🇭🇷 Hrvatska',
+                '7a36f776-9155-4d67-a8da-d39551c4768a': '🇬🇷 Elláda',
+                'ec5f09d7-b24b-4ac4-bf68-ef8f9fdf3e7d': '🇨🇿 Česko',
+                '106f99c7-0a45-42f7-a733-e9f142dd5804': '🇨🇿 Česko',
+              };
+              key = (league && leagueToCountry[league]) || (countryId && idToCountry[countryId]) || '🌍 ' + tr(lang, 'Overig', 'Other');
             }
             if (!groupMap.has(key)) groupMap.set(key, []);
             groupMap.get(key)!.push(entry);
