@@ -177,13 +177,11 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
     ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
     : isWishlist
     ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><polygon points="6,1 7.5,4.5 11,4.5 8,7 9.5,11 6,8.5 2.5,11 4,7 1,4.5 4.5,4.5" fill="white"/></svg></div>`
-    : isCustom
-    ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><svg width="7" height="7" viewBox="0 0 12 12"><path d="M6 2V10M2 6H10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>`
     : isLostGround
     ? `<div style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#78716c;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3)"><span style="font-size:8px;line-height:1;">🏚️</span></div>`
     : '';
 
-  const borderCol = isVisited ? '#22c55e' : isWishlist ? '#eab308' : isCustom ? '#8b5cf6' : isLostGround ? '#78716c' : 'white';
+  const borderCol = isVisited ? '#22c55e' : isWishlist ? '#eab308' : isLostGround ? '#78716c' : 'white';
 
   // --- Sparta: larger logo badge with golden ring + glow ---
   if (isSparta) {
@@ -206,7 +204,7 @@ const createClubIcon = (primaryColor: string, crestUrl?: string | null, isSparta
 
   // --- All other markers: circular logo badge (crest = the marker) ---
   const s = 34;
-  const className = isCustom ? 'custom-stadium-marker custom-added' : isLostGround ? 'custom-stadium-marker lost-ground' : 'custom-stadium-marker';
+  const className = isLostGround ? 'custom-stadium-marker lost-ground' : 'custom-stadium-marker';
   const opacity = isLostGround ? 'opacity:0.7;' : '';
 
   const html = crestUrl
@@ -1215,7 +1213,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         id: `custom-club-${cs.id}`,
         name: cs.club_name || cs.name,
         short_name: (cs.club_name || cs.name).substring(0, 3).toUpperCase(),
-        primary_color: cs.is_historic ? '#78716c' : (cs.primary_color || '#8b5cf6'),
+        primary_color: cs.is_historic ? '#78716c' : (cs.primary_color || '#ef4444'),
         secondary_color: undefined,
         crest_url: cs.crest_url,
         current_league: null
@@ -3802,11 +3800,6 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                         {stadium.club?.current_league && !isLostGround && (
                           <span className="text-amber-100 text-xs">{stadium.club.current_league.name}</span>
                         )}
-                        {isCustom && (
-                          <span className="text-xs px-1.5 py-0.5 bg-purple-500/30 text-purple-200 rounded">
-                            {tr(lang, 'eigen', 'custom')}
-                          </span>
-                        )}
                       </div>
                     </div>
                     {isVisited && (
@@ -3954,7 +3947,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                   )}
 
                   {/* Club details from TheSportsDB (jersey + history) */}
-                  {stadium.club?.name && !isCustom && (
+                  {stadium.club?.name && (
                     <ClubPopupDetails clubName={stadium.club.name} theme={theme} lang={lang} />
                   )}
 
@@ -4196,7 +4189,6 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
 
       <style jsx global>{`
         .custom-stadium-marker { background: transparent; border: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-        .custom-added { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)) drop-shadow(0 0 6px rgba(139, 92, 246, 0.4)); }
         .sparta-special { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); z-index: 1000 !important; }
         .sparta-pulse { animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
