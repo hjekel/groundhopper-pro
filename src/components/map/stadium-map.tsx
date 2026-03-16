@@ -655,7 +655,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   const apiSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // City search in add modal
   const [citySearchQuery, setCitySearchQuery] = useState('');
-  const [citySearchResults, setCitySearchResults] = useState<{ club: string; stadium: string; city: string; country: string; color: string; capacity?: string }[]>([]);
+  const [citySearchResults, setCitySearchResults] = useState<{ club: string; stadium: string; city: string; country: string; color: string; capacity?: string; badge?: string; lat?: number; lng?: number }[]>([]);
   const [citySearching, setCitySearching] = useState(false);
   const citySearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -1107,13 +1107,22 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       // Search TheSportsDB with the city name (many teams are named after their city)
       const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(city)}`);
       const data = await res.json();
-      const results: typeof citySearchResults = [];
+      const results: { club: string; stadium: string; city: string; country: string; color: string; capacity?: string; badge?: string; lat?: number; lng?: number }[] = [];
       if (data.teams) {
         data.teams
           .filter((t: any) => t.strSport === 'Soccer')
           .forEach((t: any) => {
             const loc = t.strStadiumLocation || t.strLocation || '';
             const teamCity = loc.split(',')[0]?.trim() || '';
+            // Parse coordinates from TheSportsDB
+            let lat: number | undefined, lng: number | undefined;
+            if (t.strStadiumLocation) {
+              const parts = t.strStadiumLocation.split(',').map((s: string) => parseFloat(s.trim()));
+              if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && Math.abs(parts[0]) > 0.1) {
+                lat = parts[0];
+                lng = parts[1];
+              }
+            }
             results.push({
               club: t.strTeam,
               stadium: t.strStadium || '',
@@ -1121,6 +1130,9 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
               country: t.strCountry || '',
               color: t.strColour1 ? `#${t.strColour1.replace('#', '')}` : '#6b7280',
               capacity: t.intStadiumCapacity || '',
+              badge: t.strBadge || undefined,
+              lat,
+              lng,
             });
           });
       }
@@ -2268,7 +2280,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                     {citySearchResults.map((result, i) => (
                       <button
                         key={`${result.club}-${i}`}
-                        onClick={() => {
+                        onClick={async () => {
                           setNewStadium(prev => ({
                             ...prev,
                             club_name: result.club,
@@ -2280,8 +2292,21 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                           }));
                           setCitySearchQuery('');
                           setCitySearchResults([]);
-                          setFoundLocation(null);
                           setExistingMatch(null);
+                          // Auto-geocode: use TheSportsDB coords if available, otherwise Nominatim
+                          if (result.lat && result.lng) {
+                            setFoundLocation({ lat: result.lat, lng: result.lng, display_name: `${result.stadium}, ${result.city}, ${result.country}` });
+                          } else {
+                            setFoundLocation(null);
+                            setIsSearching(true);
+                            const loc = await geocodeLocation(`${result.stadium} stadium ${result.city} ${result.country}`);
+                            if (loc) setFoundLocation(loc);
+                            else {
+                              const loc2 = await geocodeLocation(`${result.city} ${result.country}`);
+                              if (loc2) setFoundLocation(loc2);
+                            }
+                            setIsSearching(false);
+                          }
                         }}
                         className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition ${
                           theme === 'dark'
@@ -2289,16 +2314,20 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                             : 'hover:bg-blue-100'
                         }`}
                       >
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: result.color }}
-                        />
+                        {result.badge ? (
+                          <img src={result.badge} alt="" className="w-6 h-6 object-contain flex-shrink-0" />
+                        ) : (
+                          <div
+                            className="w-5 h-5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: result.color }}
+                          />
+                        )}
                         <div className="min-w-0 flex-1">
                           <div className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                             {result.club}
                           </div>
                           <div className={`text-xs truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {result.stadium}{result.city ? ` · ${result.city}` : ''}{result.country ? `, ${result.country}` : ''}
+                            🏟️ {result.stadium}{result.city ? ` · ${result.city}` : ''}{result.country ? `, ${result.country}` : ''}
                             {result.capacity ? ` · ${Number(result.capacity).toLocaleString()}` : ''}
                           </div>
                         </div>
