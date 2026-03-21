@@ -741,8 +741,11 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       supabase.from('bram_visit_photos').select('id, stadium_id, photo_url').eq('profile_id', pid).order('created_at', { ascending: true }),
       supabase.from('hidden_stadiums').select('stadium_id').eq('profile_id', pid),
     ]);
+    // Build a set of custom stadium IDs for matching
+    const customIds = new Set((customRes.data || []).map((c: any) => c.id));
     if (visitsRes.data) setVisits(visitsRes.data.map(v => ({
-      stadium_id: v.stadium_id,
+      // If this visit belongs to a custom stadium, add the 'custom-' prefix for matching
+      stadium_id: customIds.has(v.stadium_id) ? `custom-${v.stadium_id}` : v.stadium_id,
       visit_date: v.first_visit_date,
       notes: v.notes,
       match_home_team: v.match_home_team,
@@ -760,13 +763,15 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   };
 
   const toggleVisit = async (stadiumId: string, date?: string) => {
+    // Strip 'custom-' prefix for DB operations (stadium_visits.stadium_id is UUID type)
+    const dbStadiumId = stadiumId.startsWith('custom-') ? stadiumId.replace('custom-', '') : stadiumId;
     const existing = visits.find(v => v.stadium_id === stadiumId);
     if (existing) {
-      await supabase.from('stadium_visits').delete().eq('stadium_id', stadiumId).eq('profile_id', profileId);
+      await supabase.from('stadium_visits').delete().eq('stadium_id', dbStadiumId).eq('profile_id', profileId);
       setVisits(visits.filter(v => v.stadium_id !== stadiumId));
     } else {
       const insertData: Record<string, unknown> = {
-        stadium_id: stadiumId,
+        stadium_id: dbStadiumId,
         first_visit_date: date || null,
         last_visit_date: date || null,
         visit_count: 1,
@@ -781,7 +786,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
       const { data } = await supabase.from('stadium_visits').insert(insertData)
         .select('stadium_id, first_visit_date, notes, match_home_team, match_away_team, match_score, match_competition, rating, atmosphere_rating, facilities_rating').single();
       if (data) setVisits([...visits, {
-        stadium_id: data.stadium_id,
+        stadium_id: stadiumId, // Use original ID (with custom- prefix if custom) for matching
         visit_date: data.first_visit_date,
         notes: data.notes,
         match_home_team: data.match_home_team,
@@ -961,6 +966,11 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 if (team.strBadge) {
                   updates.crest_url = team.strBadge;
                   stateUpdates.crest_url = team.strBadge;
+                }
+                // Get stadium photo
+                if (team.strStadiumThumb) {
+                  updates.image_url = team.strStadiumThumb;
+                  stateUpdates.image_url = team.strStadiumThumb;
                 }
                 // Get stadium coordinates from TheSportsDB if available
                 if (team.strStadiumLocation) {
