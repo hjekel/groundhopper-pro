@@ -669,7 +669,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
 
   // Timeline feature
   const [showTimeline, setShowTimeline] = useState(false);
-  const [timelineView, setTimelineView] = useState<'list' | 'album' | 'stats'>('album');
+  const [timelineView, setTimelineView] = useState<'list' | 'album' | 'stats' | 'book'>('album');
   const [albumGroupBy, setAlbumGroupBy] = useState<'season' | 'country'>('season');
   const [albumFilterSeason, setAlbumFilterSeason] = useState<string | null>(null);
 
@@ -2768,6 +2768,7 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
               <div className="flex gap-1">
                 {([
                   { id: 'album' as const, icon: '📸', nl: 'Album', en: 'Album' },
+                  { id: 'book' as const, icon: '📓', nl: 'Boekje', en: 'Book' },
                   { id: 'stats' as const, icon: '📊', nl: 'Stats', en: 'Stats' },
                   { id: 'list' as const, icon: '📋', nl: 'Lijst', en: 'List' },
                 ] as const).map(tab => (
@@ -2792,6 +2793,88 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
                 <div className={`text-center py-8 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">{tr(lang, 'Nog geen bezoeken met datum', 'No visits with dates yet')}</p>
+                </div>
+              ) : timelineView === 'book' ? (
+                /* Book View - digital notebook grouped by country */
+                <div className="p-3">
+                  {(() => {
+                    // Group visits by country for notebook view
+                    const countryGroups = new Map<string, typeof timelineData>();
+                    const getCountryLabel = (entry: typeof timelineData[0]) => {
+                      const league = entry.stadium?.club?.current_league?.name;
+                      const countryId = entry.stadium?.club?.country_id;
+                      const leagueToCountry: Record<string, string> = { 'Eredivisie': '🇳🇱 Nederland', 'Eerste Divisie': '🇳🇱 Nederland', 'Amateurvoetbal': '🇳🇱 Nederland', 'Recreatief': '🇳🇱 Nederland', 'Premier League': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Championship': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'League One': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'League Two': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', 'Bundesliga': '🇩🇪 Deutschland', '2. Bundesliga': '🇩🇪 Deutschland', '3. Liga': '🇩🇪 Deutschland', 'La Liga': '🇪🇸 España', 'Serie A': '🇮🇹 Italia', 'Ligue 1': '🇫🇷 France', 'Pro League': '🇧🇪 België', 'Challenger Pro League': '🇧🇪 België', 'Primeira Liga': '🇵🇹 Portugal', 'NIFL Premiership': '🇬🇧 Northern Ireland' };
+                      const idToCountry: Record<string, string> = {
+                        '9cb27307-1599-4b0d-bc08-a93a33005bdd': '🇳🇱 Nederland', '571a5ee1-3f2c-42e4-8617-0780f160f0dd': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 England', '59307654-7b22-4031-91d0-3f832810f57b': '🇩🇪 Deutschland', '6d4e5786-3d82-4da1-a5f4-ec5d2cff89b8': '🇪🇸 España', 'f86d737c-5698-4f85-bc44-b811ef2c28c3': '🇮🇹 Italia', 'f9ae8b9e-dfd1-4cba-ae82-75254db687bf': '🇫🇷 France', '1b12742b-bd8a-48c5-9219-23342cb7bc61': '🇧🇪 België', '8e01ff46-8be4-44b2-b4b9-8f8c977a65dd': '🇵🇹 Portugal', 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee': '🇬🇧 Northern Ireland', '9e1b08c1-c768-45f4-b16f-4aec15f4455c': '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland', '535b1c5b-ac00-4c5b-b729-4d8c1c04979c': '🇹🇷 Türkiye', '5c64e16c-a002-474e-ba84-43ad6e236736': '🇦🇹 Österreich', '98817e8a-26bd-47d2-9ad9-38baac62d961': '🇳🇴 Norge', '580eacab-4949-4ffc-9cd7-24e4e14037f9': '🇸🇪 Sverige', '620fcdc1-154d-45ea-8cd6-280421e334cc': '🇨🇭 Schweiz', 'bc8614b0-1de7-407a-97e6-ed598562e414': '🇵🇱 Polska', 'fa39ae92-ce70-4a8e-9d65-e72027668960': '🇷🇸 Srbija', 'f5b9eb7c-6257-457c-a141-bc25245a7369': '🇭🇷 Hrvatska', '7a36f776-9155-4d67-a8da-d39551c4768a': '🇬🇷 Elláda', '106f99c7-0a45-42f7-a733-e9f142dd5804': '🇨🇿 Česko', 'ec5f09d7-b24b-4ac4-bf68-ef8f9fdf3e7d': '🇩🇰 Danmark',
+                      };
+                      // Also handle countries added for Bram's notebook
+                      const extraCountries: Record<string, string> = {};
+                      return (league && leagueToCountry[league]) || (countryId && (idToCountry[countryId] || extraCountries[countryId])) || '🌍 Overig';
+                    };
+                    timelineData.forEach(entry => {
+                      const country = getCountryLabel(entry);
+                      if (!countryGroups.has(country)) countryGroups.set(country, []);
+                      countryGroups.get(country)!.push(entry);
+                    });
+                    // Sort: most visits first
+                    const sorted = Array.from(countryGroups.entries()).sort((a, b) => b[1].length - a[1].length);
+                    return sorted.map(([country, entries]) => (
+                      <div key={country} className="mb-5">
+                        {/* Country header */}
+                        <div className={`flex items-center justify-between mb-2 pb-1 border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <span className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{country}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{entries.length}</span>
+                        </div>
+                        {/* Stadium entries - notebook style */}
+                        <div className="space-y-1">
+                          {entries.map((entry, idx) => {
+                            const isLost = entry.stadium?.is_active === false;
+                            return (
+                              <button
+                                key={entry.stadium_id + entry.visit_date}
+                                onClick={() => {
+                                  if (entry.stadium) {
+                                    setSelectedStadium({ lat: entry.stadium.latitude, lng: entry.stadium.longitude });
+                                    setShowTimeline(false);
+                                  }
+                                }}
+                                className={`w-full flex items-start gap-2 py-1.5 px-2 rounded-lg text-left transition ${theme === 'dark' ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'}`}
+                              >
+                                {/* Number */}
+                                <span className={`text-[10px] font-mono w-5 flex-shrink-0 pt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{idx + 1}.</span>
+                                {/* Club logo */}
+                                <div className="w-5 h-5 flex-shrink-0 mt-0.5">
+                                  {entry.stadium?.club?.crest_url ? (
+                                    <img src={entry.stadium.club.crest_url} alt="" className="w-5 h-5 object-contain" />
+                                  ) : (
+                                    <span className="text-xs">🏟️</span>
+                                  )}
+                                </div>
+                                {/* Stadium + match info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <span className={`text-xs font-medium truncate ${isLost ? (theme === 'dark' ? 'text-amber-400 line-through' : 'text-amber-600 line-through') : (theme === 'dark' ? 'text-slate-200' : 'text-slate-800')}`}>
+                                      {entry.stadium?.name || '?'}
+                                    </span>
+                                    {isLost && <span className="text-[10px]">†</span>}
+                                  </div>
+                                  <div className={`text-[10px] truncate ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                    {entry.stadium?.club?.name}{entry.notes ? ` — ${entry.notes.replace(/^[^-]*-\s*/, '').substring(0, 40)}` : ''}
+                                  </div>
+                                </div>
+                                {/* Date */}
+                                {entry.visit_date && (
+                                  <span className={`text-[9px] flex-shrink-0 pt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    {new Date(entry.visit_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
               ) : timelineView === 'stats' ? (
                 /* Stats View */
