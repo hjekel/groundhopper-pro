@@ -672,6 +672,8 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
   const [timelineView, setTimelineView] = useState<'list' | 'album' | 'stats' | 'book'>('album');
   const [albumGroupBy, setAlbumGroupBy] = useState<'season' | 'country'>('season');
   const [albumFilterSeason, setAlbumFilterSeason] = useState<string | null>(null);
+  const [showOriginalBook, setShowOriginalBook] = useState(false);
+  const [bookPage, setBookPage] = useState(0);
 
   // Bottom stats bar
   const [bottomExpanded, setBottomExpanded] = useState(false);
@@ -2797,6 +2799,13 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
               ) : timelineView === 'book' ? (
                 /* Book View - digital notebook grouped by country */
                 <div className="p-3">
+                  {/* Original notebook button */}
+                  <button
+                    onClick={() => { setShowOriginalBook(true); setBookPage(0); }}
+                    className={`w-full mb-3 py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition ${theme === 'dark' ? 'bg-amber-900/30 border border-amber-700/50 text-amber-300 hover:bg-amber-900/50' : 'bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'}`}
+                  >
+                    📖 {tr(lang, "Bekijk het originele handgeschreven boekje", "View the original handwritten notebook")}
+                  </button>
                   {(() => {
                     // Group visits by country for notebook view
                     const countryGroups = new Map<string, typeof timelineData>();
@@ -4323,6 +4332,57 @@ export default function StadiumMap({ stadiums, theme, lang, addStadiumTrigger, t
         html.light .leaflet-tooltip { background: white; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 8px; font-family: inherit; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         html.light .leaflet-tooltip-top::before { border-top-color: #e2e8f0; }
       `}</style>
+
+      {/* Original Notebook Photo Viewer */}
+      {showOriginalBook && (() => {
+        const bookPages = [
+          { src: '/boekje/1-nederland-1-20.jpg', caption: '🇳🇱 Nederland — Stadions 1 t/m 20' },
+          { src: '/boekje/2-nederland-belgie.jpg', caption: '🇳🇱 Nederland 21-44 + 🇧🇪 België 1-9' },
+          { src: '/boekje/3-belgie-duitsland-engeland.jpg', caption: '🇧🇪 België 10-19 · 🇩🇪 Duitsland 1-11 · 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland 1-6' },
+          { src: '/boekje/4-engeland-spanje-portugal-za.jpg', caption: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland 7-15 · 🇪🇸 Spanje · 🇵🇹 Portugal · 🇨🇿 Tsjechië · 🇿🇦 Zuid-Afrika' },
+          { src: '/boekje/5-italie-roemenie-ijsland-hongarije.jpg', caption: '🇮🇹 Italië · 🇷🇴 Roemenië · 🇮🇸 IJsland · 🇭🇺 Hongarije' },
+        ];
+        return (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center" onClick={() => setShowOriginalBook(false)}>
+            <div className="absolute inset-0 bg-black/80" />
+            <div className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              {/* Close button */}
+              <button onClick={() => setShowOriginalBook(false)} className="absolute -top-1 -right-1 z-10 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80">
+                <X className="w-4 h-4" />
+              </button>
+              {/* Photo */}
+              <div className="relative">
+                <img
+                  src={bookPages[bookPage].src}
+                  alt={bookPages[bookPage].caption}
+                  className="max-w-[90vw] max-h-[78vh] object-contain rounded-lg shadow-2xl"
+                />
+                {/* Nav arrows */}
+                {bookPage > 0 && (
+                  <button onClick={() => setBookPage(p => p - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 text-lg">
+                    ‹
+                  </button>
+                )}
+                {bookPage < bookPages.length - 1 && (
+                  <button onClick={() => setBookPage(p => p + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 text-lg">
+                    ›
+                  </button>
+                )}
+              </div>
+              {/* Caption + page indicator */}
+              <div className="mt-3 text-center">
+                <p className="text-white text-sm font-medium">{bookPages[bookPage].caption}</p>
+                <div className="flex gap-1.5 justify-center mt-2">
+                  {bookPages.map((_, i) => (
+                    <button key={i} onClick={() => setBookPage(i)} className={`w-2 h-2 rounded-full transition ${i === bookPage ? 'bg-amber-400' : 'bg-white/30 hover:bg-white/50'}`} />
+                  ))}
+                </div>
+                <p className="text-white/40 text-[10px] mt-1">📖 Bram&apos;s originele groundhop-boekje — {bookPage + 1}/{bookPages.length}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
